@@ -2082,6 +2082,9 @@ def unlock_all_private_chests():
     def deep_unlock(data):
         nonlocal count
         if isinstance(data, dict):
+            ctype = data.get("concrete_model_type", "")
+            if ctype in ("PalMapObjectItemBoothModel", "PalMapObjectPalBoothModel"):
+                return
             if "private_lock_player_uid" in data:
                 data["private_lock_player_uid"] = "00000000-0000-0000-0000-000000000000"
                 count += 1
@@ -2091,7 +2094,7 @@ def unlock_all_private_chests():
             for item in data:
                 deep_unlock(item)
     deep_unlock(wsd)
-    msg = f"All private chests have been unlocked! Total unlocked: {count}"
+    msg = f"All private chests have been unlocked (excluding booths)! Total unlocked: {count}"
     print(msg)
     messagebox.showinfo("Unlocked", msg)
     refresh_all()
