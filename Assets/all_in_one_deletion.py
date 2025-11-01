@@ -2110,7 +2110,7 @@ def remove_invalid_items_from_save():
     except KeyError:
         messagebox.showerror("Error", "Invalid Level.sav structure!")
         return
-    valid_ids = get_valid_item_ids()
+    valid_ids = set(x.lower() for x in get_valid_item_ids())
     removed = 0
     def count_items(data):
         total = 0
@@ -2147,18 +2147,20 @@ def remove_invalid_items_from_save():
                         item = val.get("item")
                         if isinstance(item, dict) and val.get("count", 0) > 0:
                             static_id = item.get("static_id")
-                            if static_id and static_id not in valid_ids:
+                            if static_id and static_id.lower() not in valid_ids:
                                 val["count"] = 0
                                 removed += 1
+                                print(f"[AutoItemCleaner] Removed invalid item: {static_id}")
             elif "RawData" in data and isinstance(data["RawData"], dict):
                 val = data["RawData"].get("value", {})
                 if isinstance(val, dict):
                     item = val.get("item")
                     if isinstance(item, dict) and val.get("count", 0) > 0:
                         static_id = item.get("static_id")
-                        if static_id and static_id not in valid_ids:
+                        if static_id and static_id.lower() not in valid_ids:
                             val["count"] = 0
                             removed += 1
+                            print(f"[AutoItemCleaner] Removed invalid item: {static_id}")
             for v in data.values():
                 deep_clean(v)
         elif isinstance(data, list):
