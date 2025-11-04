@@ -200,7 +200,7 @@ class MenuGUI(tk.Tk):
         tools_version, _ = get_versions()
         self.title(t("app.title", version=tools_version))
         self.configure(bg="#2f2f2f")
-        self.geometry("800x530")
+        self.geometry("800x550")
         self.resizable(False, True)
         self.info_labels = [] 
         self.category_frames = [] 
