@@ -5,7 +5,7 @@
 - **Contact me on Discord:** Pylar1991
 ---
 ---
-- **Please download the standalone folder from https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest to be able to use the .exe!**
+- **Please download the standalone folder from [https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) to be able to use the .exe!**
 ---
 
 ## Features:

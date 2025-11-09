@@ -5,7 +5,7 @@
 - **联系 Discord：** Pylar1991
 ---
 ---
-- **请从 `https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest` 下载独立版文件夹以便使用 .exe！**
+- **请从 [https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) 下载独立版文件夹以便使用 .exe！**
 ---
 
 ## 功能特点
