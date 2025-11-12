@@ -1,4 +1,4 @@
-import os, sys, subprocess, shutil
+import os, sys, subprocess, shutil, re
 
 VENV_DIR = "venv"
 PYTHON_EXE = os.path.join(VENV_DIR, "Scripts", "python.exe") if os.name == "nt" else os.path.join(VENV_DIR, "bin", "python")
@@ -15,6 +15,32 @@ def install_deps():
     subprocess.check_call([PYTHON_EXE, "-m", "pip", "install", "--upgrade", "pip"])
     subprocess.check_call([PYTHON_EXE, "-m", "pip", "install", "-e", "."])
     subprocess.check_call([PYTHON_EXE, "-m", "pip", "install", "cx_Freeze"])
+
+def sync_version():
+    common_file = os.path.join("Assets", "common.py")
+    pyproject_file = "pyproject.toml"
+    setup_file = "setup_freeze.py"
+
+    with open(common_file, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip().startswith("APP_VERSION"):
+                version = line.split("=")[1].strip().strip('"').strip("'")
+                break
+        else:
+            print("APP_VERSION not found in common.py")
+            return
+
+    for file_path, pattern, replacement in [
+        (pyproject_file, r'version\s*=\s*["\'].*?["\']', f'version = "{version}"'),
+        (setup_file, r'version\s*=\s*["\'].*?["\']', f'version="{version}"')
+    ]:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        content = re.sub(pattern, replacement, content)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    print(f"Synchronized version to {version} in pyproject.toml and setup_freeze.py")
 
 def build_with_cx_freeze():
     print("Running cx_Freeze build...")
@@ -39,6 +65,10 @@ def main():
     print("PalworldSaveTools VENV Deps")
     print("=" * 40)
     install_deps()
+    print("=" * 40)
+    print("Syncing Version Across Files")
+    print("=" * 40)
+    sync_version()
     print("=" * 40)
     print("PalworldSaveTools Exe Builder")
     print("=" * 40)
