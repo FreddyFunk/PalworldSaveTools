@@ -230,9 +230,8 @@ class MenuGUI(tk.Tk):
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
         topbar = ttk.Frame(container, style="TFrame")
         topbar.pack(fill="x", pady=(0, 6))
-        ttk.Label(topbar, text=t("lang.label")+":", style="TLabel").pack(side="right", padx=(0, 6))
         self.lang_combo = ttk.Combobox(topbar, state="readonly", values=[])
-        self.lang_combo.pack(side="right")
+        self.lang_combo.pack(side="right", padx=(0,6))
         self.lang_combo.bind("<<ComboboxSelected>>", lambda e: self.on_language_change())
         logo_path = os.path.join("Assets", "resources", "PalworldSaveTools.png")
         if os.path.exists(logo_path):
@@ -330,12 +329,8 @@ class MenuGUI(tk.Tk):
         self.deiconify()
     def on_language_change(self):
         sel = self.lang_combo.get()
-        if sel == t('lang.zh_CN'):
-            lang = 'zh_CN'
-        elif sel == t('lang.en_US'):
-            lang = 'en_US'
-        else:
-            lang = 'zh_CN'
+        lang_map = {t(f'lang.{code}'): code for code in ["zh_CN","en_US","ru_RU","fr_FR","es_ES","de_DE","ja_JP","ko_KR"]}
+        lang = lang_map.get(sel, "zh_CN")
         set_language(lang)
         load_resources(lang)
         self.refresh_texts()
@@ -348,10 +343,10 @@ class MenuGUI(tk.Tk):
             frame.configure(text=t(key))
         for btn, key in self.tool_buttons:
             btn.configure(text=t(key))
-        values = [t('lang.zh_CN'), t('lang.en_US')]
+        values = [t(f'lang.{code}') for code in ["zh_CN","en_US","ru_RU","fr_FR","es_ES","de_DE","ja_JP","ko_KR"]]
         self.lang_combo.configure(values=values)
         cur = get_language()
-        self.lang_combo.set(t('lang.zh_CN') if cur == 'zh_CN' else t('lang.en_US'))
+        self.lang_combo.set(t(f'lang.{cur}'))
 def center_window(win):
     win.update_idletasks()
     w, h = win.winfo_width(), win.winfo_height()

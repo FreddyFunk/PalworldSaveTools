@@ -25,6 +25,12 @@
   "lang.label": "语言",
   "lang.zh_CN": "简体中文",
   "lang.en_US": "English",
+  "lang.ru_RU": "Русский",
+  "lang.fr_FR": "Français",
+  "lang.es_ES": "Español",
+  "lang.de_DE": "Deutsch",
+  "lang.ja_JP": "日本語",
+  "lang.ko_KR": "한국어",
   "status.open": "正在打开 \"{name}\"…",
   "status.close": "正在关闭 \"{name}\"…"
   ,
