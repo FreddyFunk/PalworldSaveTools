@@ -1391,6 +1391,31 @@ def create_search_panel(parent, label_text, search_var, search_callback, tree_co
         tree.heading(col, text=head)
         tree.column(col, width=width_col, anchor='w')
     return panel, tree, entry
+from PIL import Image, ImageDraw, ImageFont
+def pil_text_to_surface(text, size=20, color=(255,255,255)):
+    font_paths = [
+        r"C:\Windows\Fonts\msgothic.ttc",
+        r"C:\Windows\Fonts\YuGothicUI.ttf",
+        r"C:\Windows\Fonts\YuGothic.ttf",
+        r"C:\Windows\Fonts\meiryo.ttc",
+        r"C:\Windows\Fonts\meiryob.ttc",
+        r"C:\Windows\Fonts\msmincho.ttc"
+    ]
+    font = None
+    for fp in font_paths:
+        if os.path.exists(fp):
+            try:
+                font = ImageFont.truetype(fp, size)
+                break
+            except: pass
+    if font is None: font = ImageFont.load_default()
+    dummy = Image.new("RGBA", (1,1))
+    draw = ImageDraw.Draw(dummy)
+    bbox = draw.textbbox((0,0), text, font=font)
+    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    img = Image.new("RGBA", (w, h), (0,0,0,0))
+    ImageDraw.Draw(img).text((-bbox[0], -bbox[1]), text, font=font, fill=color)
+    return pygame.image.fromstring(img.tobytes(), img.size, img.mode)
 def show_base_map():
     global srcGuildMapping, loaded_level_json
     folder = current_save_path
@@ -1539,10 +1564,10 @@ def show_base_map():
     def draw_sidebar_header():
         sidebar_x = w - sidebar_width + 10
         y_header = 36 + 30
-        screen.blit(small_font.render("Guild Name", True, (180, 180, 180)), (sidebar_x, y_header))
-        screen.blit(small_font.render("Leader", True, (180, 180, 180)), (sidebar_x + 110, y_header))
-        screen.blit(small_font.render("Last Seen", True, (180, 180, 180)), (sidebar_x + 210, y_header))
-        screen.blit(small_font.render("#Bases", True, (180, 180, 180)), (sidebar_x + 300, y_header))
+        screen.blit(pil_text_to_surface("Guild Name", 20, (180, 180, 180)), (sidebar_x, y_header))
+        screen.blit(pil_text_to_surface("Leader", 20, (180, 180, 180)), (sidebar_x + 110, y_header))
+        screen.blit(pil_text_to_surface("Last Seen", 20, (180, 180, 180)), (sidebar_x + 210, y_header))
+        screen.blit(pil_text_to_surface("#Bases", 20, (180, 180, 180)), (sidebar_x + 300, y_header))
     def draw_guild_item(guild, y, selected):
         sidebar_x = w - sidebar_width + 10
         color = (255, 200, 100) if selected else (255, 255, 255)
@@ -1551,10 +1576,10 @@ def show_base_map():
         ln = truncate_text(guild['leader_name'], max_widths[1])
         ls = truncate_text(guild['last_seen'], max_widths[2])
         nb = str(len(guild['bases']))
-        screen.blit(small_font.render(gn, True, color), (sidebar_x, y))
-        screen.blit(small_font.render(ln, True, color), (sidebar_x + 110, y))
-        screen.blit(small_font.render(ls, True, color), (sidebar_x + 210, y))
-        screen.blit(small_font.render(nb, True, color), (sidebar_x + 300, y))
+        screen.blit(pil_text_to_surface(gn, 18, color), (sidebar_x, y))
+        screen.blit(pil_text_to_surface(ln, 18, color), (sidebar_x + 110, y))
+        screen.blit(pil_text_to_surface(ls, 18, color), (sidebar_x + 210, y))
+        screen.blit(pil_text_to_surface(nb, 18, color), (sidebar_x + 300, y))
     def draw_base_item(base, y, selected):
         sidebar_x = w - sidebar_width + 30
         color = (255, 200, 100) if selected else (200, 200, 200)
@@ -1563,15 +1588,14 @@ def show_base_map():
         coords = f"x:{int(base['coords'][0])}, y:{int(base['coords'][1])}" if base['coords'][0] is not None else "N/A"
         bid = truncate_text(bid, max_widths[0])
         coords = truncate_text(coords, max_widths[1])
-        screen.blit(small_font.render(bid, True, color), (sidebar_x, y))
-        screen.blit(small_font.render(coords, True, color), (sidebar_x + 120, y))
+        screen.blit(pil_text_to_surface(bid, 16, color), (sidebar_x, y))
+        screen.blit(pil_text_to_surface(coords, 16, color), (sidebar_x + 120, y))
     def draw_totals():
         sidebar_x = w - sidebar_width + 10
         total_guilds = len(filtered_guilds)
         total_bases = sum(len(g['bases']) for g in filtered_guilds.values())
         text = f"Guilds: {total_guilds} | Bases: {total_bases}"
-        surf = small_font.render(text, True, (180, 180, 180))
-        screen.blit(surf, (sidebar_x, 40))
+        screen.blit(pil_text_to_surface(text, 16, (180, 180, 180)), (sidebar_x, 40))
     guilds_all = get_guild_bases()
     filtered_guilds = {}
     scroll_offset = 0
@@ -1775,7 +1799,11 @@ def show_base_map():
                 ]
             max_width = 0
             for line in tooltip_lines:
-                w_line = font.size(line)[0]
+                bbox = font.get_rect(line) if hasattr(font, "get_rect") else font.size(line)
+                if isinstance(bbox, tuple):
+                    w_line = bbox[0]
+                else:
+                    w_line = bbox.width
                 if w_line > max_width:
                     max_width = w_line
             tooltip_height = len(tooltip_lines) * (font.get_linesize() + 2) + 6
@@ -1788,7 +1816,7 @@ def show_base_map():
             s = pygame.Surface((tooltip_width, tooltip_height), pygame.SRCALPHA)
             s.fill(tooltip_bg_color)
             for i, line in enumerate(tooltip_lines):
-                txt_surf = font.render(line, True, tooltip_text_color)
+                txt_surf = pil_text_to_surface(line, font.get_linesize(), tooltip_text_color)
                 s.blit(txt_surf, (5, 3 + i * (font.get_linesize() + 2)))
             screen.blit(s, (x_tip, y_tip))
         pygame.display.flip()

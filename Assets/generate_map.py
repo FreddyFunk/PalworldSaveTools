@@ -17,31 +17,26 @@ def to_image_coordinates(x_world, y_world):
     y_img = (y_max - y_world) * y_scale
     return int(x_img), int(y_img)
 def parse_logfile(log_path):
-    print(f"Now parsing the info...")
-    with open(log_path, 'r', encoding='utf-8') as file:
-        lines = file.readlines()
-    guild_data = []
-    current_guild = {}
-    base_keys = set()
+    with open(log_path,'r',encoding='utf-8') as file:
+        lines=file.readlines()
+    guild_data=[]
+    current={}
+    base_keys=set()
     for line in lines:
         if line.startswith('Guild:'):
-            if current_guild:
-                guild_data.append(current_guild)
-                current_guild = {}
-            guild_info = line.strip().split('|')
-            current_guild['Guild'] = guild_info[0].split(': ')[1].strip()
-            current_guild['Guild Leader'] = guild_info[1].split(': ')[1].strip()
-        if line.startswith('Base ') and any(line.startswith(f"Base {i}:") for i in range(1, 11)):
-            base_key = line.split(':')[0].strip()
-            parts = line.strip().split('|')
-            if len(parts) >= 2:
-                coords_str = parts[1].strip()
-                current_guild[base_key] = coords_str
-                base_keys.add(base_key)
-    if current_guild:
-        guild_data.append(current_guild)
-    result = guild_data, sorted(base_keys)
-    return guild_data, sorted(base_keys)
+            if current: guild_data.append(current); current={}
+            m=re.search(r'Guild:\s*(.*?)\s*\|\s*Guild Leader:\s*(.*?)\s*\|',line)
+            if m:
+                current['Guild']=m.group(1)
+                current['Guild Leader']=m.group(2)
+        if line.startswith('Base ') and any(line.startswith(f"Base {i}:") for i in range(1,11)):
+            key=line.split(':')[0].strip()
+            parts=line.strip().split('|')
+            if len(parts)>=2:
+                current[key]=parts[1].strip()
+                base_keys.add(key)
+    if current: guild_data.append(current)
+    return guild_data,sorted(base_keys)
 def write_csv(guild_data, base_keys, output_file):
     print(f"Now writing the info into csv...")
     fieldnames = ['Guild', 'Guild Leader'] + base_keys
@@ -81,6 +76,32 @@ def extract_info_from_log():
     for key, value in stats.items():
         print(f"{key}: {value}")
     return stats
+def render_text_pil(text, size=20, color=(255,0,0)):
+    font_paths=[
+        r"C:\Windows\Fonts\msgothic.ttc",
+        r"C:\Windows\Fonts\YuGothicUI.ttf",
+        r"C:\Windows\Fonts\YuGothic.ttf",
+        r"C:\Windows\Fonts\meiryo.ttc",
+        r"C:\Windows\Fonts\meiryob.ttc",
+        r"C:\Windows\Fonts\msmincho.ttc"
+    ]
+    font=None
+    for fp in font_paths:
+        if os.path.exists(fp):
+            try:
+                font=ImageFont.truetype(fp,size)
+                break
+            except:
+                pass
+    if font is None: font=ImageFont.load_default()
+    dummy=Image.new("RGBA",(10,10))
+    d=ImageDraw.Draw(dummy)
+    left,top,right,bottom=d.textbbox((0,0),text,font=font)
+    w,h=right-left,bottom-top
+    img=Image.new("RGBA",(w,h),(0,0,0,0))
+    d2=ImageDraw.Draw(img)
+    d2.text((0,0),text,font=font,fill=color)
+    return img
 def create_world_map():
     import pygame
     pygame.init()
@@ -123,8 +144,8 @@ def create_world_map():
                 guild = row.get('Guild', 'Unknown')
                 leader = row.get('Guild Leader', 'Unknown')
                 text = f"{guild} ({leader})"
-                text_img = render_text(text, color=(255,0,0))
-                shadow_img = render_text(text, color=(0,0,0))
+                text_img=render_text_pil(text, size=20*scale, color=(255,0,0))
+                shadow_img=render_text_pil(text, size=20*scale, color=(0,0,0))
                 for dx, dy in [(-1,-1), (-1,1), (1,-1), (1,1)]:
                     overlay.paste(shadow_img, (x_img - shadow_img.width//2 + dx*scale, marker_y + marker_resized.height + 10*scale + dy*scale), shadow_img)
                 overlay.paste(text_img, (x_img - text_img.width//2, marker_y + marker_resized.height + 10*scale), text_img)
