@@ -1445,8 +1445,8 @@ def show_base_map():
     orig_map = orig_map_raw.convert_alpha()
     base_icon = pygame.image.load(base_icon_path).convert_alpha()
     base_icon = pygame.transform.smoothscale(base_icon, (24, 24))
-    font = pygame.font.SysFont(None, 20)
-    small_font = pygame.font.SysFont(None, 18)
+    font = pygame.font.SysFont(None, 16)
+    small_font = pygame.font.SysFont(None, 14)
     tooltip_bg_color = (50, 50, 50, 220)
     tooltip_text_color = (255, 255, 255)
     input_bg_color = (40, 40, 40)
@@ -1564,10 +1564,10 @@ def show_base_map():
     def draw_sidebar_header():
         sidebar_x = w - sidebar_width + 10
         y_header = 36 + 30
-        screen.blit(pil_text_to_surface("Guild Name", 20, (180, 180, 180)), (sidebar_x, y_header))
-        screen.blit(pil_text_to_surface("Leader", 20, (180, 180, 180)), (sidebar_x + 110, y_header))
-        screen.blit(pil_text_to_surface("Last Seen", 20, (180, 180, 180)), (sidebar_x + 210, y_header))
-        screen.blit(pil_text_to_surface("#Bases", 20, (180, 180, 180)), (sidebar_x + 300, y_header))
+        screen.blit(pil_text_to_surface("Guild Name", 12, (180, 180, 180)), (sidebar_x, y_header))
+        screen.blit(pil_text_to_surface("Leader", 12, (180, 180, 180)), (sidebar_x + 110, y_header))
+        screen.blit(pil_text_to_surface("Last Seen", 12, (180, 180, 180)), (sidebar_x + 210, y_header))
+        screen.blit(pil_text_to_surface("#Bases", 12, (180, 180, 180)), (sidebar_x + 300, y_header))
     def draw_guild_item(guild, y, selected):
         sidebar_x = w - sidebar_width + 10
         color = (255, 200, 100) if selected else (255, 255, 255)
@@ -1576,10 +1576,10 @@ def show_base_map():
         ln = truncate_text(guild['leader_name'], max_widths[1])
         ls = truncate_text(guild['last_seen'], max_widths[2])
         nb = str(len(guild['bases']))
-        screen.blit(pil_text_to_surface(gn, 18, color), (sidebar_x, y))
-        screen.blit(pil_text_to_surface(ln, 18, color), (sidebar_x + 110, y))
-        screen.blit(pil_text_to_surface(ls, 18, color), (sidebar_x + 210, y))
-        screen.blit(pil_text_to_surface(nb, 18, color), (sidebar_x + 300, y))
+        screen.blit(pil_text_to_surface(gn, 12, color), (sidebar_x, y))
+        screen.blit(pil_text_to_surface(ln, 12, color), (sidebar_x + 110, y))
+        screen.blit(pil_text_to_surface(ls, 12, color), (sidebar_x + 210, y))
+        screen.blit(pil_text_to_surface(nb, 12, color), (sidebar_x + 300, y))
     def draw_base_item(base, y, selected):
         sidebar_x = w - sidebar_width + 30
         color = (255, 200, 100) if selected else (200, 200, 200)
@@ -1588,14 +1588,14 @@ def show_base_map():
         coords = f"x:{int(base['coords'][0])}, y:{int(base['coords'][1])}" if base['coords'][0] is not None else "N/A"
         bid = truncate_text(bid, max_widths[0])
         coords = truncate_text(coords, max_widths[1])
-        screen.blit(pil_text_to_surface(bid, 16, color), (sidebar_x, y))
-        screen.blit(pil_text_to_surface(coords, 16, color), (sidebar_x + 120, y))
+        screen.blit(pil_text_to_surface(bid, 10, color), (sidebar_x, y))
+        screen.blit(pil_text_to_surface(coords, 10, color), (sidebar_x + 120, y))
     def draw_totals():
         sidebar_x = w - sidebar_width + 10
         total_guilds = len(filtered_guilds)
         total_bases = sum(len(g['bases']) for g in filtered_guilds.values())
         text = f"Guilds: {total_guilds} | Bases: {total_bases}"
-        screen.blit(pil_text_to_surface(text, 16, (180, 180, 180)), (sidebar_x, 40))
+        screen.blit(pil_text_to_surface(text, 12, (180, 180, 180)), (sidebar_x, 40))
     guilds_all = get_guild_bases()
     filtered_guilds = {}
     scroll_offset = 0
@@ -1816,8 +1816,8 @@ def show_base_map():
             s = pygame.Surface((tooltip_width, tooltip_height), pygame.SRCALPHA)
             s.fill(tooltip_bg_color)
             for i, line in enumerate(tooltip_lines):
-                txt_surf = pil_text_to_surface(line, font.get_linesize(), tooltip_text_color)
-                s.blit(txt_surf, (5, 3 + i * (font.get_linesize() + 2)))
+                txt_surf = pil_text_to_surface(line, 10, tooltip_text_color)
+                s.blit(txt_surf, (5, 3 + i * (10 + 2)))
             screen.blit(s, (x_tip, y_tip))
         pygame.display.flip()
         clock.tick(60)
