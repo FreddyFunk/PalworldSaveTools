@@ -24,41 +24,10 @@ def check_github_update(auto_download=False, download_folder="PST_update", force
             if local_tuple>=latest_tuple:
                 print(f"{GREEN_FONT}You are on the latest version: {local}{RESET_FONT}")
                 return True,latest
-            print(f"{YELLOW_FONT}Update available! Local: {local}, Latest: {latest}{RESET_FONT}")
-            new_folder=f"PST_v{latest}"
-            if auto_download:
-                if os.path.exists(new_folder):
-                    new_exe=None
-                    for root,dirs,files in os.walk(new_folder):
-                        if "PalworldSaveTools.exe" in files:
-                            new_exe=os.path.join(root,"PalworldSaveTools.exe")
-                            break
-                    if new_exe:
-                        print(f"{YELLOW_FONT}Launching existing downloaded update...{RESET_FONT}")
-                        subprocess.Popen([new_exe])
-                        sys.exit(0)
-                os.makedirs(new_folder,exist_ok=True)
-                zip_path=os.path.join(new_folder,"update.zip")
-                try:
-                    print("Downloading latest release...")
-                    urllib.request.urlretrieve(GITHUB_LATEST_ZIP,zip_path)
-                    print(f"{GREEN_FONT}Downloaded latest ZIP to {zip_path}{RESET_FONT}")
-                    print("Extracting...")
-                    with zipfile.ZipFile(zip_path,'r') as zf: zf.extractall(new_folder)
-                    os.remove(zip_path)
-                    print(f"{GREEN_FONT}Extraction complete.{RESET_FONT}")
-                    new_exe=None
-                    for root,dirs,files in os.walk(new_folder):
-                        if "PalworldSaveTools.exe" in files:
-                            new_exe=os.path.join(root,"PalworldSaveTools.exe")
-                            break
-                    if new_exe:
-                        print(f"{YELLOW_FONT}Launching new PST...{RESET_FONT}")
-                        subprocess.Popen([new_exe])
-                        sys.exit(0)
-                    print(f"{RED_FONT}New executable not found in {new_folder}{RESET_FONT}")
-                except Exception as e:
-                    print(f"{RED_FONT}Failed to download or extract latest ZIP: {e}{RESET_FONT}")
+            print(f"{YELLOW_FONT}New update available!{RESET_FONT}")
+            print(f"{YELLOW_FONT}Local: {local}  Latest: {latest}{RESET_FONT}")
+            print(f"{BLUE_FONT}Download it here:{RESET_FONT}")
+            print(f"{BLUE_FONT}{GITHUB_LATEST_ZIP}{RESET_FONT}")
             return False,latest
         print(f"{RED_FONT}Could not parse APP_VERSION from GitHub.{RESET_FONT}")
         return True,None
