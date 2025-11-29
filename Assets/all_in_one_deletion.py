@@ -9,6 +9,26 @@ import sys, os
 base_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(base_dir, "palworld_save_tools", "commands"))
 from convert import main as convert_main
+def check_for_update():
+    try:
+        r = urllib.request.urlopen(GITHUB_RAW_URL, timeout=5)
+        content = r.read().decode("utf-8")
+        match = re.search(r'APP_VERSION\s*=\s*"([^"]+)"', content)
+        latest = match.group(1) if match else None
+        local, _ = get_versions()
+        if not latest:
+            return None
+
+        local_tuple = tuple(int(x) for x in local.split("."))
+        latest_tuple = tuple(int(x) for x in latest.split("."))
+
+        return {
+            "local": local,
+            "latest": latest,
+            "update_available": latest_tuple > local_tuple
+        }
+    except Exception:
+        return None
 current_save_path = None
 loaded_level_json = None
 original_loaded_level_json = None
@@ -2667,7 +2687,6 @@ def get_steam_id_from_local():
         d=[x for x in os.listdir(p) if os.path.isdir(os.path.join(p,x))]
         return d[0] if d else None
     return None
-
 def convert_steam_id():
     def do_convert(v=None):
         v=e.get().strip() if v is None else v
@@ -2725,6 +2744,32 @@ def all_in_one_deletion():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     #window = tk.Toplevel()
     window = tk.Tk()
+    import webbrowser
+    info = check_for_update()
+    if info:
+        latest = info["latest"]
+        local = info["local"]
+        update_available = info["update_available"]
+        version_text = f"Latest: {latest}  |  Current: {local}"
+        fg_color = "yellow" if update_available else "lightgreen"
+
+        version_label = tk.Label(window, text=version_text, bg="#2f2f2f",
+                                 fg=fg_color, font=("Consolas", 10, "bold"),
+                                 cursor="hand2")
+        version_label.place(x=650 + 250, y=10)
+        def open_latest(event):
+            webbrowser.open("https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest")
+        version_label.bind("<Button-1>", open_latest)
+        if update_available:
+            glow_box = tk.Frame(window, bg="yellow", width= version_label.winfo_reqwidth()+10,
+                                height=version_label.winfo_reqheight()+6)
+            glow_box.place(x=650+245, y=7)
+            version_label.lift(glow_box)
+            def pulse():
+                current = glow_box["bg"]
+                glow_box["bg"] = "orange" if current=="yellow" else "yellow"
+                window.after(500, pulse)
+            pulse()
     window.title(t("deletion.title"))
     window.geometry("1200x660")
     window.config(bg="#2f2f2f")
