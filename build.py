@@ -63,6 +63,10 @@ def clean_build_artifacts():
                 shutil.rmtree(path,ignore_errors=True)
 
 def main():
+    print("PalworldSaveTools Directory Cleaner")
+    print("=" * 40)
+    clean_build_artifacts()
+    print("=" * 40)
     print("=" * 40)
     print("PalworldSaveTools VENV Builder")
     print("=" * 40)

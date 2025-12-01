@@ -533,6 +533,7 @@ def main(skip_msgbox=False):
     replace_containers(targ_inv_ids)
     double_transfer_character_and_containers(host_guid, targ_uid)
     gather_and_update_dynamic_containers()
+    transfer_pals_only()
     modified_target_players.add(selected_target_player)
     modified_targets_data[selected_target_player] = (fast_deepcopy(targ_json), targ_json_gvas)
     load_players(targ_lvl, is_source=False)
@@ -546,6 +547,143 @@ def main(skip_msgbox=False):
     target_player_list.selection_remove(target_player_list.selection())
     if not skip_msgbox:
         messagebox.showinfo("Transfer Successful", "Transfer successful in memory! Hit 'Save Changes' to save.")
+def transfer_pals_only():
+    global host_guid, targ_uid
+    try:
+        host_guid=UUID.from_str(selected_source_player)
+        targ_uid=UUID.from_str(selected_target_player or selected_source_player)
+    except:
+        return False
+    if not load_json_files(): return False
+    zero=UUID.from_str("00000000-0000-0000-0000-000000000000")
+    def bump_guid_str(s):
+        s=str(s).lower()
+        trans=str.maketrans("0123456789abcdef","123456789abcdef0")
+        return s.translate(trans)
+    targ_guild_id=None
+    gmap_all=targ_lvl.get("GroupSaveDataMap",{}).get("value",[])
+    for entry in gmap_all:
+        try:
+            raw=entry["value"]["RawData"]["value"]
+            gid=raw.get("group_id",zero)
+            plist=raw.get("players",[])
+            for p in plist:
+                if p.get("player_uid")==targ_uid:
+                    targ_guild_id=gid
+                    break
+            if targ_guild_id: break
+        except: pass
+    if not targ_guild_id: targ_guild_id=zero
+    src_params=[]
+    id_map={}
+    cmap=level_json["CharacterSaveParameterMap"]["value"]
+    for ch in cmap:
+        raw=ch.get("value",{}).get("RawData",{}).get("value",{})
+        obj=raw.get("object")
+        if not obj: continue
+        sp=obj.get("SaveParameter")
+        if not sp: continue
+        spv=sp.get("value",{})
+        owner=spv.get("OwnerPlayerUId")
+        if not owner or owner.get("value")!=host_guid: continue
+        key=ch.get("key",{})
+        inst_field=key.get("InstanceId")
+        if not inst_field: continue
+        old_inst=inst_field.get("value")
+        if not old_inst: continue
+        new_inst_str=bump_guid_str(old_inst)
+        try: new_inst=UUID.from_str(new_inst_str)
+        except: new_inst=old_inst
+        id_map[str(old_inst)]=new_inst
+        cp=fast_deepcopy(ch)
+        try: cp["value"]["RawData"]["value"]["object"]["SaveParameter"]["value"]["OwnerPlayerUId"]["value"]=targ_uid
+        except: pass
+        try: cp["key"]["InstanceId"]["value"]=new_inst
+        except: pass
+        try: cp["value"]["RawData"]["value"]["group_id"]=str(targ_guild_id)
+        except: pass
+        try:
+            spv2=cp["value"]["RawData"]["value"]["object"]["SaveParameter"]["value"]
+            try: spv2["WorkRegion"]["group_id"]["value"]=zero
+            except: pass
+            try: spv2["WorkerID"]["value"]=zero
+            except: pass
+            try:
+                if "TaskData" in spv2: spv2["TaskData"]["value"]={}
+            except: pass
+            try:
+                if "MapObjectConcreteInstanceIdAssignedToExpedition" in spv2:
+                    del spv2["MapObjectConcreteInstanceIdAssignedToExpedition"]
+            except: pass
+            try: del spv2["WorkSuitabilityOptionInfo"]
+            except: pass
+        except: pass
+        src_params.append(cp)
+    try:
+        s_pal_id=host_json["SaveData"]["value"]["PalStorageContainerId"]["value"]["ID"]["value"]
+        s_oto_id=host_json["SaveData"]["value"]["OtomoCharacterContainerId"]["value"]["ID"]["value"]
+        t_pal_id=targ_json["SaveData"]["value"]["PalStorageContainerId"]["value"]["ID"]["value"]
+        t_oto_id=targ_json["SaveData"]["value"]["OtomoCharacterContainerId"]["value"]["ID"]["value"]
+    except: return False
+    src_pal=src_oto=tgt_pal=tgt_oto=None
+    for c in level_json["CharacterContainerSaveData"]["value"]:
+        cid=c["key"]["ID"]["value"]
+        if cid==s_pal_id: src_pal=c
+        if cid==s_oto_id: src_oto=c
+    for c in targ_lvl["CharacterContainerSaveData"]["value"]:
+        cid=c["key"]["ID"]["value"]
+        if cid==t_pal_id: tgt_pal=c
+        if cid==t_oto_id: tgt_oto=c
+    if not src_pal or not tgt_pal: return False
+    if not src_oto or not tgt_oto: return False
+    def remap_slots(slots):
+        for slot in slots:
+            raw=slot.get("RawData",{}).get("value",{})
+            old=raw.get("instance_id")
+            if old is None: continue
+            key=str(old)
+            if key in id_map: raw["instance_id"]=id_map[key]
+    new_box=fast_deepcopy(src_pal["value"]["Slots"]["value"].get("values",[]))
+    remap_slots(new_box)
+    tgt_pal["value"]["Slots"]["value"]["values"]=new_box
+    new_oto=fast_deepcopy(src_oto["value"]["Slots"]["value"].get("values",[]))
+    remap_slots(new_oto)
+    tgt_oto["value"]["Slots"]["value"]["values"]=new_oto
+    new_map=[]
+    for ch in targ_lvl["CharacterSaveParameterMap"]["value"]:
+        raw=ch.get("value",{}).get("RawData",{}).get("value",{})
+        obj=raw.get("object")
+        if not obj: new_map.append(ch); continue
+        sp=obj.get("SaveParameter")
+        if not sp: new_map.append(ch); continue
+        val=sp.get("value")
+        if not val: new_map.append(ch); continue
+        owner=val.get("OwnerPlayerUId")
+        if not owner: new_map.append(ch); continue
+        if owner.get("value")==targ_uid: continue
+        new_map.append(ch)
+    new_map+=src_params
+    targ_lvl["CharacterSaveParameterMap"]["value"]=new_map
+    for entry in gmap_all:
+        try:
+            raw=entry["value"]["RawData"]["value"]
+            gid=raw.get("group_id")
+            if gid!=targ_guild_id:
+                continue
+            handles=raw.get("individual_character_handle_ids")
+            if handles is None:
+                continue
+            if not isinstance(handles, list):
+                continue
+            for old_inst,new_inst in id_map.items():
+                handles.append({
+                    "guid": str(zero),
+                    "instance_id": new_inst
+                })
+        except:
+            pass
+    modified_targets_data[selected_target_player]=(fast_deepcopy(targ_json),targ_json_gvas)
+    return True
 def save_and_backup():
     print(t("Now saving the data..."))
     WORLDSAVESIZEPREFIX = b'\x0e\x00\x00\x00worldSaveData\x00\x0f\x00\x00\x00StructProperty\x00'
