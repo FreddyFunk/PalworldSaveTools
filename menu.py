@@ -8,6 +8,12 @@ from PIL import Image, ImageTk
 import os, sys, urllib.request, zipfile, subprocess, re
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/deafdudecomputers/PalworldSaveTools/main/Assets/common.py"
 GITHUB_LATEST_ZIP = "https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest/download/PST_standalone.zip"
+UPDATE_CACHE=None
+def get_cached_update_info():
+    global UPDATE_CACHE
+    if UPDATE_CACHE is None:
+        UPDATE_CACHE=check_github_update(force_test=False)
+    return UPDATE_CACHE
 def check_github_update(auto_download=False, download_folder="PST_update", force_test=False):
     try:
         r=urllib.request.urlopen(GITHUB_RAW_URL,timeout=5)
@@ -20,17 +26,17 @@ def check_github_update(auto_download=False, download_folder="PST_update", force
             local_tuple=tuple(int(x) for x in local.split("."))
             latest_tuple=tuple(int(x) for x in latest.split("."))
             if local_tuple>=latest_tuple:
-                print(f"{GREEN_FONT}You are on the latest version: {local}{RESET_FONT}")
+                print(f"{GREEN_FONT}{t('update.latest_version')} {local}{RESET_FONT}")
                 return True,latest
-            print(f"{YELLOW_FONT}New update available!{RESET_FONT}")
-            print(f"{YELLOW_FONT}Local: {local}  Latest: {latest}{RESET_FONT}")
-            print(f"{BLUE_FONT}Download it here:{RESET_FONT}")
+            print(f"{YELLOW_FONT}{t('update.new_available')}{RESET_FONT}")
+            print(f"{YELLOW_FONT}{t('update.local')}: {local}  {t('update.latest')}: {latest}{RESET_FONT}")
+            print(f"{BLUE_FONT}{t('update.download_here')}{RESET_FONT}")
             print(f"{BLUE_FONT}{GITHUB_LATEST_ZIP}{RESET_FONT}")
             return False,latest
-        print(f"{RED_FONT}Could not parse APP_VERSION from GitHub.{RESET_FONT}")
+        print(f"{RED_FONT}{t('update.parse_error')}{RESET_FONT}")
         return True,None
     except Exception as e:
-        print(f"{RED_FONT}Failed to check GitHub version: {e}{RESET_FONT}")
+        print(f"{RED_FONT}{t('update.failed')} {e}{RESET_FONT}")
         return True,None
 def is_frozen():
     return getattr(sys, 'frozen', False)
@@ -106,7 +112,7 @@ class LazyImporter:
                     return module
         except Exception:
             pass
-        raise ImportError(f"Could not import module: {module_name}")
+        raise ImportError(t("error.module") + f" {module_name}")
     def get_module(self, module_name):
         return self._try_import(module_name)    
     def get_function(self, module_name, function_name):
@@ -182,7 +188,7 @@ def run_tool(choice):
             lambda: import_and_call("convertids", "convert_steam_id"),
         ],
         [
-            lambda: import_and_call("all_in_one_deletion", "all_in_one_deletion"),
+            lambda: import_and_call("all_in_one_tools", "all_in_one_tools"),
             lambda: import_and_call("slot_injector", "slot_injector"),
             lambda: import_and_call("modify_save", "modify_save"),
             lambda: import_and_call("character_transfer", "character_transfer"),
@@ -196,7 +202,7 @@ def run_tool(choice):
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print(f"Invalid choice or error running tool: {e}")
+        print(f"{t('error.tool')} {e}")
 converting_tool_keys = [
     "tool.convert.level.to_json",
     "tool.convert.level.to_sav",
@@ -220,7 +226,7 @@ class MenuGUI(tk.Tk):
             if os.name == 'nt' and os.path.exists(ICON_PATH):
                 self.iconbitmap(ICON_PATH)
         except Exception as e:
-            print(f"Could not set icon: {e}")
+            pprint(f"{t('error.icon')} {e}")
         style = ttk.Style(self)
         style.theme_use('clam')
         style.configure("TFrame", background="#2f2f2f")
@@ -284,27 +290,23 @@ class MenuGUI(tk.Tk):
                 ttk.Label(container, text=line, font=ascii_font, style="TLabel").pack(anchor="center")
         tools_version, game_version = get_versions()
         import webbrowser
-        update_info = check_github_update(force_test=False)
+        update_info=get_cached_update_info()
         if update_info:
-            has_update, latest_version = update_info
-            tools_version, _ = get_versions()
-            version_frame = tk.Frame(self, bg="#2f2f2f")
-            version_frame.place(x=10, y=10)
-            latest_label = tk.Label(version_frame, text=f"Latest: {latest_version}",
-                                    bg="#2f2f2f", fg="white", font=("Consolas", 8, "bold"))
-            latest_label.pack(anchor="w")
-            separator = tk.Frame(version_frame, height=1, bg="#666", bd=0)
-            separator.pack(fill="x", pady=1)
-            current_label = tk.Label(version_frame, text=f"Current: {tools_version}",
-                                     bg="#2f2f2f", fg="lightgreen", font=("Consolas", 8, "bold"),
-                                     cursor="hand2")
-            current_label.pack(anchor="w")
-            current_label.bind("<Button-1>", lambda e: webbrowser.open(
-                "https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest"))
+            has_update,latest_version=update_info
+            tools_version,_=get_versions()
+            self.version_frame=tk.Frame(self,bg="#2f2f2f")
+            self.version_frame.place(x=10,y=10)
+            self.latest_label=tk.Label(self.version_frame,text=f"{t('update.latest')}: {latest_version}",bg="#2f2f2f",fg="white",font=("Consolas",8,"bold"))
+            self.latest_label.pack(anchor="w")
+            separator=tk.Frame(self.version_frame,height=1,bg="#666",bd=0)
+            separator.pack(fill="x",pady=1)
+            self.current_label=tk.Label(self.version_frame,text=f"{t('update.current')}: {tools_version}",bg="#2f2f2f",fg="lightgreen",font=("Consolas",8,"bold"),cursor="hand2")
+            self.current_label.pack(anchor="w")
+            self.current_label.bind("<Button-1>",lambda e:webbrowser.open("https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest"))
             if not has_update:
                 def pulse_current():
-                    current_label["fg"] = "yellow" if current_label["fg"]=="lightgreen" else "lightgreen"
-                    current_label.after(700, pulse_current)
+                    self.current_label["fg"]="yellow" if self.current_label["fg"]=="lightgreen" else "lightgreen"
+                    self.current_label.after(700,pulse_current)
                 pulse_current()
         info_items = [
             ("app.subtitle", {"game_version": game_version}, "#6f9", ("Consolas", 10)),
@@ -392,7 +394,12 @@ class MenuGUI(tk.Tk):
         load_resources(lang)
         self.refresh_texts()
     def refresh_texts(self):
-        tools_version, game_version = get_versions()
+        tools_version,_=get_versions()
+        update_info=get_cached_update_info()
+        if update_info:
+            has_update,latest_version=update_info
+            self.latest_label.configure(text=f"{t('update.latest')}: {latest_version}")
+            self.current_label.configure(text=f"{t('update.current')}: {tools_version}")
         self.title(t("app.title", version=tools_version))
         for label, key, fmt in self.info_labels:
             label.configure(text=t(key, **fmt))

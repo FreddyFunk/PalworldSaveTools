@@ -1,6 +1,6 @@
 import os, sys
 APP_NAME = "PalworldSaveTools"
-APP_VERSION = "1.1.17"
+APP_VERSION = "1.1.18"
 GAME_VERSION = "0.6.9"
 def get_base_directory():
     if getattr(sys, 'frozen', False):
@@ -20,7 +20,7 @@ BACKUP_BASE_DIR = os.path.join(get_base_directory(), "Backups")
 def get_backup_directory(tool_name):
     return os.path.join(BACKUP_BASE_DIR, tool_name)
 BACKUP_DIRS = {
-    "all_in_one_deletion": "AllinOneDeletionTool",
+    "all_in_one_tools": "AllinOneTools",
     "slot_injector": "Slot Injector", 
     "character_transfer": "Character Transfer",
     "fix_host_save": "Fix Host Save",

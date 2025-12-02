@@ -1,26 +1,23 @@
-import sys, os
-sys.path.insert(0, os.path.abspath("Assets"))
-from cx_Freeze import setup, Executable
+import sys,os
+sys.path.insert(0,os.path.abspath("Assets"))
+from cx_Freeze import setup,Executable
 def find_customtkinter_assets():
     try:
         import customtkinter
-        customtkinter_path = os.path.dirname(customtkinter.__file__)
-        assets_path = os.path.join(customtkinter_path, "assets")
-        if os.path.exists(assets_path):
-            return (assets_path, "lib/customtkinter/assets")
-    except ImportError:
-        pass
+        customtkinter_path=os.path.dirname(customtkinter.__file__)
+        assets_path=os.path.join(customtkinter_path,"assets")
+        if os.path.exists(assets_path): return(assets_path,"lib/customtkinter/assets")
+    except ImportError: pass
     return None
 def find_ooz_library():
     try:
         import ooz
-        ooz_path = os.path.dirname(ooz.__file__)
-        return (ooz_path, "Assets/palworld_save_tools/lib/windows")
-    except ImportError:
-        pass
+        ooz_path=os.path.dirname(ooz.__file__)
+        return(ooz_path,"Assets/palworld_save_tools/lib/windows")
+    except ImportError: pass
     return None
-build_exe_options = {
-    "packages": [
+build_exe_options={
+    "packages":[
         "pygame","loguru","os","sys","subprocess","pathlib","shutil","matplotlib","pandas","customtkinter",
         "cityhash","tkinter","json","uuid","time","datetime","struct","enum","collections","itertools","math",
         "zlib","gzip","zipfile","threading","multiprocessing","io","base64","binascii","hashlib","hmac",
@@ -29,55 +26,37 @@ build_exe_options = {
         "functools","gc","importlib","importlib.metadata","importlib.util","PIL","PIL.Image","PIL.ImageDraw",
         "PIL.ImageOps","PIL.ImageFont","numpy","ooz","pickle","tarfile","csv","pprint","code","platform",
         "matplotlib.patches","matplotlib.font_manager","matplotlib.patheffects","tkinter.font",
-        "tkinter.simpledialog","urllib.request","multiprocessing.shared_memory"
+        "tkinter.simpledialog","urllib.request","multiprocessing.shared_memory","fontTools"
     ],
-    "excludes": [
+    "excludes":[
         "test","unittest","pdb","tkinter.test","lib2to3","distutils","setuptools","pip","wheel","venv",
         "ensurepip","msgpack"
     ],
-    "include_files": [
-        ("Assets/","Assets/"),
-        ("PalworldSave/","PalworldSave/"),
-        ("readme.md","readme.md"),
-        ("license","license")
+    "include_files":[
+        ("Assets/","Assets/"),("readme.md","readme.md"),("license","license")
     ],
-    "includes": [
-        "all_in_one_deletion",
-        "character_transfer",
-        "modify_save",
-        "slot_injector",
-        "fix_host_save",
-        "restore_map",
-        "convertids",
-        "convert_players_location_finder",
-        "convert_level_location_finder",
+    "includes":[
+        "all_in_one_tools","character_transfer","modify_save","slot_injector","fix_host_save",
+        "restore_map","convertids","convert_players_location_finder","convert_level_location_finder",
         "game_pass_save_fix"
     ],
-    "zip_include_packages": [],
-    "zip_exclude_packages": ["customtkinter"],
-    "build_exe": "PST_standalone",
-    "bin_includes": ["python311.dll","vcruntime140.dll"] if sys.platform == "win32" else [],
+    "zip_include_packages":[],
+    "zip_exclude_packages":["customtkinter"],
+    "build_exe":"PST_standalone",
+    "bin_includes":["python311.dll","vcruntime140.dll"] if sys.platform=="win32" else []
 }
-customtkinter_assets = find_customtkinter_assets()
-if customtkinter_assets:
-    build_exe_options["include_files"].append(customtkinter_assets)
-ooz_library = find_ooz_library()
-if ooz_library:
-    build_exe_options["include_files"].append(ooz_library)
-base = None
-if sys.platform == "win32":
-    base = "Console"
+customtkinter_assets=find_customtkinter_assets()
+if customtkinter_assets: build_exe_options["include_files"].append(customtkinter_assets)
+ooz_library=find_ooz_library()
+if ooz_library: build_exe_options["include_files"].append(ooz_library)
+base=None
+if sys.platform=="win32": base="Console"
 setup(
     name="PalworldSaveTools",
-    version="1.1.17",
+    version="1.1.18",
     description="All-in-one tool for fixing/transferring/editing Palworld saves",
-    options={"build_exe": build_exe_options},
+    options={"build_exe":build_exe_options},
     executables=[
-        Executable(
-            "menu.py",
-            base=base,
-            target_name="PalworldSaveTools.exe",
-            icon="Assets/resources/pal.ico",
-        )
-    ],
+        Executable("menu.py",base=base,target_name="PalworldSaveTools.exe",icon="Assets/resources/pal.ico")
+    ]
 )
