@@ -66,20 +66,31 @@ def refresh_stats(section):
 def as_uuid(val): return str(val).lower() if val else ''
 def are_equal_uuids(a,b): return as_uuid(a)==as_uuid(b)
 def backup_whole_directory(source_folder, backup_folder):
-    import datetime as dt
+    import os, sys, shutil, datetime as dt
     def get_timestamp():
-        if hasattr(dt, 'datetime') and hasattr(dt.datetime, 'now'):
-            return dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-        raise RuntimeError("The datetime module is broken or shadowed on this system.")
+        return dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    source_folder = os.path.abspath(source_folder)
     if not os.path.isabs(backup_folder):
-        base_path = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        base_path = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         backup_folder = os.path.abspath(os.path.join(base_path, backup_folder))
-    if not os.path.exists(backup_folder): os.makedirs(backup_folder)
-    print("Now backing up the whole directory of the Level.sav's location...")
+    else:
+        backup_folder = os.path.abspath(backup_folder)
+    if not os.path.exists(backup_folder):
+        os.makedirs(backup_folder)
+    print("Now backing up Level.sav, LevelMeta.sav and Players folder...")
     timestamp = get_timestamp()
     backup_path = os.path.join(backup_folder, f"PalworldSave_backup_{timestamp}")
-    shutil.copytree(source_folder, backup_path)
-    print(f"Backup of {source_folder} created at: {backup_path}")
+    os.makedirs(backup_path, exist_ok=True)
+    level_src = os.path.join(source_folder, "Level.sav")
+    levelmeta_src = os.path.join(source_folder, "LevelMeta.sav")
+    players_src = os.path.join(source_folder, "Players")
+    if os.path.exists(level_src):
+        shutil.copy2(level_src, os.path.join(backup_path, "Level.sav"))
+    if os.path.exists(levelmeta_src):
+        shutil.copy2(levelmeta_src, os.path.join(backup_path, "LevelMeta.sav"))
+    if os.path.exists(players_src):
+        shutil.copytree(players_src, os.path.join(backup_path, "Players"))
+    print(f"Backup created at: {backup_path}")
 try:
     from menu import run_tool
 except ImportError:
@@ -623,7 +634,7 @@ def save_changes():
         messagebox.showerror("Error", "No save loaded!")
         return
     if not current_save_path or not loaded_level_json: return
-    backup_whole_directory(backup_save_path, "Backups/AllinOneDeletionTool")
+    backup_whole_directory(backup_save_path, "Backups/AllinOneTools")
     level_sav_path = os.path.join(current_save_path, "Level.sav")
     json_to_sav(loaded_level_json, level_sav_path)
     players_folder = os.path.join(current_save_path, 'Players')
