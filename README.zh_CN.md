@@ -8,26 +8,43 @@
 - **请从 [https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) 下载独立版文件夹以便使用 .exe！**
 ---
 
-## 功能特点
+## 功能
 
-- **快速解析/读取**，速度领先的工具之一  
-- 列出所有玩家/公会  
-- 列出全部帕鲁及其详情  
-- 显示玩家最近上线时间  
-- 将玩家及其数据记录到 `players.log`  
-- 统计并按拥有帕鲁数量排序  
-- 提供**基地地图视图**  
-- 为 PalDefender 提供自动化 killnearestbase 命令，定位不活跃基地  
-- 在独服与单人/联机世界之间转移存档  
-- 通过 GUID 编辑修复主机存档（Fix Host Save）  
-- 提供 Steam ID 转换  
-- 提供坐标转换  
-- 提供 GamePass ⇔ Steam 转换  
-- 槽位注入器：提升每位玩家在世界/服务器的帧箱槽位，兼容 Bigger PalBox 模组  
-- 工具使用间自动备份  
-- 一体化删除工具（删除公会/基地/玩家）
+- **高速解析/读取**工具——市面上最快之一。  
+- 列出所有玩家/公会。  
+- 列出所有帕鲁及其详细信息。  
+- 显示玩家最后在线时间。  
+- 将玩家及其数据记录到 `players.log` 中。  
+- 根据拥有帕鲁数量记录并排序玩家。  
+- 提供 **基地地图视图**。  
+- 为 PalDefender 自动生成 `killnearestbase` 指令以清理不活跃基地。  
+- 在专用服务器与单人/联机世界之间转移存档。  
+- 通过 GUID 编辑修复主机存档。  
+- 内置 Steam ID 转换。  
+- 内置坐标转换。  
+- 内置 GamePass ⇔ Steam 转换。  
+- 玩家槽位扩展注入器（兼容 Bigger PalBox 模组）。  
+- 工具使用之间自动备份。  
+- **All in One Tools**（原 All in One Deletion Tool）:
+  - 删除玩家  
+  - 删除基地  
+  - 删除公会  
+  - **重建所有公会**  
+    - 将所有帕鲁重新分配到正确公会  
+    - 修复 group_id（公会ID）  
+    - 清除远征标记  
+    - 重置工作适性  
+    - 重建无重复的公会句柄列表  
+  - 重置防空炮台  
+  - 删除未引用数据  
+  - 重置任务  
+  - 解锁私人箱子  
+  - 删除无效/模组物品  
+  - 排除系统（保护指定玩家/公会/基地）  
+  - 在公会之间移动玩家  
+  - 设置玩家为公会会长  
+  - 将其他工具整合到文件菜单中  
 
----
 
 ## ✏️ 修改存档：编辑器选择
 

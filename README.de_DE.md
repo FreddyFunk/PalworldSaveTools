@@ -8,26 +8,42 @@
 - **Bitte lade den Standalone-Ordner von [https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest), um die .exe nutzen zu können!**
 ---
 
-## Funktionen:
+## Funktionen
 
-- **Schnelles Parsen/Lesen** – eines der schnellsten Tools.  
+- **Schnelles Parsing/Lesen** – eines der schnellsten verfügbaren Tools.  
 - Listet alle Spieler/Gilden auf.  
 - Listet alle Pals und deren Details auf.  
 - Zeigt die letzte Online-Zeit der Spieler an.  
 - Protokolliert Spieler und deren Daten in `players.log`.  
-- Sortiert Spieler nach Anzahl besessener Pals.  
-- Bietet eine **Basis-Kartenansicht**.  
-- Automatisierte `killnearestbase`-Befehle für PalDefender, um inaktive Basen anzuvisieren.  
-- Überträgt Saves zwischen dedizierten Servern und Solo/Koop-Welten.  
-- Fix Host Save über GUID-Editing.  
-- Steam-ID Konvertierung enthalten.  
-- Koordinatenkonvertierung enthalten.  
-- GamePass ⇔ Steam Konvertierung enthalten.  
-- Slot-Injektor zur Erhöhung der Slots pro Spieler auf Welt/Server, kompatibel mit Bigger PalBox-Mod.  
-- Automatische Sicherung bei Tool-Nutzung.  
-- All-in-One Löschtool (Gilden, Basen, Spieler löschen).
-
----
+- Protokolliert und sortiert Spieler nach der Anzahl ihrer besessenen Pals.  
+- Bietet eine **Basiskartenansicht**.  
+- Erstellt automatische `killnearestbase`-Befehle für PalDefender, um inaktive Basen zu entfernen.  
+- Überträgt Spielstände zwischen Dedicated Servern und Einzel-/Koop-Welten.  
+- Repariert Host-Spielstände durch GUID-Bearbeitung.  
+- Enthält Steam-ID-Konvertierung.  
+- Enthält Koordinatenkonvertierung.  
+- Enthält GamePass ⇔ Steam-Konvertierung.  
+- Slot-Injektor zur Erhöhung der Pal-Slots pro Spieler, kompatibel mit Bigger PalBox Mod.  
+- Automatisches Backup bei jeder Tool-Nutzung.  
+- **All in One Tools** (ehemals All in One Deletion Tool):
+  - Spieler löschen  
+  - Basen löschen  
+  - Gilden löschen  
+  - **Alle Gilden neu aufbauen**  
+    - Weist jeden Pal der korrekten Gilde zu  
+    - Repariert Gruppen-IDs  
+    - Entfernt Expeditionsmarkierungen  
+    - Setzt Arbeitseignung zurück  
+    - Baut Gilden-Handles ohne Duplikate wieder auf  
+  - Anti-Air-Geschütze zurücksetzen  
+  - Nicht referenzierte Daten löschen  
+  - Missionen zurücksetzen  
+  - Private Truhen entsperren  
+  - Ungültige/modifizierte Items entfernen  
+  - Ausschlusssystem für geschützte Spieler/Gilden/Basen  
+  - Spieler zwischen Gilden verschieben  
+  - Spieler zum Gildenleiter machen  
+  - Andere Tools im Datei-Menü zusammengeführt  
 
 ## 🗺️ Schritte zum Entsperren der Karte
 

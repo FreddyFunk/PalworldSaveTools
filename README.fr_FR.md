@@ -8,26 +8,43 @@
 - **Téléchargez le dossier autonome depuis [https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) pour pouvoir utiliser le .exe !**
 ---
 
-## Fonctionnalités :
+## Fonctionnalités
 
-- **Lecture/Parsing rapide** — un des outils les plus rapides disponibles.  
+- Outil de **lecture/analyse ultra rapide**, parmi les plus rapides disponibles.  
 - Liste tous les joueurs/guildes.  
-- Liste tous les Pals et leurs détails.  
-- Affiche la dernière connexion des joueurs.  
+- Liste tous les pals et leurs détails.  
+- Affiche la dernière activité en ligne des joueurs.  
 - Enregistre les joueurs et leurs données dans `players.log`.  
-- Trie et enregistre les joueurs par nombre de Pals possédés.  
-- Fournit une **vue de la carte de la base**.  
-- Commandes automatiques `killnearestbase` pour PalDefender ciblant les bases inactives.  
-- Transfère les sauvegardes entre serveurs dédiés et mondes Solo/Coop.  
-- Réparation du Host Save via édition GUID.  
-- Conversion de Steam ID incluse.  
-- Conversion de coordonnées incluse.  
-- Conversion GamePass ⇔ Steam incluse.  
-- Injecteur de slots pour augmenter les slots par joueur sur monde/serveur, compatible avec le mod Bigger PalBox.  
-- Sauvegarde automatique entre les utilisations de l’outil.  
-- Outil de suppression tout-en-un (Supprimer Guildes, Bases et Joueurs).
+- Enregistre et trie les joueurs selon le nombre de pals qu’ils possèdent.  
+- Fournit une **vue de la carte des bases**.  
+- Génère des commandes automatiques `killnearestbase` pour PalDefender ciblant les bases inactives.  
+- Transfère les sauvegardes entre serveurs dédiés et mondes solo/coop.  
+- Répare la sauvegarde hôte via modification GUID.  
+- Inclut la conversion d’ID Steam.  
+- Inclut la conversion de coordonnées.  
+- Inclut la conversion GamePass ⇔ Steam.  
+- Injecteur de slots pour augmenter les emplacements par joueur, compatible avec Bigger PalBox mod.  
+- Sauvegarde automatique entre utilisations de l’outil.  
+- **All in One Tools** (anciennement All in One Deletion Tool):
+  - Supprimer des joueurs  
+  - Supprimer des bases  
+  - Supprimer des guildes  
+  - **Reconstruire toutes les guildes**  
+    - Réassigne chaque pal à la bonne guilde  
+    - Répare les IDs de groupe  
+    - Supprime les marqueurs d’expédition  
+    - Réinitialise l’aptitude au travail  
+    - Reconstruit les handles sans doublons  
+  - Réinitialiser les tourelles anti-aériennes  
+  - Supprimer les données non référencées  
+  - Réinitialiser les missions  
+  - Déverrouiller les coffres privés  
+  - Supprimer les objets invalides/moddés  
+  - Système d’exclusions pour joueurs/guildes/bases protégés  
+  - Déplacer un joueur entre guildes  
+  - Nommer un joueur chef de guilde  
+  - Intègre d’autres outils dans le menu Fichier  
 
----
 
 ## 🗺️ Étapes pour débloquer la carte
 

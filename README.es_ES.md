@@ -8,26 +8,42 @@
 - **Descarga la carpeta independiente desde [https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) para poder usar el .exe!**
 ---
 
-## Funciones:
+## Características
 
-- **Lectura/Parseo rápido** — una de las herramientas más rápidas disponibles.  
+- Herramienta de **lectura/análisis rápida**, una de las más veloces disponibles.  
 - Lista todos los jugadores/gremios.  
 - Lista todos los pals y sus detalles.  
-- Muestra la última conexión de los jugadores.  
-- Registra jugadores y sus datos en `players.log`.  
-- Ordena jugadores según el número de pals que poseen.  
-- Proporciona una **vista de mapa de la base**.  
-- Comandos automáticos de `killnearestbase` para PalDefender que apuntan a bases inactivas.  
-- Transfiere partidas guardadas entre servidores dedicados y mundos Solo/Coop.  
-- Reparación de Host Save vía edición GUID.  
-- Conversión de Steam ID incluida.  
-- Conversión de coordenadas incluida.  
-- Conversión GamePass ⇔ Steam incluida.  
-- Inyector de slots para aumentar los slots por jugador en mundo/servidor, compatible con el mod Bigger PalBox.  
-- Backup automático entre usos de la herramienta.  
-- Herramienta de borrado todo en uno (Eliminar Gremios, Bases y Jugadores).
-
----
+- Muestra la última vez en línea de los jugadores.  
+- Registra jugadores y datos en `players.log`.  
+- Registra y ordena jugadores por la cantidad de pals que poseen.  
+- Proporciona una **vista del mapa de bases**.  
+- Genera comandos automáticos `killnearestbase` para PalDefender contra bases inactivas.  
+- Transfiere guardados entre servidores dedicados y mundos individuales/coop.  
+- Repara el guardado del host mediante edición de GUID.  
+- Incluye conversión de Steam ID.  
+- Incluye conversión de coordenadas.  
+- Incluye conversión GamePass ⇔ Steam.  
+- Inyector de slots para aumentar los espacios por jugador, compatible con Bigger PalBox mod.  
+- Copias de seguridad automáticas entre usos de la herramienta.  
+- **All in One Tools** (antes All in One Deletion Tool):
+  - Eliminar jugadores  
+  - Eliminar bases  
+  - Eliminar gremios  
+  - **Reconstruir todos los gremios**  
+    - Reasigna cada pal a su gremio correcto  
+    - Corrige IDs de grupo  
+    - Elimina banderas de expedición  
+    - Restablece aptitud laboral  
+    - Reconstruye los handles sin duplicados  
+  - Restablecer torretas antiaéreas  
+  - Eliminar datos no referenciados  
+  - Restablecer misiones  
+  - Desbloquear cofres privados  
+  - Eliminar ítems inválidos o modificados  
+  - Sistema de exclusiones para jugadores/gremios/bases protegidos  
+  - Mover jugadores entre gremios  
+  - Convertir un jugador en líder del gremio  
+  - Integración de herramientas adicionales en el menú Archivo  
 
 ## 🗺️ Pasos para desbloquear el mapa
 

@@ -8,7 +8,7 @@
 - **Please download the standalone folder from [https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) to be able to use the .exe!**
 ---
 
-## Features:
+## Features
 
 - **Fast parsing/reading** tool—one of the quickest available.  
 - Lists all players/guilds.  
@@ -17,17 +17,33 @@
 - Logs players and their data into `players.log`.  
 - Logs and sorts players by the number of pals owned.  
 - Provides a **base map view**.  
-- Provides automated killnearestbase commands for PalDefender targeting inactive bases.  
+- Provides automated `killnearestbase` commands for PalDefender targeting inactive bases.  
 - Transfers saves between dedicated servers and single/coop worlds.  
 - Fix Host Save via GUID editing.  
 - Includes Steam ID conversion.  
 - Includes coordinate conversion.  
 - Includes GamePass ⇔ Steam conversion.  
 - Slot injector to increase slots per player on world/server, compatible with Bigger PalBox mod.  
-- Automated backup between tool usages.
-- All in One Deletion Tool (Delete Guilds, Delete Bases, Delete Players).
-
----
+- Automated backup between tool usages.  
+- **All in One Tools** (formerly All in One Deletion Tool):
+  - Delete Players  
+  - Delete Bases  
+  - Delete Guilds  
+  - **Rebuild All Guilds**  
+    - Reassigns every pal to the correct guild  
+    - Fixes group IDs  
+    - Clears expedition flags  
+    - Resets work suitability  
+    - Rebuilds and restores guild handles with no duplicates  
+  - Reset Anti-Air Turrets  
+  - Delete Unreferenced Data  
+  - Reset Missions  
+  - Unlock private chests  
+  - Remove invalid/modded items  
+  - Exclusions system for protected players/guilds/bases  
+  - Move players between guilds  
+  - Make a player guild leader  
+  - Consolidates other tools into the File menu for easier management  
 
 ## 🗺️ Steps to Unlock Your Map.
 
