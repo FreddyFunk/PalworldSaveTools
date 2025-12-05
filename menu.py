@@ -7,7 +7,7 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import os, sys, urllib.request, zipfile, subprocess, re
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/deafdudecomputers/PalworldSaveTools/main/Assets/common.py"
-GITHUB_LATEST_ZIP = "https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest/download/PST_standalone.zip"
+GITHUB_LATEST_ZIP = "https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest"
 UPDATE_CACHE=None
 def get_cached_update_info():
     global UPDATE_CACHE
@@ -305,6 +305,7 @@ class MenuGUI(tk.Tk):
             self.current_label.bind("<Button-1>",lambda e:webbrowser.open("https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest"))
             if not has_update:
                 def pulse_current():
+                    if not self.running: return
                     self.current_label["fg"]="yellow" if self.current_label["fg"]=="lightgreen" else "lightgreen"
                     self.current_label.after(700,pulse_current)
                 pulse_current()
@@ -418,13 +419,9 @@ def center_window(win):
     x, y = (ws - w) // 2, (hs - h) // 2
     win.geometry(f'{w}x{h}+{x}+{y}')
 def on_exit():
-    try:
-        app.quit()
-        app.destroy()
-    except:
-        pass
-    import os
-    os._exit(0)
+    app.running=False
+    try: app.destroy()
+    except: pass
 if __name__=="__main__":
     try:
         init_language("zh_CN")
@@ -434,6 +431,7 @@ if __name__=="__main__":
     set_console_title(f"PalworldSaveTools v{tv}")
     clear_console()
     app = MenuGUI()
+    app.running=True
     try:
         app.mainloop()
     finally:

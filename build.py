@@ -61,37 +61,54 @@ def run_upx_on_build():
         print("UPX not found on PATH, skipping UPX compression...")
         return
     targets=[]
+    skip_names=("vcruntime","msvcp","python3.dll")
     for root,dirs,files in os.walk(build_dir):
         for f in files:
             lf=f.lower()
-            if lf.endswith(".exe") or lf.endswith(".dll"):
-                targets.append(os.path.join(root,f))
+            if not (lf.endswith(".exe") or lf.endswith(".dll")):
+                continue
+            if any(k in lf for k in skip_names):
+                continue
+            targets.append(os.path.join(root,f))
     if not targets:
         print("No EXE/DLL files found for UPX compression...")
         return
+    targets.sort(key=lambda x: 0 if x.lower().endswith(".exe") else 1)
     print("Running UPX compression on built binaries...")
-    cmd=["upx","--best","--lzma"]+targets
+    cmd=["upx","--best","--lzma","--no-progress"]+targets
     result=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
-    print(result.stdout)
+    print("\n".join([l for l in result.stdout.splitlines() if l.strip()]))
     if result.stderr:
         print("UPX completed with some warnings (expected):")
         print(result.stderr)
+def get_app_version():
+    common_file=os.path.join("Assets","common.py")
+    with open(common_file,"r",encoding="utf-8") as f:
+        for line in f:
+            if line.strip().startswith("APP_VERSION"):
+                return line.split("=")[1].strip().strip('"').strip("'")
+    return "unknown"
 def create_release_archive():
+    version=get_app_version()
     build_dir="PST_standalone"
     if not os.path.exists(build_dir):
-        print("Build folder not found, skipping ZIP archive...")
+        print("Build folder not found, skipping archive...")
         return
-    archive_name="PST_standalone.zip"
+    archive_name=f"PST_standalone_v{version}.7z"
     if os.path.exists(archive_name):
         os.remove(archive_name)
-    print("Creating ZIP release archive...")
-    shutil.make_archive("PST_standalone","zip",root_dir=build_dir)
-    print("ZIP archive created:",archive_name)
+    print(f"Creating 7z Ultra archive: {archive_name}...")
+    old=os.getcwd()
+    os.chdir(build_dir)
+    items=os.listdir(".")
+    cmd=["7z","a","-t7z","-m0=lzma2","-mx=9","-mfb=273","-md=256m","-ms=on",os.path.join("..",archive_name)]+items
+    subprocess.check_call(cmd)
+    os.chdir(old)
+    print("7z archive created:",archive_name)
 def main():
     print("PalworldSaveTools Directory Cleaner")
     print("="*40)
     clean_build_artifacts()
-    print("="*40)
     print("="*40)
     print("PalworldSaveTools VENV Builder")
     print("="*40)
