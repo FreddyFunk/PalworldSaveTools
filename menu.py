@@ -252,6 +252,7 @@ class MenuGUI(tk.Tk):
         messagebox.showerror("PST Error",f"[ERROR TYPE] {err_type}\n[DESCRIPTION] {err_msg}\n\n========================\nFull Traceback Logged\n========================")
         hide_console()
     def __init__(self):
+        self.running = True 
         super().__init__()
         self.report_callback_exception = self.tk_error_handler
         try:
@@ -461,7 +462,6 @@ if __name__=="__main__":
     set_console_title(f"PalworldSaveTools v{tv}")
     clear_console()
     app = MenuGUI()
-    app.running=True
     try:
         app.mainloop()
     except Exception:
