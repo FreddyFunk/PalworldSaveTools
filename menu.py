@@ -1,12 +1,9 @@
-import os, sys, shutil
+import os, sys, shutil, subprocess, re, tempfile, urllib.request, zipfile
 from pathlib import Path
 import importlib.util
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
-import os, sys, urllib.request, zipfile, subprocess, re
-import os, subprocess, tempfile, sys
 def unlock_self_folder():
     folder=os.path.dirname(os.path.abspath(sys.argv[0]))
     script=(
