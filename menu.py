@@ -486,17 +486,17 @@ if __name__=="__main__":
     set_console_title(f"PalworldSaveTools v{tv}")
     clear_console()
     app = MenuGUI()
-    try: 
-        all_in_one_tool_choice = (1, 0)
-        app.run_tool(all_in_one_tool_choice)
-    except Exception:
-        show_console()
-        import traceback
-        traceback.print_exc()
-        input("\nPress Enter to exit...")
-        raise
-    finally:
-        on_exit()
+    #try: 
+        #all_in_one_tool_choice = (1, 0)
+        #app.run_tool(all_in_one_tool_choice)
+    #except Exception:
+        #show_console()
+        #import traceback
+        #traceback.print_exc()
+        #input("\nPress Enter to exit...")
+        #raise
+    #finally:
+        #on_exit()
     try:
         app.mainloop()
     except Exception:
