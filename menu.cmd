@@ -18,4 +18,4 @@ if exist "%VENV_PY%" (
 echo Using Python: "%PYEXE%"
 "%PYEXE%" -c "import sys; print('Python', sys.version)" 2>nul
 
-"%PYEXE%" "%SCRIPT_DIR%menu.py"
+"%PYEXE%" "%SCRIPT_DIR%/menu.py

@@ -1,5 +1,6 @@
 from import_libs import *
-from character_transfer import *
+import customtkinter as ctk
+ctk.set_appearance_mode("Dark")
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/deafdudecomputers/PalworldSaveTools/main/Assets/common.py"
 def check_for_update():
     try:
@@ -33,27 +34,30 @@ guild_result = None
 base_result = None
 player_result = None
 files_to_delete = set()
+PLAYER_PAL_COUNTS = {}
+PLAYER_DETAILS_CACHE = {}
+PLAYER_REMAPS = {}
 def refresh_stats(section):
     stats = get_current_stats()
     section_keys = {
-        "Before Deletion": "deletion.stats.before",
-        "After Deletion": "deletion.stats.after",
-        "Deletion Result": "deletion.stats.result",
+        "Before": "deletion.stats.before",
+        "After": "deletion.stats.after",
+        "Result": "deletion.stats.result",
         "After Reset": "deletion.stats.after"
     }
     display_section = t(section_keys.get(section, section))
-    if section == "Before Deletion":
+    if section == "Before":
         refresh_stats.stats_before = stats
     if section == "After Reset":
         zero_stats = {k: 0 for k in stats}
-        update_stats_section(stat_labels, "After Deletion", zero_stats)
-        update_stats_section(stat_labels, "Deletion Result", zero_stats)
+        update_stats_section(stat_labels, "After", zero_stats)
+        update_stats_section(stat_labels, "Result", zero_stats)
     else:
         update_stats_section(stat_labels, section, stats)
-        if section == "After Deletion" and hasattr(refresh_stats, "stats_before"):
+        if section == "After" and hasattr(refresh_stats, "stats_before"):
             before = refresh_stats.stats_before
             result = {k: before[k] - stats.get(k, 0) for k in before}
-            update_stats_section(stat_labels, "Deletion Result", result)
+            update_stats_section(stat_labels, "Result", result)
 def as_uuid(val): return str(val).lower() if val else ''
 def are_equal_uuids(a,b): return as_uuid(a)==as_uuid(b)
 try:
@@ -206,7 +210,8 @@ def top_process_player(p, playerdir, log_folder):
         dps_tasks.append((uid, pname, dps_file, log_folder))
     return uid, pname, uniques, caught, encounters
 def load_save(path=None):
-    global current_save_path, loaded_level_json, backup_save_path, srcGuildMapping, player_levels, original_loaded_level_json
+    global current_save_path, loaded_level_json, backup_save_path, srcGuildMapping, player_levels, original_loaded_level_json, base_guild_lookup
+    global PLAYER_PAL_COUNTS 
     base_path = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if path is None:
         p = filedialog.askopenfilename(title="Select Level.sav", filetypes=[("SAV","*.sav")])
@@ -229,12 +234,6 @@ def load_save(path=None):
     t1 = time.perf_counter()
     print(t("loading.converted", seconds=f"{t1 - t0:.2f}"))
     build_player_levels()
-    refresh_all()
-    refresh_stats("Before Deletion")
-    print(t("loading.done"))
-    stats = get_current_stats()
-    for k,v in stats.items():
-        print(f"Total {k}: {v}")
     all_in_one_tools.loaded_json = loaded_level_json
     data_source = loaded_level_json["properties"]["worldSaveData"]["value"]
     reduce_memory = False
@@ -247,11 +246,27 @@ def load_save(path=None):
     except Exception as e:
         messagebox.showerror(t("error.title"), t("error.guild_mapping_failed", err=e))
         srcGuildMapping = None
+    base_guild_lookup = {}
+    if srcGuildMapping:
+        for gid_uuid, gdata in srcGuildMapping.GroupSaveDataMap.items():
+            gid = str(gid_uuid)
+            guild_name = gdata['value']['RawData']['value'].get('guild_name', "Unnamed Guild")
+            for base_id_uuid in gdata['value']['RawData']['value'].get('base_ids', []):
+                base_id = str(base_id_uuid)
+                base_guild_lookup[base_id] = {
+                    "GuildName": guild_name,
+                    "GuildID": gid
+                }
+    print(t("loading.done"))
+    stats = get_current_stats()
+    for k,v in stats.items():
+        print(f"Total {k}: {v}")
     log_folder = os.path.join(base_path, "Scan Save Logger")
     if os.path.exists(log_folder): shutil.rmtree(log_folder)
     os.makedirs(log_folder, exist_ok=True)
     player_pals_count = {}
     count_pals_found(data_source, player_pals_count, log_folder)
+    PLAYER_PAL_COUNTS = player_pals_count     
     def count_owned_pals(level_json):
         owned_count = {}
         char_map = level_json.get('properties', {}).get('worldSaveData', {}).get('value', {}).get('CharacterSaveParameterMap', {}).get('value', [])
@@ -348,7 +363,8 @@ def load_save(path=None):
         h.close()
     t2 = time.perf_counter()
     print(t("stats.loaded_time", sec=f"{t2 - t0:.2f}"))
-    #start_dps_processing_background(t0)
+    refresh_all()
+    refresh_stats("Before")
 def extract_value(data, key, default_value=''):
     value = data.get(key, default_value)
     if isinstance(value, dict):
@@ -422,13 +438,13 @@ def count_pals_found(data, player_pals_count, log_folder):
         tstr=f"HP IV: {extract_value(raw,'Talent_HP','0')}({rh}%), ATK IV: {extract_value(raw,'Talent_Shot','0')}({ra}%), DEF IV: {extract_value(raw,'Talent_Defense','0')}({rd}%), Work Speed: ({rc}%)"
         nick=raw.get("NickName",{}).get("value","Unknown")
         nickstr=f", {nick}" if nick!="Unknown" else ""
-        info=f"{name}{nickstr}, Level: {lvl}, Rank: {rk}, Gender: {ginfo}, {tstr}{pstr}, ID: {base}, Instance: {inst}, Group: {gid}"
+        info=f"{name}{nickstr}, Level: {lvl}, Rank: {rk}, Gender: {ginfo}, {tstr}{pstr}, ContainerID: {base}, InstanceID: {inst}, GuildID: {gid}"
         base_count[base]+=1
         if not uid:
             na=info.split(",")[0].strip()
             if na!="None":
                 non_owner_pals_info.append(info)
-                non_owner_pals_info_with_base.append(f"{info} (ID: {base})")
+                non_owner_pals_info_with_base.append(f"{info} (ContainerID: {base})")
                 base_id_groups[base].append(info)
                 continue
         owner_pals_info[uid].append(info)
@@ -442,16 +458,16 @@ def count_pals_found(data, player_pals_count, log_folder):
                 f.write("-"*(len(str(tot))+len(" Non-Owner Pals"))+"\n")
                 for bid,pals in base_id_groups.items():
                     cnt=len(pals)
-                    f.write(f"ID: {bid} (Count: {cnt})\n")
-                    f.write("-"*(len(f"ID: {bid} (Count: {cnt})"))+"\n")
+                    f.write(f"ContainerID: {bid} (Count: {cnt})\n")
+                    f.write("-"*(len(f"ContainerID: {bid} (Count: {cnt})"))+"\n")
                     f.write("\n".join(pals)+"\n\n")
         except:
             pass
     for uid,pals in owner_pals_info.items():
         pb=defaultdict(list)
         for p in pals:
-            if "ID:" in p:
-                bid=p.split("ID:")[1].split(",")[0].strip()
+            if "ContainerID:" in p:
+                bid=p.split("ContainerID:")[1].split(",")[0].strip()
                 pb[bid if bid else "Unknown"].append(p)
         pname=owner_nicknames.get(uid,'Unknown')
         sname=sanitize_filename(pname.encode('utf-8','replace').decode('utf-8'))
@@ -471,7 +487,7 @@ def count_pals_found(data, player_pals_count, log_folder):
         lg.info(f"{pname}'s {cnt} Pals")
         lg.info("-"*(len(pname)+len(f"'s {cnt} Pals")))
         for bid,pp in pb.items():
-            lg.info(f"ID: {bid}")
+            lg.info(f"ContainerID: {bid}")
             lg.info("----------------")
             sp=[safe_str(x) for x in sorted(pp)]
             lg.info("\n".join(sp))
@@ -566,6 +582,7 @@ def save_changes():
         except FileNotFoundError: pass
         try: os.remove(f_dps)
         except FileNotFoundError: pass
+    apply_player_remaps_on_save()
     files_to_delete.clear()
     window.focus_force()
     messagebox.showinfo(t("Saved"), t("Changes saved and files deleted!"), parent=window)
@@ -589,60 +606,6 @@ def get_players():
             level = player_levels.get(uid.replace('-', ''), '?') if uid else '?'
             out.append((uid, name, gid, lastseen, level))
     return out
-def refresh_all():
-    guild_tree.delete(*guild_tree.get_children())
-    base_tree.delete(*base_tree.get_children())
-    player_tree.delete(*player_tree.get_children())
-    for g in loaded_level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
-        if g['value']['GroupType']['value']['value']=='EPalGroupType::Guild':
-            name=g['value']['RawData']['value'].get('guild_name',"Unknown")
-            gid=as_uuid(g['key'])
-            guild_tree.insert("", "end", values=(name,gid))
-    base_camps=loaded_level_json['properties']['worldSaveData']['value'].get('BaseCampSaveData',{}).get('value',[])
-    for b in base_camps:
-        base_tree.insert("", "end", values=(str(b['key']),))
-    used=set()
-    for uid,name,gid,seen,level in get_players():
-        iid=uid
-        c=1
-        while iid in used:
-            iid=f"{uid}_{c}"
-            c+=1
-        used.add(iid)
-        player_tree.insert("", "end", iid=iid, values=(uid,name,gid,seen,level))
-def on_guild_search(q=None):
-    if q is None:
-        q = guild_search_var.get()
-    q = q.lower()
-    guild_tree.delete(*guild_tree.get_children())
-    for g in loaded_level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
-        if g['value']['GroupType']['value']['value'] != 'EPalGroupType::Guild': continue
-        name = g['value']['RawData']['value'].get('guild_name', 'Unknown')
-        gid = as_uuid(g['key'])
-        if q in name.lower() or q in gid.lower():
-            guild_tree.insert("", "end", values=(name, gid))
-def on_base_search(q=None):
-    if q is None:
-        q = base_search_var.get()
-    q = q.lower()
-    base_tree.delete(*base_tree.get_children())
-    base_data = loaded_level_json['properties']['worldSaveData']['value'].get('BaseCampSaveData', {}).get('value', [])
-    for b in base_data:
-        bid = str(b['key'])
-        if q in bid.lower():
-            base_tree.insert("", "end", values=(bid,))
-def on_player_search(q=None):
-    if q is None:
-        q = player_search_var.get()
-    q = q.lower()
-    player_tree.delete(*player_tree.get_children())
-    for uid, name, gid, seen, level in get_players():
-        if any(q in str(c).lower() for c in (uid, name, gid, seen, level)):
-            player_tree.insert("", "end", values=(uid, name, gid, seen, level))
-def extract_level(data):
-    while isinstance(data, dict) and 'value' in data:
-        data = data['value']
-    return data
 player_levels = {}
 def build_player_levels():
     global player_levels
@@ -665,37 +628,6 @@ def build_player_levels():
         except Exception:
             continue
     player_levels = dict(uid_level_map)
-def on_guild_select(evt):
-    sel = guild_tree.selection()
-    base_tree.delete(*base_tree.get_children())
-    guild_members_tree.delete(*guild_members_tree.get_children())
-    base_data = loaded_level_json['properties']['worldSaveData']['value'].get('BaseCampSaveData', {}).get('value', [])
-    if not sel:
-        guild_result.config(text=f"{t('ui.selected.guild')}: {t('ui.none')}")
-        for b in base_data:
-            base_tree.insert("", "end", values=(str(b['key']),))
-        return
-    name, gid = guild_tree.item(sel[0])['values']
-    guild_result.config(text=f"{t('ui.selected.guild')}: {name}")
-    for b in base_data:
-        if are_equal_uuids(b['value']['RawData']['value'].get('group_id_belong_to'), gid):
-            base_tree.insert("", "end", values=(str(b['key']),))
-    for g in loaded_level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
-        if are_equal_uuids(g['key'], gid):
-            raw = g['value'].get('RawData', {}).get('value', {})
-            players = raw.get('players', [])
-            for p in players:
-                p_name = p.get('player_info', {}).get('player_name', 'Unknown')
-                p_uid = str(p.get('player_uid', ''))
-                p_uid_key = p_uid.replace('-', '')
-                p_level = player_levels.get(p_uid_key, '?')
-                guild_members_tree.insert("", "end", values=(p_name, p_level, p_uid))
-            break
-def on_base_select(evt):
-    sel=base_tree.selection()
-    if not sel: return
-    bid=base_tree.item(sel[0])['values'][0]
-    base_result.config(text=f"{t('ui.selected.base')}: {bid}")
 def delete_base_camp(base, guild_id, loaded_json):
     base_val = base['value']
     raw_data = base_val.get('RawData', {}).get('value', {})
@@ -777,7 +709,7 @@ def delete_selected_guild():
             delete_base_camp(b, gid, loaded_level_json)
     delete_orphaned_bases()
     refresh_all()
-    refresh_stats("After Deletion")
+    refresh_stats("After")
     messagebox.showinfo(t("Marked"), t("guild.marked_for_deletion", gid=raw_gid, count=len(deleted_uids)))
 def delete_selected_base():
     folder = current_save_path
@@ -798,13 +730,8 @@ def delete_selected_base():
             break
     delete_orphaned_bases()
     refresh_all()
-    refresh_stats("After Deletion")
+    refresh_stats("After")
     messagebox.showinfo(t("Deleted"), t("Base deleted"))
-def get_owner_uid(entry):
-    try:
-        return entry["value"]["object"]["SaveParameter"]["value"]["OwnerPlayerUId"].get("value", "")
-    except Exception:
-        return ""
 def delete_selected_player():
     global files_to_delete
     folder = current_save_path
@@ -815,7 +742,7 @@ def delete_selected_player():
     if not sel:
         messagebox.showerror(t("Error"), t("Select player"))
         return
-    raw_uid = player_tree.item(sel[0])['values'][0]
+    raw_uid = player_tree.item(sel[0])['values'][4]
     uid = raw_uid.replace('-', '')
     wsd = loaded_level_json['properties']['worldSaveData']['value']
     group_data = wsd['GroupSaveDataMap']['value']
@@ -858,7 +785,7 @@ def delete_selected_player():
                                .get('object', {}).get('SaveParameter', {}).get('value', {})
                                .get('OwnerPlayerUId', {}).get('value', '')).replace('-', '') != uid]
         refresh_all()
-        refresh_stats("After Deletion")
+        refresh_stats("After")
         messagebox.showinfo(t("Marked"), t("player.marked_for_deletion", uid=raw_uid))
     else:
         messagebox.showinfo(t("Info"), t("player.not_found_or_deleted"))
@@ -872,7 +799,7 @@ def delete_selected_guild_member():
     if not sel:
         messagebox.showerror(t("Error"), t("Select player"))
         return
-    uid = guild_members_tree.item(sel[0])['values'][2].replace('-', '')
+    uid = guild_members_tree.item(sel[0])['values'][4].replace('-', '')
     wsd = loaded_level_json['properties']['worldSaveData']['value']
     group_data = wsd['GroupSaveDataMap']['value']
     deleted = False
@@ -913,7 +840,7 @@ def delete_selected_guild_member():
                                .get('object', {}).get('SaveParameter', {}).get('value', {})
                                .get('OwnerPlayerUId', {}).get('value', '')).replace('-', '') != uid]
         refresh_all()
-        refresh_stats("After Deletion")
+        refresh_stats("After")
         messagebox.showinfo(t("Marked"), t("player.marked"))
     else:
         messagebox.showinfo(t("Info"), t("player.not_found_or_deleted"))
@@ -970,7 +897,7 @@ def delete_inactive_bases():
             if delete_base_camp(b, gid, loaded_level_json): cnt += 1
     delete_orphaned_bases()
     refresh_all()
-    refresh_stats("After Deletion")
+    refresh_stats("After")
     messagebox.showinfo(t("Done"), t("bases.deleted_count", count=cnt))
 def delete_orphaned_bases():
     folder = current_save_path
@@ -989,7 +916,7 @@ def delete_orphaned_bases():
         if not gid or gid not in valid_guild_ids:
             if delete_base_camp(b, gid, loaded_level_json): cnt += 1
     refresh_all()
-    refresh_stats("After Deletion")
+    refresh_stats("After")
     if cnt > 0: print(t("bases.orphaned_deleted", count=cnt))
 def is_valid_level(level):
     try:
@@ -1037,13 +964,8 @@ def delete_empty_guilds():
         group_data.remove(g)
     delete_orphaned_bases()
     refresh_all()
-    refresh_stats("After Deletion")
+    refresh_stats("After")
     messagebox.showinfo(t("Done"), t("guilds.deleted_count", count=len(to_delete)))
-def on_player_select(evt):
-    sel = player_tree.selection()
-    if not sel: return
-    uid, name, *_ = player_tree.item(sel[0])['values']
-    player_result.config(text=f"{t('ui.selected.player')}: {name} ({uid})")
 def delete_inactive_players_button():
     folder = current_save_path
     if not folder:
@@ -1154,7 +1076,7 @@ def delete_unreferenced_data():
     delete_orphaned_bases()
     build_player_levels()
     refresh_all()
-    refresh_stats("After Cleaning Players Without References")
+    refresh_stats("After")
     mapobject_count = count_mapobject_ids(wsd)
     result_msg=t(
         "cleanup.summary",
@@ -1230,7 +1152,7 @@ def delete_inactive_players(folder_path, inactive_days=30):
                                .get('OwnerPlayerUId', {}).get('value', '')).replace('-', '') not in to_delete_uids]
         delete_orphaned_bases()
         refresh_all()
-        refresh_stats("After Deletion")
+        refresh_stats("After")
         total_players_after = sum(
             len(g['value']['RawData']['value'].get('players', []))
             for g in group_data_list if g['value']['GroupType']['value']['value'] == 'EPalGroupType::Guild'
@@ -1320,7 +1242,7 @@ def delete_duplicated_players():
     clean_character_save_parameter_map(wsd, valid_uids)
     delete_orphaned_bases()
     refresh_all()
-    refresh_stats("After Deletion")
+    refresh_stats("After")
     for d in deleted_players:
         print(t(
             "players.duplicate.kept",
@@ -1337,28 +1259,171 @@ def delete_duplicated_players():
             last_online=format_duration(tick_now - d["deleted_last_online"])
         ) + "\n")
     print(t("players.duplicate.marked", count=len(deleted_players)))
-def on_guild_members_search(q=None):
+def refresh_all():
+    global guild_tree, base_tree, player_tree, loaded_level_json, PLAYER_PAL_COUNTS, PLAYER_DETAILS_CACHE, guild_result, base_result, player_result
+    guild_tree.delete(*guild_tree.get_children())
+    base_tree.delete(*base_tree.get_children())
+    player_tree.delete(*player_tree.get_children())
+    guild_result.configure(text=t("deletion.selected_guild", name="N/A"))
+    base_result.configure(text=t("deletion.selected_base", id="N/A"))
+    player_result.configure(text=t("deletion.selected_player", name="N/A"))
+    if 'PLAYER_DETAILS_CACHE' not in globals():
+        globals()['PLAYER_DETAILS_CACHE'] = {}
+    PLAYER_DETAILS_CACHE = {}
+    for g in loaded_level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
+        if g['value']['GroupType']['value']['value']=='EPalGroupType::Guild':
+            name=g['value']['RawData']['value'].get('guild_name',"Unknown")
+            gid=as_uuid(g['key'])
+            guild_tree.insert("", "end", values=(name,gid))
+    on_base_search()
+    used=set()
+    for uid,name,gid,seen,level in get_players():
+        stripped_uid = uid.replace('-', '').lower()
+        PLAYER_DETAILS_CACHE[stripped_uid] = {
+            'level': level,
+            'seen': seen,
+            'name': name,
+            'uid_full': uid,
+            'gid': gid
+        }
+        iid=uid
+        c=1
+        while iid in used:
+            iid=f"{uid}_{c}"
+            c+=1
+        used.add(iid)
+        pal_count = PLAYER_PAL_COUNTS.get(uid, 0)
+        guild_name = get_guild_name_by_id(gid)
+        player_tree.insert("", "end", iid=iid, values=(name, seen, level, pal_count, uid, guild_name, gid))
+def treeview_sort_column(treeview, col, reverse):
+    l = [(treeview.set(k, col), k) for k in treeview.get_children('')]
+    try:
+        l.sort(key=lambda t: int(t[0]) if t[0].isdigit() else t[0], reverse=reverse)
+    except Exception:
+        l.sort(key=lambda t: t[0], reverse=reverse)    
+    for index, (val, k) in enumerate(l):
+        treeview.move(k, '', index)    
+    treeview.heading(col, command=lambda: treeview_sort_column(treeview, col, not reverse))
+def on_guild_search(q=None):
     if q is None:
-        q = guild_members_search_var.get()
+        q = guild_search_var.get()
     q = q.lower()
-    guild_members_tree.delete(*guild_members_tree.get_children())
+    guild_tree.delete(*guild_tree.get_children())
+    for g in loaded_level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
+        if g['value']['GroupType']['value']['value'] != 'EPalGroupType::Guild': continue
+        name = g['value']['RawData']['value'].get('guild_name', 'Unknown')
+        gid = as_uuid(g['key'])
+        if q in name.lower() or q in gid.lower():
+            guild_tree.insert("", "end", values=(name, gid))
+def on_base_search(q=None):
+    global base_tree, base_search_var, base_guild_lookup, guild_tree     
+    if q is None:
+        q = base_search_var.get()
+    q = q.lower()
+    selected_gid = None
+    selected_items = guild_tree.selection()
+    if selected_items:
+        selected_gid = guild_tree.item(selected_items[0], 'values')[1]        
+    base_tree.delete(*base_tree.get_children())    
+    if 'base_guild_lookup' not in globals() or not globals().get('base_guild_lookup'):
+        return        
+    for base_id, info in base_guild_lookup.items():
+        guild_name = info["GuildName"]
+        guild_id = info["GuildID"]
+        if selected_gid is not None and guild_id != selected_gid:
+            continue
+        if q in base_id.lower() or q in guild_name.lower() or q in guild_id.lower():
+            base_tree.insert("", "end", values=(base_id, guild_id, guild_name))
+def get_guild_name_by_id(target_gid):
+    global loaded_level_json
+    if not loaded_level_json:return "Unknown Guild"
+    for g in loaded_level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
+        current_gid=as_uuid(g['key'])
+        if g['value']['GroupType']['value']['value']=='EPalGroupType::Guild' and current_gid==target_gid:
+            return g['value']['RawData']['value'].get('guild_name',"Unnamed Guild")
+    return "No Guild"
+def on_player_search(q=None):
+    global player_tree, player_search_var, PLAYER_PAL_COUNTS
+    if q is None:
+        q = player_search_var.get()
+    q = q.lower()
+    player_tree.delete(*player_tree.get_children())
+    for uid, name, gid, seen, level in get_players():
+        pal_count = PLAYER_PAL_COUNTS.get(uid, 0)
+        guild_name = get_guild_name_by_id(gid)
+        if any(q in str(c).lower() for c in (uid, name, gid, seen, level, pal_count, guild_name)):
+            player_tree.insert("", "end", values=(name, seen, level, pal_count, uid, guild_name, gid))
+def on_guild_select(evt):
+    global base_tree, guild_tree, guild_members_tree, loaded_level_json, player_levels, base_guild_lookup, base_search_var, PLAYER_PAL_COUNTS, PLAYER_DETAILS_CACHE
     sel = guild_tree.selection()
-    if not sel: return
-    gid = guild_tree.item(sel[0])['values'][1]
+    base_tree.delete(*base_tree.get_children())
+    guild_members_tree.delete(*guild_members_tree.get_children())
+    if not globals().get('base_guild_lookup'):
+        return
+    if not sel:
+        guild_result.configure(text=f"{t('ui.selected.guild')}: {t('ui.none')}")
+        base_search_var.set("")
+        for base_id, info in base_guild_lookup.items():
+            base_tree.insert("", "end", values=(base_id, info["GuildID"], info["GuildName"]))
+        return
+    name, gid = guild_tree.item(sel[0])['values']
+    guild_result.configure(text=f"{t('ui.selected.guild')}: {name} ({gid})")
+    for base_id, info in base_guild_lookup.items():
+        if info["GuildID"] == gid:
+            base_tree.insert("", "end", values=(base_id, info["GuildID"], info["GuildName"]))
     for g in loaded_level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
         if are_equal_uuids(g['key'], gid):
             raw = g['value'].get('RawData', {}).get('value', {})
             players = raw.get('players', [])
             for p in players:
                 p_name = p.get('player_info', {}).get('player_name', 'Unknown')
-                p_uid_raw = p.get('player_uid', '')
-                p_uid = str(p_uid_raw).replace('-', '')
-                p_level = player_levels.get(p_uid, '?')
-                if q in p_name.lower() or q in str(p_level).lower() or q in p_uid.lower():
-                    guild_members_tree.insert("", "end", values=(p_name, p_level, p_uid))
+                p_uid = str(p.get('player_uid', ''))
+                p_uid_key = p_uid.replace('-', '')
+                player_details = PLAYER_DETAILS_CACHE.get(p_uid_key, {})
+                p_level = player_details.get('level', player_levels.get(p_uid_key, '?'))
+                p_seen = player_details.get('seen', 'N/A')
+                pal_count = PLAYER_PAL_COUNTS.get(p_uid, 0)
+                guild_members_tree.insert("", "end", values=(p_name, p_seen, p_level, pal_count, p_uid))
             break
-def on_guild_member_select(event=None):
-    pass    
+def on_base_select(evt):
+    sel=base_tree.selection()
+    if not sel: return
+    bid, _, guild_name = base_tree.item(sel[0])['values']
+    base_result.configure(text=f"{t('ui.selected.base')}: {bid} ({guild_name})")
+def on_player_select(evt):
+    sel = player_tree.selection()
+    if not sel: return
+    name, _, _, _, uid, *_ = player_tree.item(sel[0])['values']
+    player_result.configure(text=f"{t('ui.selected.player')}: {name} ({uid})")
+def on_guild_member_select(event=None): pass
+def on_guild_members_search(q=None):
+    global guild_members_tree, guild_members_search_var, loaded_level_json, player_levels, PLAYER_PAL_COUNTS, guild_tree
+    player_lookup_map = {
+        uid.replace('-', ''): (uid, name, gid, seen, level) 
+        for uid, name, gid, seen, level in get_players()
+    }    
+    if q is None:
+        q = guild_members_search_var.get()
+    q = q.lower()    
+    guild_members_tree.delete(*guild_members_tree.get_children())
+    sel = guild_tree.selection()
+    if not sel: return
+    gid = guild_tree.item(sel[0])['values'][1]    
+    for g in loaded_level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
+        if are_equal_uuids(g['key'], gid):
+            raw = g['value'].get('RawData', {}).get('value', {})
+            players = raw.get('players', [])            
+            for p in players:
+                p_name = p.get('player_info', {}).get('player_name', 'Unknown')
+                p_uid_full = str(p.get('player_uid', ''))
+                p_uid_stripped = p_uid_full.replace('-', '')
+                p_level = player_levels.get(p_uid_stripped, '?')
+                pal_count = PLAYER_PAL_COUNTS.get(p_uid_full, 0)
+                player_data = player_lookup_map.get(p_uid_stripped)
+                p_seen = player_data[3] if player_data else 'N/A'
+                if any(q in str(c).lower() for c in (p_name, p_level, p_seen, p_uid_stripped, pal_count)):
+                    guild_members_tree.insert("", "end", values=(p_name, p_seen, p_level, pal_count, p_uid_full))
+            break
 def get_current_stats():
     wsd = loaded_level_json['properties']['worldSaveData']['value']
     group_data = wsd.get('GroupSaveDataMap', {}).get('value', [])
@@ -1381,23 +1446,28 @@ def update_stats_section(stat_labels, section, stats):
     for field_key, value in stats.items():
         label_key = f"{key_sec}_{field_key.lower()}"
         if label_key in stat_labels:
-            stat_labels[label_key].config(text=f"{t(f'deletion.stats.{field_key.lower()}')}: {value}")
-def create_search_panel(parent,label_text,search_var,search_callback,tree_columns,tree_headings,tree_col_widths,width,height,tree_height=12):
-    panel=ttk.Frame(parent,style="TFrame")
-    panel.place(width=width,height=height)
-    topbar=ttk.Frame(panel,style="TFrame")
-    topbar.pack(fill='x',padx=5,pady=5)
-    lbl=ttk.Label(topbar,text=label_text,font=("Arial",10),style="TLabel")
-    lbl.pack(side='left')
-    entry=ttk.Entry(topbar,textvariable=search_var)
-    entry.pack(side='left',fill='x',expand=True,padx=(5,0))
-    entry.bind("<KeyRelease>",lambda e:search_callback(entry.get()))
-    tree=ttk.Treeview(panel,columns=tree_columns,show='headings',height=tree_height,selectmode="extended")
-    tree.pack(fill='both',expand=True,padx=5,pady=(0,5))
-    for col,head,width_col in zip(tree_columns,tree_headings,tree_col_widths):
-        tree.heading(col,text=head)
-        tree.column(col,width=width_col,anchor='w')
-    return panel,tree,entry
+            stat_labels[label_key].configure(text=str(value))
+def create_search_panel(parent, label_key, search_var, search_callback, tree_columns, tree_headings, tree_col_widths, width, height, tree_height=12):
+    panel = ttk.Frame(parent, style="TFrame")
+    panel.columnconfigure(0, weight=1)
+    panel.rowconfigure(1, weight=1)
+    topbar = ttk.Frame(panel, style="TFrame")
+    topbar.grid(row=0, column=0, sticky='ew', padx=5, pady=5)
+    topbar.columnconfigure(1, weight=1)
+    lbl = ttk.Label(topbar, text=t(label_key), font=("Arial", 10), style="TLabel")
+    lbl.grid(row=0, column=0, sticky='w')
+    entry = ttk.Entry(topbar, textvariable=search_var)
+    entry.grid(row=0, column=1, sticky='ew', padx=(5, 0))
+    entry.bind("<KeyRelease>", lambda e: search_callback(entry.get()))
+    tree = ttk.Treeview(panel, columns=tree_columns, show='headings', height=tree_height)
+    tree.grid(row=1, column=0, sticky='nsew', padx=5, pady=(0, 5))
+    vsb = ttk.Scrollbar(panel, orient="vertical", command=tree.yview)
+    vsb.grid(row=1, column=1, sticky='ns', padx=(0, 5), pady=(0, 5))
+    tree.configure(yscrollcommand=vsb.set)
+    for col, head, width_col in zip(tree_columns, tree_headings, tree_col_widths):
+        tree.heading(col, text=head)
+        tree.column(col, width=width_col, anchor='w')
+    return panel, tree, entry, lbl
 from PIL import Image, ImageDraw, ImageFont
 def pil_text_to_surface(text, size=20, color=(255,255,255)):
     font_paths = [
@@ -1427,7 +1497,7 @@ def show_base_map():
     global srcGuildMapping, loaded_level_json
     folder=current_save_path
     if not folder:
-        messagebox.showerror(t("error.title"),t("error.no_save_loaded"))
+        messagebox.showerror(t("error.title"),t("guild.rebuild.no_save"))
         return
     if srcGuildMapping is None:
         messagebox.showwarning(t("warning.title"),t("warning.no_data_loaded"))
@@ -2053,33 +2123,73 @@ def load_exclusions():
     with open(EXCLUSIONS_FILE, "r") as f:
         exclusions.update(json.load(f))
 load_exclusions()
+def get_stat_value(stat_labels, key):
+    label_text = stat_labels[key].cget("text")
+    if ":" in label_text:
+        return label_text.split(":")[1].strip()
+    return label_text.strip()
+def copy_stats_to_clipboard(stat_labels):
+    copy_content = "PalworldSaveTools\n\n"
+    sections = ["before", "after", "result"]
+    fields = ["guilds", "bases", "players", "pals"]
+    header_template = "{type:<15}{before:<12}{after:<12}{result}"
+    data_template = "{type:<15}{before:<12}{after:<12}{result}" 
+    copy_content += header_template.format(
+        type=t('deletion.stats.field'),
+        before=t('deletion.stats.before'),
+        after=t('deletion.stats.after'),
+        result=t('deletion.stats.result')
+    ) + "\n"
+    for field in fields:
+        field_name = t(f"deletion.stats.{field}")
+        before_val = get_stat_value(stat_labels, f"before_{field}")
+        after_val = get_stat_value(stat_labels, f"after_{field}")
+        result_val = get_stat_value(stat_labels, f"result_{field}")        
+        copy_content += data_template.format(
+            type=field_name,
+            before=before_val,
+            after=after_val,
+            result=result_val
+        ) + "\n"        
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        root.clipboard_clear()
+        root.clipboard_append(copy_content)
+        root.update()
+        root.destroy()
+        messagebox.showinfo(t('status.copy_success_title'), t('status.copy_success_body'))
+    except Exception:
+        messagebox.showerror(t('status.copy_fail_title'), t('status.copy_fail_body'))
 def create_stats_panel(parent, style):
-    style.configure("Stat.TFrame", background="#444444")
-    style.configure("Stat.TLabel", background="#444444", foreground="white", font=("Arial", 10))
-    stat_frame = ttk.Frame(parent, style="Stat.TFrame", borderwidth=2, relief="solid")
-    sections = [
-        ("Before Deletion", "deletion.stats.before"),
-        ("After Deletion", "deletion.stats.after"),
-        ("Deletion Result", "deletion.stats.result"),
-    ]
-    fields = [
-        ("Guilds", "deletion.stats.guilds"),
-        ("Bases", "deletion.stats.bases"),
-        ("Players", "deletion.stats.players"),
-        ("Pals", "deletion.stats.pals"),
-    ] 
-    stat_labels = {}
-    for col, (sec_key, sec_label_key) in enumerate(sections):
-        ttk.Label(stat_frame, text=t(sec_label_key), style="Stat.TLabel", font=("Arial", 10, "bold")).grid(row=0, column=col, padx=20, pady=5)
-        key_sec = sec_key.lower().replace(" ", "")
-        for row, (field_key, field_label_key) in enumerate(fields, start=1):
-            key = f"{key_sec}_{field_key.lower()}"
-            lbl = ttk.Label(stat_frame, text=f"{t(field_label_key)}: 0", style="Stat.TLabel")
-            lbl.grid(row=row, column=col, sticky="w", padx=20)
-            stat_labels[key] = lbl
-    stat_frame.lift()
-    return stat_frame, stat_labels
+    stat_frame = ctk.CTkFrame(parent, fg_color="transparent", border_width=0, corner_radius=0)
+    sections=[("Before","deletion.stats.before"),("After","deletion.stats.after"),("Result","deletion.stats.result")]
+    fields=[("Guilds","deletion.stats.guilds"),("Bases","deletion.stats.bases"),("Players","deletion.stats.players"),("Pals","deletion.stats.pals")]
+    stat_labels={}
+    stat_key_labels_to_refresh=[]
+    last_row_index=len(fields)
+    copy_btn=ctk.CTkButton(stat_frame,text="📋",width=30,height=24,fg_color="transparent",hover_color="#555555",command=lambda:copy_stats_to_clipboard(stat_labels))
+    copy_btn.grid(row=0,column=len(sections)+1,padx=5,pady=3,sticky="ne")
+    ctk.CTkLabel(stat_frame,text="",text_color="white",font=("Segoe UI",12,"bold"),fg_color="transparent").grid(row=0,column=0,padx=10,pady=3)
+    for col,(sec_key,sec_label_key) in enumerate(sections,start=1):
+        lbl=ctk.CTkLabel(stat_frame,text=t(sec_label_key),text_color="white",font=("Segoe UI",12,"bold"),fg_color="transparent")
+        lbl.grid(row=0,column=col,padx=10,pady=3)
+        stat_key_labels_to_refresh.append((lbl,sec_label_key))
+    for row,(field_key,field_label_key) in enumerate(fields,start=1):
+        field_label=ctk.CTkLabel(stat_frame,text=t(field_label_key)+":",text_color="white",font=("Segoe UI",11),height=14,fg_color="transparent")
+        field_label.grid(row=row,column=0,sticky="w",padx=10,pady=(1,1) if row==last_row_index else (0,0))
+        stat_key_labels_to_refresh.append((field_label,field_label_key))
+        for col,(sec_key,_) in enumerate(sections,start=1):
+            key=f"{sec_key.lower().replace(' ','')}_{field_key.lower()}"
+            lbl=ctk.CTkLabel(stat_frame,text="0",text_color="white",font=("Segoe UI",11),height=14,fg_color="transparent")
+            lbl.grid(row=row,column=col,sticky="w",padx=10,pady=(1,1) if row==last_row_index else (0,0))
+            stat_labels[key]=lbl
+    return stat_frame,stat_labels,stat_key_labels_to_refresh
 def generate_map():
+    folder_path=current_save_path
+    if not folder_path:
+        messagebox.showerror(t("Error"),t("guild.rebuild.no_save"))
+        return
     start_time=time.time()
     script_dir=os.path.dirname(os.path.abspath(__file__))
     main_dir=os.path.dirname(script_dir)
@@ -2285,7 +2395,7 @@ def remove_invalid_pals_from_save():
         cont["value"]["Slots"]["value"]["values"]=newslots
     msg=t("palclean.summary",removed=removed)
     refresh_all()
-    refresh_stats("After Deletion")
+    refresh_stats("After")
     print(msg)
     messagebox.showinfo(t("AutoCleaner"),msg)
 def fix_missions():
@@ -2351,9 +2461,9 @@ def move_selected_player_to_selected_guild():
     if not sel_guild:
         messagebox.showerror("Error",t("guild.common.select_guild_first"))
         return
-    player_uid_raw=player_tree.item(sel_player[0])['values'][0]
-    player_uid=player_uid_raw.replace('-','')
-    target_gid_raw=guild_tree.item(sel_guild[0])['values'][1]
+    player_uid_raw = player_tree.item(sel_player[0])['values'][4]
+    player_uid = player_uid_raw.replace('-', '')
+    target_gid_raw = guild_tree.item(sel_guild[0])['values'][1]
     target_gid=target_gid_raw.replace('-','')
     wsd=loaded_level_json['properties']['worldSaveData']['value']
     group_map=wsd['GroupSaveDataMap']['value']
@@ -2451,7 +2561,7 @@ def move_selected_player_to_selected_guild():
         except:
             pass
     refresh_all()
-    refresh_stats("After Deletion")
+    refresh_stats("After")
     messagebox.showinfo(t("Done"), t("guild.move.moved", player=player_uid_raw, guild=target_gid_raw))
 def rebuild_all_players_pals():
     global loaded_level_json,current_save_path
@@ -2671,12 +2781,12 @@ def rebuild_all_guilds():
             except:
                 pass
     refresh_all()
-    refresh_stats("After Deletion")
+    refresh_stats("After")
     messagebox.showinfo("Done", t("guild.rebuild.done"))
 def make_selected_member_leader():
     sel=guild_members_tree.selection()
     if not sel: return
-    p_name,p_level,p_uid=guild_members_tree.item(sel[0])['values']
+    p_name,p_seen,p_level,pal_count,p_uid=guild_members_tree.item(sel[0])['values']
     gsel=guild_tree.selection()
     if not gsel:
         messagebox.showerror("Error",t("guild.common.select_guild_first"))
@@ -2694,7 +2804,7 @@ def make_selected_member_leader():
     if old_leader_uid:
         for child in guild_members_tree.get_children():
             vals=guild_members_tree.item(child)['values']
-            if vals and vals[2]==old_leader_uid:
+            if vals and vals[4]==old_leader_uid:
                 old_leader_name=vals[0]
                 break
     for g in group_data_list:
@@ -2731,9 +2841,11 @@ def rename_player():
         return
     vals=(guild_members_tree.item(sel[0])['values'] if src=="guild" else player_tree.item(sel[0])['values'])
     if src=="guild":
-        old_name,p_level,p_uid=vals
+        old_name=vals[0]
+        p_uid=vals[4]
     else:
-        p_uid,old_name,*_=vals
+        old_name=vals[0]
+        p_uid=vals[4]
     new_name=ask_string_with_icon(t("player.rename.title"),t("player.rename.prompt"),ICON_PATH)
     if not new_name:
         return
@@ -2763,6 +2875,9 @@ def rename_player():
     refresh_all()
     messagebox.showinfo(t("player.rename.done_title"),t("player.rename.done_msg",old=old_name,new=new_name))
 def rename_world():
+    if not current_save_path or not loaded_level_json:
+        tk.messagebox.showerror(t("Error"), t("guild.rebuild.no_save"))
+        return
     meta_path=os.path.join(current_save_path,"LevelMeta.sav")
     if not os.path.exists(meta_path): return None
     meta_json=sav_to_json(meta_path)
@@ -2773,98 +2888,409 @@ def rename_world():
         json_to_sav(meta_json,meta_path)
         return new_name
     return None
+def apply_slotnum_update_in_memory(pages, slots):
+    global loaded_level_json    
+    new_value = pages * slots
+    level_json = loaded_level_json    
+    container = level_json.get("properties", {}).get("worldSaveData", {}).get("value", {}).get("CharacterContainerSaveData", {}).get("value", [])
+    if not isinstance(container, list):
+        tk.messagebox.showerror(t("error.title"), t("slot.invalid_structure"))
+        return False        
+    PLAYER_SLOT_THRESHOLD = 960    
+    editable = [entry for entry in container if entry.get("value",{}).get("SlotNum",{}).get("value",0) >= PLAYER_SLOT_THRESHOLD]
+    total_players = len(editable)    
+    if total_players == 0:
+        tk.messagebox.showinfo(t("info.title"), t("slot.no_entries"))
+        return True
+    resp = tk.messagebox.askyesno(t("slot.confirm_title"), t("slot.confirm_msg", count=total_players, new=new_value))
+    if not resp:
+        return False        
+    for entry in editable:
+        entry["value"]["SlotNum"]["value"] = new_value        
+    tk.messagebox.showinfo(t("success.title"), t("slot.success_msg", count=total_players, new=new_value))
+    return True
+class SlotNumUpdaterApp(tk.Toplevel):
+    def __init__(self):
+        super().__init__()
+        self.title(t("tool.slot_injector"))
+        self.config(bg="#2f2f2f")
+        self.geometry("400x150")
+        try:self.iconbitmap(ICON_PATH)
+        except:pass
+        style=ttk.Style(self)
+        style.theme_use('clam')
+        style.configure("TFrame",background="#2f2f2f")
+        style.configure("TLabel",background="#2f2f2f",foreground="white")
+        style.configure("TEntry",fieldbackground="#444444",foreground="white")
+        style.configure("Dark.TButton",background="#555555",foreground="white",padding=6)        
+        frame=ttk.Frame(self)
+        frame.pack(padx=20,pady=10,fill='x', expand=True)        
+        row=0
+        ttk.Label(frame,text=t("slot.total_pages"),style="TLabel").grid(row=row,column=0,sticky="w", padx=(0, 10))
+        self.pages_entry=ttk.Entry(frame,width=10)
+        self.pages_entry.grid(row=row,column=1, sticky="w")
+        row+=1        
+        ttk.Label(frame,text=t("slot.total_slots"),style="TLabel").grid(row=row,column=0,sticky="w", padx=(0, 10))
+        self.slots_entry=ttk.Entry(frame,width=10)
+        self.slots_entry.grid(row=row,column=1, sticky="w")
+        row+=1        
+        ttk.Button(frame,text=t("slot.apply"),command=self.apply_update_and_close,style="Dark.TButton").grid(row=row,column=0,columnspan=2,pady=10, sticky="ew")
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)        
+        center_window(self)
+        self.protocol("WM_DELETE_WINDOW",self.destroy)
+    def apply_update_and_close(self):
+        try:
+            pages=int(self.pages_entry.get())
+            slots=int(self.slots_entry.get())
+            if pages<1 or slots<1:
+                raise ValueError
+        except ValueError:
+            tk.messagebox.showerror(t("error.title"),t("slot.invalid_numbers"))
+            return            
+        if apply_slotnum_update_in_memory(pages, slots):
+            self.destroy()
+            refresh_all()
+def slot_injector():
+    global current_save_path, loaded_level_json
+    if not current_save_path or not loaded_level_json:
+        tk.messagebox.showerror(t("Error"), t("guild.rebuild.no_save"))
+        return
+    return SlotNumUpdaterApp()
+class PlayerUidSwapApp(tk.Toplevel):
+    def __init__(self, master):
+        super().__init__(master)
+        self.title(t("tool.fix_host_save"))
+        self.config(bg="#2f2f2f")
+        self.geometry("800x600")
+        try: self.iconbitmap(ICON_PATH)
+        except: pass
+        style = ttk.Style(self)
+        style.theme_use('clam')
+        style.configure("TFrame", background="#2f2f2f")
+        style.configure("TLabel", background="#2f2f2f", foreground="white")
+        style.configure("TEntry", fieldbackground="#444444", foreground="white")
+        style.configure("Dark.TButton", background="#555555", foreground="white", padding=6)
+        main_frame = ttk.Frame(self)
+        main_frame.pack(padx=10, pady=10, fill='both', expand=True)
+        main_frame.columnconfigure((0, 2), weight=1)
+        main_frame.columnconfigure(1, weight=0)
+        main_frame.rowconfigure(0, weight=1)
+        player1_frame = ttk.Frame(main_frame)
+        player1_frame.grid(row=0, column=0, sticky='nsew', padx=(0, 5))
+        ctk.CTkLabel(player1_frame, text=t("player.swap.player1_source"), font=("Segoe UI", 11, "bold")).pack(pady=(0, 5))
+        self.p1_result_label = ttk.Label(player1_frame, text=t("player.swap.selected_uid", name="N/A", uid="N/A"), style="TLabel")
+        self.p1_result_label.pack(fill='x', pady=(0, 5))
+        self.p1_tree, self.p1_search_var = self._create_player_selector(player1_frame, self._update_p1_selection)
+        center_frame = ttk.Frame(main_frame)
+        center_frame.grid(row=0, column=1, sticky='ns', padx=5)
+        ctk.CTkLabel(center_frame, text="<-- SWAP -->", font=("Segoe UI", 16, "bold"), text_color="#3B8ED0").pack(pady=20)
+        swap_button = ttk.Button(center_frame, text=t("player.swap.perform_swap"), command=self._perform_swap, style="Dark.TButton")
+        swap_button.pack(pady=10)
+        player2_frame = ttk.Frame(main_frame)
+        player2_frame.grid(row=0, column=2, sticky='nsew', padx=(5, 0))
+        ctk.CTkLabel(player2_frame, text=t("player.swap.player2_target"), font=("Segoe UI", 11, "bold")).pack(pady=(0, 5))
+        self.p2_result_label = ttk.Label(player2_frame, text=t("player.swap.selected_uid", name="N/A", uid="N/A"), style="TLabel")
+        self.p2_result_label.pack(fill='x', pady=(0, 5))
+        self.p2_tree, self.p2_search_var = self._create_player_selector(player2_frame, self._update_p2_selection)
+        center_window(self)
+    def _create_player_selector(self, parent_frame, select_command):
+        search_var = tk.StringVar()
+        search_entry = ttk.Entry(parent_frame, textvariable=search_var)
+        search_entry.pack(fill='x', padx=5, pady=5)
+        tree_frame = ttk.Frame(parent_frame)
+        tree_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        tree = ttk.Treeview(tree_frame, columns=("Name", "UID"), show="headings", style="Treeview")
+        tree.heading("Name", text=t("deletion.col.player_name"))
+        tree.heading("UID", text="UID")
+        tree.column("Name", width=150, stretch=True)
+        tree.column("UID", width=250, stretch=True)
+        vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=vsb.set)
+        vsb.pack(side='right', fill='y')
+        tree.pack(side='left', fill='both', expand=True)
+        tree.bind("<<TreeviewSelect>>", select_command)
+        search_var.trace_add('write', lambda *args: self._filter_treeview(tree, search_var.get()))
+        self._populate_player_tree(tree)
+        tree.config(selectmode='browse')
+        return tree, search_var
+    def _populate_player_tree(self, tree):
+        tree.delete(*tree.get_children())
+        player_list = self._get_player_list()
+        for name, uid_full, _ in player_list:
+            tree.insert("", "end", values=(name, uid_full))
+    def _filter_treeview(self, tree, search_term):
+        tree.delete(*tree.get_children())
+        player_list = self._get_player_list()
+        search_term = search_term.lower()
+        for name, uid_full, _ in player_list:
+            if search_term in name.lower() or search_term in uid_full.lower():
+                tree.insert("", "end", values=(name, uid_full))
+    def _get_player_list(self):
+        global PLAYER_DETAILS_CACHE
+        player_data = []
+        for uid_stripped, details in PLAYER_DETAILS_CACHE.items():
+            player_name = details.get('name')
+            uid_full = details.get('uid_full')
+            if player_name and uid_full:
+                 player_data.append((player_name, uid_full, uid_stripped))
+        return player_data
+    def _update_p1_selection(self, event):
+        selected = self.p1_tree.selection()
+        if selected:
+            name, uid_full = self.p1_tree.item(selected[0], 'values')
+            self.p1_result_label.config(text=t("player.swap.selected_uid", name=name, uid=uid_full))
+        else:
+            self.p1_result_label.config(text=t("player.swap.selected_uid", name="N/A", uid="N/A"))
+    def _update_p2_selection(self, event):
+        selected = self.p2_tree.selection()
+        if selected:
+            name, uid_full = self.p2_tree.item(selected[0], 'values')
+            self.p2_result_label.config(text=t("player.swap.selected_uid", name=name, uid=uid_full))
+        else:
+            self.p2_result_label.config(text=t("player.swap.selected_uid", name="N/A", uid="N/A"))
+    def _perform_swap(self):
+        p1_selection = self.p1_tree.selection()
+        p2_selection = self.p2_tree.selection()
+        if not p1_selection or not p2_selection:
+            tk.messagebox.showwarning(t("Warning"), t("player.swap.select_two_in_ui"))
+            return
+        p1_name, uid1_full = self.p1_tree.item(p1_selection[0], 'values')
+        p2_name, uid2_full = self.p2_tree.item(p2_selection[0], 'values')
+        if uid1_full == uid2_full:
+            tk.messagebox.showwarning(t("Warning"), t("player.swap.same_player"))
+            return
+        confirm_msg = t("player.swap.confirm_ui", name1=p1_name, uid1=uid1_full, name2=p2_name, uid2=uid2_full)
+        if tk.messagebox.askyesno(t("Confirm Swap"), confirm_msg):
+            swap_player_uids(uid1_full, uid2_full)
+            self.destroy()
+def open_uid_swap_ui():
+    global current_save_path, loaded_level_json, window
+    if not current_save_path or not loaded_level_json:
+        tk.messagebox.showerror(t("Error"), t("guild.rebuild.no_save"))
+        return
+    refresh_all()
+    return PlayerUidSwapApp(window)
+def swap_player_uids(uid1_full, uid2_full):
+    global loaded_level_json, PLAYER_REMAPS
+    if not current_save_path or not loaded_level_json:
+        tk.messagebox.showerror(t("Error"), t("guild.rebuild.no_save"))
+        return
+    uid1 = uid1_full.replace('-', '').lower()
+    uid2 = uid2_full.replace('-', '').lower()
+    wsd = loaded_level_json['properties']['worldSaveData']['value']
+    group_map = wsd.get('GroupSaveDataMap', {}).get('value', [])
+    for g in group_map:
+        raw = g['value']['RawData']['value']
+        admin_uid_key = 'admin_player_uid'
+        if admin_uid_key in raw:
+            if raw[admin_uid_key] == uid1_full:
+                raw[admin_uid_key] = uid2_full
+            elif raw[admin_uid_key] == uid2_full:
+                raw[admin_uid_key] = uid1_full
+        players = raw.get('players', [])
+        for p in players:
+            p_uid_full = str(p.get('player_uid', ''))
+            p_uid_stripped = p_uid_full.replace('-', '').lower()
+            if p_uid_stripped == uid1:
+                p['player_uid'] = uid2_full
+            elif p_uid_stripped == uid2:
+                p['player_uid'] = uid1_full
+    char_map = wsd.get('CharacterSaveParameterMap', {}).get('value', [])
+    for entry in char_map:
+        key = entry.get('key', {})
+        sp_val = entry.get('value', {}).get('RawData', {}).get('value', {}).get('object', {}).get('SaveParameter', {}).get('value', {})
+        player_uid_obj = key.get('PlayerUId', {})
+        owner_uid_obj = sp_val.get('OwnerPlayerUId')
+        if owner_uid_obj:
+            if owner_uid_obj.get('value') == uid1_full:
+                owner_uid_obj['value'] = uid2_full
+            elif owner_uid_obj.get('value') == uid2_full:
+                owner_uid_obj['value'] = uid1_full
+        if player_uid_obj:
+            puid_stripped = str(player_uid_obj.get('value', '')).replace('-', '').lower()
+            if puid_stripped == uid1:
+                player_uid_obj['value'] = uid2_full
+            elif puid_stripped == uid2:
+                player_uid_obj['value'] = uid1_full
+    PLAYER_REMAPS[uid1] = {'new_file_uid': uid2, 'new_content_uid': uid2_full}
+    PLAYER_REMAPS[uid2] = {'new_file_uid': uid1, 'new_content_uid': uid1_full}
+    refresh_all()
+    tk.messagebox.showinfo(t("Success"), t("player.swap.done", uid1=uid1_full, uid2=uid2_full))
+def apply_player_remaps_on_save():
+    global PLAYER_REMAPS, current_save_path
+    if not current_save_path or not PLAYER_REMAPS:
+        return
+    player_dir = os.path.join(current_save_path, 'Players')
+    remaps_to_process = PLAYER_REMAPS.copy()
+    PLAYER_REMAPS = {}
+    temp_renames = {}
+    file_renames = {}
+    for old_stripped_uid, remap_data in remaps_to_process.items():
+        new_stripped_uid = remap_data['new_file_uid']
+        old_stripped_uid_upper = old_stripped_uid.upper()
+        new_stripped_uid_upper = new_stripped_uid.upper()
+        old_sav_path = os.path.join(player_dir, f"{old_stripped_uid_upper}.sav")
+        new_sav_path = os.path.join(player_dir, f"{new_stripped_uid_upper}.sav")
+        if os.path.exists(old_sav_path) and old_stripped_uid_upper != new_stripped_uid_upper:
+            temp_path = os.path.join(player_dir, f"{old_stripped_uid_upper}.sav.tmp")
+            temp_renames[old_sav_path] = temp_path
+            file_renames[temp_path] = new_sav_path
+    for old_path, temp_path in temp_renames.items():
+        try:
+            os.rename(old_path, temp_path)
+        except Exception as e:
+            print(f"Error renaming player file to temporary {old_path} to {temp_path}: {e}")
+    for temp_path, new_path in file_renames.items():
+        try:
+            if os.path.exists(temp_path):
+                os.rename(temp_path, new_path)
+                print_base = os.path.basename(temp_path).replace('.sav.tmp', '.sav')
+                print(f"Renamed player file: {print_base} -> {os.path.basename(new_path)}")
+        except Exception as e:
+            print(f"Error renaming player file from temporary {temp_path} to {new_path}: {e}")
+    for old_stripped_uid, remap_data in remaps_to_process.items():
+        new_stripped_uid = remap_data['new_file_uid']
+        new_content_uid = remap_data['new_content_uid']
+        new_stripped_uid_upper = new_stripped_uid.upper()
+        sav_path = os.path.join(player_dir, f"{new_stripped_uid_upper}.sav")
+        if os.path.exists(sav_path):
+            try:
+                player_json = sav_to_json(sav_path)
+                player_json['properties']['SaveData']['value']['PlayerUId']['value'] = new_content_uid
+                player_json['properties']['SaveData']['value']['IndividualId']['value']['PlayerUId']['value'] = new_content_uid
+                json_to_sav(player_json, sav_path)
+                print(f"Updated internal GUID for player file: {os.path.basename(sav_path)}")
+            except Exception as e:
+                print(f"Error updating player content for {sav_path}: {e}")
+def on_swap_uids_button(): open_uid_swap_ui()
 def all_in_one_tools():
     global window, stat_labels, guild_tree, base_tree, player_tree, guild_members_tree
     global guild_search_var, base_search_var, player_search_var, guild_members_search_var
     global guild_result, base_result, player_result
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    window = tk.Toplevel()
+    window = ctk.CTkToplevel()
     window.running=True
+    window.refresh_elements = {
+        'menu_buttons': [],
+        'main_labels': [],
+        'version_labels': [],
+        'treeview_headings': [],
+        'notebook_tabs': [],
+        'menus': [],
+        'search_labels': [],
+        'stat_key_labels': []
+    }
+    def on_language_change_cmd(lang_code):
+        set_language(lang_code)
+        load_resources(lang_code)
+        window.refresh_texts_all_in_one()
+    def refresh_texts_all_in_one():
+        tools_version, _ = get_versions()
+        window.title(t("app.title", version=tools_version) + " - " + t("tool.deletion"))
+        for button, key in window.refresh_elements['menu_buttons']:
+            button.configure(text=t(key))
+        for menu, items in window.refresh_elements['menus']:
+            menu.delete(0, 'end')
+            for item in items:
+                if item['is_separator']:
+                    menu.add_separator()
+                else:
+                    menu.add_command(label=t(item['label_key']), command=item['command'])
+        for label, key, fmt in window.refresh_elements['main_labels']:
+            label.configure(text=t(key, **fmt))
+        info = check_for_update()
+        local_version = get_versions()[0]
+        for label, key in window.refresh_elements['version_labels']:
+            if key == 'update.current':
+                label.configure(text=f"{t(key)}: {local_version}")
+            elif key == 'update.latest':
+                text = f" | {t('update.latest')}: {info['latest']}" if info and not info['update_available'] else f"{t('update.latest')}: {info['latest']}"
+                label.configure(text=text)
+            elif key == 'pipe_separator':
+                label.configure(text=" | ")
+        for tree, col_id, key in window.refresh_elements['treeview_headings']:
+            tree.heading(col_id, text=t(key))
+        for label, key in window.refresh_elements['search_labels']:
+            label.configure(text=t(key))
+        for label, key in window.refresh_elements['stat_key_labels']:
+            label.configure(text=t(key))
+        if hasattr(window, 'notebook'):
+            for tab_name, key in window.refresh_elements['notebook_tabs']:
+                if tab_name in window.notebook._segmented_button._buttons_dict:
+                    window.notebook._segmented_button._buttons_dict[tab_name].configure(text=t(key))
+    window.refresh_texts_all_in_one = refresh_texts_all_in_one
+    window.on_language_change_cmd = on_language_change_cmd
     import webbrowser
-    info=check_for_update()
-    if info:
-        latest,local=info["latest"],info["local"]
-        update_available=info["update_available"]
-        version_frame=tk.Frame(window,bg="#2f2f2f")
-        version_frame.place(relx=1.0,x=-10,y=2,anchor="ne")
-        latest_label=tk.Label(version_frame,text=f"{t('update.latest')}: {latest}",bg="#2f2f2f",fg="white",font=("Consolas",8,"bold"),padx=4,pady=0)
-        latest_label.pack(anchor="e",pady=0)
-        separator=tk.Frame(version_frame,height=1,bg="#666",bd=0)
-        separator.pack(fill="x",pady=0)
-        current_label=tk.Label(version_frame,text=f"{t('update.current')}: {local}",bg="#2f2f2f",fg="lightgreen",font=("Consolas",8,"bold"),padx=4,pady=0,cursor="hand2")
-        current_label.pack(anchor="e",pady=0)
-        current_label.bind("<Button-1>",lambda e:webbrowser.open("https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest"))
-        if update_available:
-            def pulse_current():
-                if not window.running: return
-                current_label["fg"]="yellow" if current_label["fg"]=="lightgreen" else "lightgreen"
-                window.after(800,pulse_current)
-            pulse_current()
     window.title(t("deletion.title"))
-    window.geometry("1200x660")
-    window.config(bg="#2f2f2f")
-    font = ("Arial", 10)
+    window.geometry("700x500")
+    window.minsize(1000, 700)
+    font = ("Segoe UI", 10)
     s = ttk.Style(window)
     s.theme_use('clam')
-    s.configure("Treeview.Heading", font=("Arial",12,"bold"), background="#444", foreground="white")
-    s.configure("Treeview", background="#333", foreground="white", fieldbackground="#333")
-    s.configure("TFrame", background="#2f2f2f")
-    s.configure("TLabel", background="#2f2f2f", foreground="white")
-    s.configure("TEntry", fieldbackground="#444", foreground="white")
-    s.configure("Dark.TButton", background="#555555", foreground="white", font=font, padding=6)
-    s.map("Dark.TButton", background=[("active","#666666"),("!disabled","#555555")], foreground=[("disabled","#888888"),("!disabled","white")])
-    try: window.iconbitmap(ICON_PATH)
-    except: pass
-    guild_search_var = tk.StringVar()
-    gframe, guild_tree, guild_search_entry = create_search_panel(window, t("deletion.search_guilds"), guild_search_var, on_guild_search,
-        ("Name", "ID"), (t("deletion.col.guild_name"), t("deletion.col.guild_id")), (130, 130), 310, 410, tree_height=18)
-    gframe.place(x=10, y=40)
-    guild_tree.bind("<<TreeviewSelect>>", on_guild_select)
-    base_search_var = tk.StringVar()
-    bframe, base_tree, base_search_entry = create_search_panel(window, t("deletion.search_bases"), base_search_var, on_base_search,
-        ("ID",), (t("deletion.col.base_id"),), (280,), 310, 200, tree_height=8)
-    bframe.place(x=330, y=40)
-    base_tree.bind("<<TreeviewSelect>>", on_base_select)
-    guild_members_search_var = tk.StringVar()
-    gm_frame, guild_members_tree, guild_members_search_entry = create_search_panel(window, t("deletion.guild_members"), guild_members_search_var,
-        on_guild_members_search, ("Name", "Level", "UID"), (t("deletion.col.member"), t("deletion.col.level"), "UID"), (100, 50, 140), 310, 200, tree_height=8)
-    gm_frame.place(x=330, y=250)
-    guild_members_tree.bind("<<TreeviewSelect>>", on_guild_member_select)
-    player_search_var = tk.StringVar()
-    pframe, player_tree, player_search_entry = create_search_panel(window, t("deletion.search_players"), player_search_var, on_player_search,
-        ("UID", "Name", "GID", "Last", "Level"), ("UID", t("deletion.col.player_name"), t("deletion.col.guild_id"), t("deletion.col.last_seen"), t("deletion.col.level")),
-        (100, 120, 120, 90, 50), 540, 410, tree_height=18)
-    pframe.place(x=650, y=40)
-    player_tree.bind("<<TreeviewSelect>>", on_player_select)
-    guild_result = tk.Label(window, text=t("deletion.selected_guild", name="N/A"), bg="#2f2f2f", fg="white", font=font)
-    guild_result.place(x=10, y=10)
-    base_result = tk.Label(window, text=t("deletion.selected_base", id="N/A"), bg="#2f2f2f", fg="white", font=font)
-    base_result.place(x=330, y=10)
-    player_result = tk.Label(window, text=t("deletion.selected_player", name="N/A"), bg="#2f2f2f", fg="white", font=font)
-    player_result.place(x=650, y=10)
-    stat_frame, stat_labels = create_stats_panel(window, s)
-    stat_frame.place(x=655, y=470, width=530, height=158)
-    stat_frame.lift()
-    exclusions_container = ttk.Frame(window)
-    exclusions_container.place(x=15, y=470, width=619, height=180)
-    guild_ex_frame = ttk.Frame(exclusions_container)
-    guild_ex_frame.pack(side='left', fill='y', expand=False)
-    exclusions_guilds_tree = ttk.Treeview(guild_ex_frame, columns=("ID",), show="headings", height=5)
-    exclusions_guilds_tree.heading("ID", text=t("deletion.excluded_guild_id"))
-    exclusions_guilds_tree.column("ID", width=207)
-    exclusions_guilds_tree.pack()
-    player_ex_frame = ttk.Frame(exclusions_container)
-    player_ex_frame.pack(side='left', fill='y', expand=False)
-    exclusions_players_tree = ttk.Treeview(player_ex_frame, columns=("ID",), show="headings", height=5)
-    exclusions_players_tree.heading("ID", text=t("deletion.excluded_player_uid"))
-    exclusions_players_tree.column("ID", width=206)
-    exclusions_players_tree.pack()
-    base_ex_frame = ttk.Frame(exclusions_container)
-    base_ex_frame.pack(side='left', fill='y', expand=False)
-    exclusions_bases_tree = ttk.Treeview(base_ex_frame, columns=("ID",), show="headings", height=5)
-    exclusions_bases_tree.heading("ID", text=t("deletion.excluded_bases"))
-    exclusions_bases_tree.column("ID", width=206)
-    exclusions_bases_tree.pack()
+    DARK_BG = "#333333"
+    DARK_FIELD = "#444444"
+    DARK_FG = "white"
+    ACCENT_COLOR = '#3B8ED0'
+    s.configure("Treeview.Heading", font=("Segoe UI", 11, "bold"), background="#3a3a3a", foreground="white")
+    s.configure("Treeview", background=DARK_BG, foreground=DARK_FG, fieldbackground=DARK_BG, rowheight=18, bordercolor=DARK_BG, focuscolor=DARK_BG)
+    s.map("Treeview", background=[('selected', ACCENT_COLOR)])
+    s.layout("Treeview", [('Treeview.treearea', {'sticky': 'nswe'})])
+    s.configure("TFrame", background=DARK_BG)
+    s.configure("TLabel", background=DARK_BG, foreground=DARK_FG)
+    s.configure("TEntry", fieldbackground=DARK_FIELD, foreground=DARK_FG, bordercolor=DARK_FIELD)
+    s.configure("Vertical.TScrollbar", background=DARK_BG, troughcolor=DARK_BG, bordercolor=DARK_BG, arrowcolor=DARK_FG)
+    s.map("Vertical.TScrollbar",
+              background=[('active', DARK_FIELD), ('!active', DARK_BG)],
+              troughcolor=[('active', DARK_BG), ('!active', DARK_BG)],
+              arrowcolor=[('active', DARK_FG), ('!active', DARK_FG)],
+              bordercolor=[('active', DARK_BG), ('!active', DARK_BG)])
+    MENU_BG = DARK_BG
+    MENU_FG = "white"
+    MENU_ACTIVE_BG = ACCENT_COLOR
+    window.columnconfigure(0, weight=1)
+    window.rowconfigure(0, weight=0)
+    window.rowconfigure(1, weight=0)
+    window.rowconfigure(2, weight=1)
+    menu_bar_frame = ctk.CTkFrame(window, fg_color="transparent")
+    menu_bar_frame.grid(row=0, column=0, sticky="ew", padx=0)
+    menu_button_frame=ctk.CTkFrame(menu_bar_frame, fg_color="transparent")
+    menu_button_frame.grid(row=0, column=0, sticky="w", padx=0, pady=0)
+    menu_bar_frame.columnconfigure(0, weight=0)
+    menu_bar_frame.columnconfigure(1, weight=10)
+    menu_bar_frame.columnconfigure(2, weight=0)
+    menu_bar_frame.columnconfigure(3, weight=10)
+    menu_bar_frame.columnconfigure(4, weight=0)
+    menu_button_font = ("Segoe UI", 9)    
+    def show_menu(event, menu):
+        x = event.winfo_rootx()
+        y = event.winfo_rooty() + event.winfo_height()
+        menu.tk_popup(x, y)
+    def create_menu_button(parent, text_key, menu_object):
+        button = ctk.CTkButton(
+            parent,
+            text=t(text_key),
+            fg_color=DARK_BG,
+            hover_color=DARK_FIELD,
+            width=50,
+            height=18, 
+            corner_radius=0,
+            font=menu_button_font 
+        )
+        button.pack(side="left", padx=1, pady=0)
+        button.bind("<Button-1>", lambda e: show_menu(button, menu_object))
+        window.refresh_elements['menu_buttons'].append((button, text_key))
+        return button
+    def create_and_store_menu(menu_name):
+        menu = tk.Menu(window, tearoff=0, bg=MENU_BG, fg=MENU_FG, activebackground=MENU_ACTIVE_BG, activeforeground=MENU_FG)
+        items = []
+        def add_item(label_key, command, is_separator=False):
+            if is_separator:
+                menu.add_separator()
+            else:
+                menu.add_command(label=t(label_key), command=command)
+            items.append({'label_key': label_key, 'command': command, 'is_separator': is_separator})
+        return menu, items, add_item
     def populate_exclusions_trees():
         exclusions_guilds_tree.delete(*exclusions_guilds_tree.get_children())
         for gid in exclusions.get("guilds", []):
@@ -2884,9 +3310,9 @@ def all_in_one_tools():
         if source_tree == guild_tree:
             val = val[1]
         elif source_tree == player_tree:
-            val = val[0]
+            val = val[4]
         elif source_tree == guild_members_tree:
-            val = val[2]
+            val = val[4]
         else:
             val = val[0]
         if val not in exclusions[key]:
@@ -2910,9 +3336,9 @@ def all_in_one_tools():
             if tree == guild_tree:
                 val = val[1]
             elif tree == player_tree:
-                val = val[0]
+                val = val[4]
             elif tree == guild_members_tree:
-                val = val[2]
+                val = val[4]
             else:
                 val = val[0]
             if val in exclusions[key]:
@@ -2921,43 +3347,330 @@ def all_in_one_tools():
     def save_exclusions_func():
         with open("deletion_exclusions.json", "w") as f: json.dump(exclusions, f, indent=4)
         tk.messagebox.showinfo(t("Saved"), t("deletion.saved_exclusions"))
+    file_menu, file_menu_items, file_menu_add = create_and_store_menu("file_menu")
+    file_menu_add("menu.file.load_save", load_save)
+    file_menu_add("menu.file.save_changes", save_changes)
+    file_menu_add("menu.file.convert_sav_to_json", open_convert_level_to_json)
+    file_menu_add("menu.file.convert_json_to_sav", open_convert_json_to_level)
+    file_menu_add("menu.file.convert_players_to_json", open_convert_players_to_json)
+    file_menu_add("menu.file.convert_players_to_sav", open_convert_players_to_sav)
+    file_menu_add("menu.file.gamepass_converter", open_gamepass_converter)
+    file_menu_add("menu.file.id_converter", open_id_converter)
+    file_menu_add("menu.file.slot_injector", slot_injector)
+    file_menu_add("menu.file.modify_save", open_modify_save)
+    file_menu_add("tool.fix_host_save", open_uid_swap_ui)
+    file_menu_add("menu.file.character_transfer", open_character_transfer)
+    file_menu_add("menu.file.restore_map", open_restore_map)
+    file_menu_add("menu.file.rename_world", rename_world)    
+    window.refresh_elements['menus'].append((file_menu, file_menu_items))
+    create_menu_button(menu_button_frame, "deletion.menu.file", file_menu)
+    delete_menu, delete_menu_items, delete_menu_add = create_and_store_menu("delete_menu")
+    delete_menu_add("deletion.menu.delete_empty_guilds", delete_empty_guilds)
+    delete_menu_add("deletion.menu.delete_inactive_bases", delete_inactive_bases)
+    delete_menu_add("deletion.menu.delete_duplicate_players", delete_duplicated_players)
+    delete_menu_add("deletion.menu.delete_inactive_players", delete_inactive_players_button)
+    delete_menu_add("deletion.menu.delete_unreferenced", delete_unreferenced_data)    
+    delete_menu_add("deletion.menu.unlock_private_chests", unlock_all_private_chests)
+    delete_menu_add("deletion.menu.remove_invalid_items", remove_invalid_items_from_save)
+    delete_menu_add("deletion.menu.remove_invalid_pals", remove_invalid_pals_from_save)
+    delete_menu_add("deletion.menu.reset_missions", fix_missions)
+    delete_menu_add("deletion.menu.reset_anti_air", reset_anti_air_turrets)
+    delete_menu_add("deletion.menu.generate_killnearestbase", open_kill_nearest_base_ui)
+    delete_menu_add("guild.menu.rebuild_all_guilds", rebuild_all_guilds)
+    delete_menu_add("guild.menu.move_selected_player_to_selected_guild", move_selected_player_to_selected_guild)
+    window.refresh_elements['menus'].append((delete_menu, delete_menu_items))
+    create_menu_button(menu_button_frame, "deletion.menu.delete", delete_menu)
+    view_menu, view_menu_items, view_menu_add = create_and_store_menu("view_menu")
+    view_menu_add("deletion.menu.show_map", show_base_map)
+    view_menu_add("deletion.menu.generate_map", generate_map)
+    window.refresh_elements['menus'].append((view_menu, view_menu_items))
+    create_menu_button(menu_button_frame, "deletion.menu.view", view_menu)
+    exclusions_menu, exclusions_menu_items, exclusions_menu_add = create_and_store_menu("exclusions_menu")
+    exclusions_menu_add("deletion.menu.save_exclusions", save_exclusions_func)
+    window.refresh_elements['menus'].append((exclusions_menu, exclusions_menu_items))
+    create_menu_button(menu_button_frame, "deletion.menu.exclusions", exclusions_menu)
+    language_menu, language_menu_items, language_menu_add = create_and_store_menu("language_menu")
+    LANG_CODES = ["zh_CN","en_US","ru_RU","fr_FR","es_ES","de_DE","ja_JP","ko_KR"]
+    def create_lang_command(lang_code):
+        return lambda: window.on_language_change_cmd(lang_code)
+    for code in LANG_CODES:
+        language_menu_add(f'lang.{code}', create_lang_command(code))
+    window.refresh_elements['menus'].append((language_menu, language_menu_items))
+    create_menu_button(menu_button_frame, "lang.label", language_menu)    
+    right_header_frame = ctk.CTkFrame(menu_bar_frame, fg_color="transparent")
+    right_header_frame.grid(row=0, column=4, padx=10, pady=0, sticky="e")    
+    try:
+        from PIL import Image
+        logo_image_path = os.path.join(base_dir, "resources", "PalworldSaveTools.png")
+        logo_image = ctk.CTkImage(Image.open(logo_image_path), size=(450, 40))
+        logo_label = ctk.CTkLabel(menu_bar_frame, image=logo_image, text="", fg_color="transparent")
+        logo_label.grid(row=0, column=2, padx=(0, 10), pady=0, sticky="n")
+        logo_label.image = logo_image
+    except Exception as e:
+        print(f"Error loading logo: {e}")
+    info=check_for_update()
+    if info:
+        latest,local=info["latest"],info["local"]
+        update_available=info["update_available"]
+        version_frame=ctk.CTkFrame(right_header_frame, fg_color="transparent")
+        version_frame.pack(side="top", anchor="e", pady=0, padx=0)
+        current_text = f"{t('update.current')}: {local}"
+        current_label = ctk.CTkLabel(version_frame, text=current_text, text_color="white", font=("Consolas",11,"bold"), anchor="w")
+        current_label.pack(side="left", anchor="w", pady=0, padx=0)
+        window.refresh_elements['version_labels'].append((current_label, 'update.current'))
+        if not update_available:
+            latest_text = f" | {t('update.latest')}: {latest}"
+            latest_label = ctk.CTkLabel(version_frame, text=latest_text, text_color="white", font=("Consolas",11,"bold"), anchor="e")
+            latest_label.pack(side="right", anchor="e", pady=0, padx=(4, 0))
+            window.refresh_elements['version_labels'].append((latest_label, 'update.latest'))
+        else:
+            pipe_separator = ctk.CTkLabel(version_frame, text=" | ", text_color="white", font=("Consolas",11,"bold"), anchor="e")
+            pipe_separator.pack(side="left", anchor="e", pady=0, padx=0)
+            window.refresh_elements['version_labels'].append((pipe_separator, 'pipe_separator'))
+            update_label = ctk.CTkLabel(
+                version_frame,
+                text=f"{t('update.latest')}: {latest}",
+                text_color="white",
+                font=("Consolas",11,"bold", "underline"),
+                cursor="hand2"
+            )
+            update_label.pack(side="right", anchor="e", pady=0, padx=(4, 0))
+            window.refresh_elements['version_labels'].append((update_label, 'update.latest'))            
+            update_url = "https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest"
+            update_label.bind("<Button-1>", lambda e: webbrowser.open(update_url))
+            if window.running:
+                def pulse_label():
+                    if not window.running: return
+                    current_color = update_label.cget("text_color")
+                    new_color = "red" if current_color == "white" else "white"
+                    update_label.configure(text_color=new_color)
+                    window.after(800,pulse_label)
+                pulse_label()
+    result_frame = ctk.CTkFrame(window, fg_color="transparent")
+    result_frame.grid(row=1, column=0, padx=10, pady=0, sticky="ew")
+    result_frame.grid_propagate(False)
+    result_frame.configure(height=110)
+    result_frame.columnconfigure(0, weight=1)
+    result_frame.columnconfigure(1, weight=0)
+    info_container = ctk.CTkFrame(result_frame, fg_color="transparent")
+    info_container.grid(row=0, column=0, sticky="nsew")
+    info_container.columnconfigure(0, weight=1)
+    info_container.columnconfigure(1, weight=0)
+    status_label_frame = ctk.CTkFrame(info_container, fg_color="transparent", width=400)
+    status_label_frame.grid(row=0, column=0, sticky="nw", padx=(0, 10))
+    status_label_frame.columnconfigure(0, weight=1)
+    stat_frame, stat_labels, stat_key_labels_to_refresh = create_stats_panel(info_container, s)
+    stat_frame.grid(row=0, column=1, sticky="ne")
+    font_large = ("Segoe UI", 11)
+    player_result = ctk.CTkLabel(status_label_frame, text=t("deletion.selected_player", name="N/A"), font=font_large, anchor="w")
+    player_result.grid(row=0, column=0, sticky="w", pady=(0, 2))
+    window.refresh_elements['main_labels'].append((player_result, "deletion.selected_player", {"name": "N/A"}))
+    guild_result = ctk.CTkLabel(status_label_frame, text=t("deletion.selected_guild", name="N/A"), font=font_large, anchor="w")
+    guild_result.grid(row=1, column=0, sticky="w", pady=(0, 2))
+    window.refresh_elements['main_labels'].append((guild_result, "deletion.selected_guild", {"name": "N/A"}))
+    base_result = ctk.CTkLabel(status_label_frame, text=t("deletion.selected_base", id="N/A"), font=font_large, anchor="w")
+    base_result.grid(row=2, column=0, sticky="w")
+    window.refresh_elements['main_labels'].append((base_result, "deletion.selected_base", {"id": "N/A"}))
+    window.refresh_elements['stat_key_labels'] = stat_key_labels_to_refresh
+    notebook = ctk.CTkTabview(window, width=950)
+    notebook.grid(row=2, column=0, padx=10, pady=(0, 5), sticky="nsew")
+    window.notebook = notebook
+    PLAYER_TAB_NAME = "PlayersTab"
+    player_tab = notebook.add(PLAYER_TAB_NAME)
+    window.refresh_elements['notebook_tabs'].append((PLAYER_TAB_NAME, "deletion.search_players"))
+    player_tab.columnconfigure(0, weight=1)
+    player_tab.rowconfigure(0, weight=1)
+    player_search_var = tk.StringVar()
+    pframe, player_tree, player_search_entry, player_search_label = create_search_panel(
+        player_tab,
+        "deletion.search_players",
+        player_search_var,
+        on_player_search,
+        ("Name", "Last", "Level", "Pals", "UID", "GName", "GID"),
+        (
+            t("deletion.col.player_name"),
+            t("deletion.col.last_seen"),
+            t("deletion.col.level"),
+            t("deletion.col.pals"),
+            "UID",
+            t("deletion.col.guild_name"),
+            t("deletion.col.guild_id")
+        ),
+        (140, 120, 60, 60, 150, 180, 180),
+        900,
+        600,
+        tree_height=25
+    )
+    window.refresh_elements['search_labels'].append((player_search_label, "deletion.search_players"))
+    pframe.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+    player_tree.configure(selectmode='browse')
+    player_tree.bind("<<TreeviewSelect>>", on_player_select)
+    for col, key in zip(
+        ("Name", "Last", "Level", "Pals", "UID", "GName", "GID"),
+        (
+            "deletion.col.player_name",
+            "deletion.col.last_seen",
+            "deletion.col.level",
+            "deletion.col.pals",
+            "UID",
+            "deletion.col.guild_name",
+            "deletion.col.guild_id"
+        )
+    ):
+        player_tree.heading(col, command=lambda c=col: treeview_sort_column(player_tree, c, False))
+        window.refresh_elements['treeview_headings'].append((player_tree, col, key))
+    GUILD_TAB_NAME = "GuildsTab"
+    guild_tab = notebook.add(GUILD_TAB_NAME)
+    window.refresh_elements['notebook_tabs'].append((GUILD_TAB_NAME, "deletion.search_guilds"))
+    guild_tab.columnconfigure(0, weight=1)
+    guild_tab.rowconfigure(0, weight=2)
+    guild_tab.rowconfigure(1, weight=1)
+    guild_search_var = tk.StringVar()
+    gframe, guild_tree, guild_search_entry, guild_search_label = create_search_panel(
+        guild_tab,
+        "deletion.search_guilds",
+        guild_search_var,
+        on_guild_search,
+        ("Name", "ID"),
+        (t("deletion.col.guild_name"), t("deletion.col.guild_id")),
+        (150, 150), 700, 400, tree_height=15)
+    window.refresh_elements['search_labels'].append((guild_search_label, "deletion.search_guilds"))
+    gframe.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+    guild_tree.bind("<<TreeviewSelect>>", on_guild_select)
+    for col, key in zip(("Name", "ID"), ("deletion.col.guild_name", "deletion.col.guild_id")):
+        guild_tree.heading(col, command=lambda c=col: treeview_sort_column(guild_tree, c, False))
+        window.refresh_elements['treeview_headings'].append((guild_tree, col, key))
+    guild_members_search_var = tk.StringVar()
+    gm_frame, guild_members_tree, guild_members_search_entry, guild_members_search_label = create_search_panel(
+        guild_tab,
+        "deletion.guild_members",
+        guild_members_search_var,
+        on_guild_members_search,
+        ("Name", "Last", "Level", "Pals", "UID"),
+        (t("deletion.col.member"), t("deletion.col.last_seen"), t("deletion.col.level"), t("deletion.col.pals"), "UID"),
+        (200, 120, 60, 100, 300), 800, 200, tree_height=10)
+    window.refresh_elements['search_labels'].append((guild_members_search_label, "deletion.guild_members"))
+    gm_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+    guild_members_tree.bind("<<TreeviewSelect>>", on_guild_member_select)
+    for col, key in zip(("Name", "Last", "Level", "Pals", "UID"), ("deletion.col.member", "deletion.col.last_seen", "deletion.col.level", "deletion.col.pals", "UID")):
+        guild_members_tree.heading(col, command=lambda c=col: treeview_sort_column(guild_members_tree, c, False))
+        window.refresh_elements['treeview_headings'].append((guild_members_tree, col, key))
+    BASES_TAB_NAME = "BasesTab"
+    base_tab = notebook.add(BASES_TAB_NAME)
+    window.refresh_elements['notebook_tabs'].append((BASES_TAB_NAME, "deletion.search_bases"))
+    base_tab.columnconfigure(0, weight=1)
+    base_tab.rowconfigure(0, weight=3)
+    base_search_var = tk.StringVar()
+    bframe, base_tree, base_search_entry, base_search_label = create_search_panel(
+        base_tab,
+        "deletion.search_bases",
+        base_search_var,
+        on_base_search,
+        ("ID", "GuildID", "GuildName"),
+        (t("deletion.col.base_id"), t("deletion.col.guild_id"), t("deletion.col.guild_name")),
+        (200, 250, 250),
+        800,
+        600,
+        tree_height=25
+    )
+    window.refresh_elements['search_labels'].append((base_search_label, "deletion.search_bases"))
+    bframe.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+    base_tree.bind("<<TreeviewSelect>>", on_base_select)
+    for col, key in zip(("ID", "GuildID", "GuildName"), ("deletion.col.base_id", "deletion.col.guild_id", "deletion.col.guild_name")):
+        base_tree.heading(col, command=lambda c=col: treeview_sort_column(base_tree, c, False))
+        window.refresh_elements['treeview_headings'].append((base_tree, col, key))
+    EXCLUSIONS_TAB_NAME = "ExclusionsTab"
+    exclusions_tab = notebook.add(EXCLUSIONS_TAB_NAME)
+    window.refresh_elements['notebook_tabs'].append((EXCLUSIONS_TAB_NAME, "deletion.menu.exclusions"))
+    exclusions_tab.columnconfigure((0, 1, 2), weight=1)
+    exclusions_tab.rowconfigure(0, weight=1)
+    player_excl_frame = ctk.CTkFrame(exclusions_tab, fg_color="transparent")
+    player_excl_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+    player_excl_frame.columnconfigure(0, weight=1)
+    player_excl_frame.rowconfigure(0, weight=1)
+    player_excl_label = ctk.CTkLabel(player_excl_frame, text=t("deletion.exclusions.player_label"), font=("Segoe UI", 11, "bold"))
+    player_excl_label.pack(pady=(0, 5), padx=5, anchor="w")
+    window.refresh_elements['main_labels'].append((player_excl_label, "deletion.exclusions.player_label", {}))
+    exclusions_players_tree = ttk.Treeview(player_excl_frame, columns=("ID",), show="headings", style="Treeview")
+    exclusions_players_tree.heading("ID", text=t("deletion.excluded_player_uid"))
+    window.refresh_elements['treeview_headings'].append((exclusions_players_tree, "ID", "deletion.excluded_player_uid"))
+    exclusions_players_tree.column("ID", width=300, stretch=True)
+    exclusions_players_tree.pack(fill="both", expand=True, padx=5, pady=0)
+    for col in ("ID",):
+        exclusions_players_tree.heading(col, command=lambda c=col: treeview_sort_column(exclusions_players_tree, c, False))
+    guild_excl_frame = ctk.CTkFrame(exclusions_tab, fg_color="transparent")
+    guild_excl_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+    guild_excl_frame.columnconfigure(0, weight=1)
+    guild_excl_frame.rowconfigure(0, weight=1)
+    guild_excl_label = ctk.CTkLabel(guild_excl_frame, text=t("deletion.exclusions.guild_label"), font=("Segoe UI", 11, "bold"))
+    guild_excl_label.pack(pady=(0, 5), padx=5, anchor="w")
+    window.refresh_elements['main_labels'].append((guild_excl_label, "deletion.exclusions.guild_label", {}))
+    exclusions_guilds_tree = ttk.Treeview(guild_excl_frame, columns=("ID",), show="headings", style="Treeview")
+    exclusions_guilds_tree.heading("ID", text=t("deletion.excluded_guild_id"))
+    window.refresh_elements['treeview_headings'].append((exclusions_guilds_tree, "ID", "deletion.excluded_guild_id"))
+    exclusions_guilds_tree.column("ID", width=300, stretch=True)
+    exclusions_guilds_tree.pack(fill="both", expand=True, padx=5, pady=0)
+    for col in ("ID",):
+        exclusions_guilds_tree.heading(col, command=lambda c=col: treeview_sort_column(exclusions_guilds_tree, c, False))
+    base_excl_frame = ctk.CTkFrame(exclusions_tab, fg_color="transparent")
+    base_excl_frame.grid(row=0, column=2, padx=5, pady=5, sticky="nsew")
+    base_excl_frame.columnconfigure(0, weight=1)
+    base_excl_frame.rowconfigure(0, weight=1)
+    base_excl_label = ctk.CTkLabel(base_excl_frame, text=t("deletion.exclusions.base_label"), font=("Segoe UI", 11, "bold"))
+    base_excl_label.pack(pady=(0, 5), padx=5, anchor="w")
+    window.refresh_elements['main_labels'].append((base_excl_label, "deletion.exclusions.base_label", {}))
+    exclusions_bases_tree = ttk.Treeview(base_excl_frame, columns=("ID",), show="headings", style="Treeview")
+    exclusions_bases_tree.heading("ID", text=t("deletion.excluded_bases"))
+    window.refresh_elements['treeview_headings'].append((exclusions_bases_tree, "ID", "deletion.excluded_bases"))
+    exclusions_bases_tree.column("ID", width=300, stretch=True)
+    exclusions_bases_tree.pack(fill="both", expand=True, padx=5, pady=0)
+    for col in ("ID",):
+        exclusions_bases_tree.heading(col, command=lambda c=col: treeview_sort_column(exclusions_bases_tree, c, False))
     populate_exclusions_trees()
     def guild_tree_menu(event):
         iid = guild_tree.identify_row(event.y)
         if iid:
             guild_tree.selection_set(iid)
-            menu = tk.Menu(window, tearoff=0)
+            menu = tk.Menu(window, tearoff=0, bg=MENU_BG, fg=MENU_FG, activebackground=MENU_ACTIVE_BG, activeforeground=MENU_FG)
             menu.add_command(label=t("deletion.ctx.add_exclusion"), command=lambda: add_exclusion(guild_tree, "guilds"))
             menu.add_command(label=t("deletion.ctx.remove_exclusion"), command=lambda: remove_selected_from_regular(guild_tree, "guilds"))
             menu.add_command(label=t("deletion.ctx.delete_guild"), command=delete_selected_guild)
-            menu.add_command(label=t("guild.menu.move_selected_player_to_selected_guild"), command=move_selected_player_to_selected_guild)
             menu.add_command(label=t("guild.rename.menu"), command=rename_guild)
+            menu.add_command(label=t("guild.menu.move_selected_player_to_selected_guild"), command=move_selected_player_to_selected_guild)
             menu.tk_popup(event.x_root, event.y_root)
     def base_tree_menu(event):
         iid = base_tree.identify_row(event.y)
         if iid:
             base_tree.selection_set(iid)
-            menu = tk.Menu(window, tearoff=0)
+            menu = tk.Menu(window, tearoff=0, bg=MENU_BG, fg=MENU_FG, activebackground=MENU_ACTIVE_BG, activeforeground=MENU_FG)
             menu.add_command(label=t("deletion.ctx.add_exclusion"), command=lambda: add_exclusion(base_tree, "bases"))
             menu.add_command(label=t("deletion.ctx.remove_exclusion"), command=lambda: remove_selected_from_regular(base_tree, "bases"))
             menu.add_command(label=t("deletion.ctx.delete_base"), command=delete_selected_base)
             menu.tk_popup(event.x_root, event.y_root)
     def player_tree_menu(event):
+        global selected_source_player        
         iid = player_tree.identify_row(event.y)
         if iid:
-            player_tree.selection_set(iid)
-            menu = tk.Menu(window, tearoff=0)
+            player_tree.selection_set(iid)        
+        selected_iids = player_tree.selection()        
+        if selected_iids:
+            raw_uid = player_tree.item(selected_iids[0])['values'][4]
+            selected_source_player = raw_uid             
+            menu = tk.Menu(window, tearoff=0, bg=MENU_BG, fg=MENU_FG, activebackground=MENU_ACTIVE_BG, activeforeground=MENU_FG)
             menu.add_command(label=t("deletion.ctx.add_exclusion"), command=lambda: add_exclusion(player_tree, "players"))
             menu.add_command(label=t("deletion.ctx.remove_exclusion"), command=lambda: remove_selected_from_regular(player_tree, "players"))
             menu.add_command(label=t("deletion.ctx.delete_player"), command=delete_selected_player)
             menu.add_command(label=t("player.rename.menu"), command=rename_player)
+            menu.add_separator()
             menu.add_command(label=t("guild.menu.move_selected_player_to_selected_guild"), command=move_selected_player_to_selected_guild)
             menu.tk_popup(event.x_root, event.y_root)
+        else:
+            selected_source_player = None
     def guild_members_tree_menu(event):
         iid = guild_members_tree.identify_row(event.y)
         if iid:
             guild_members_tree.selection_set(iid)
-            menu = tk.Menu(window, tearoff=0)
+            menu = tk.Menu(window, tearoff=0, bg=MENU_BG, fg=MENU_FG, activebackground=MENU_ACTIVE_BG, activeforeground=MENU_FG)
             menu.add_command(label=t("guild.ctx.make_leader"), command=make_selected_member_leader)
             menu.add_command(label=t("deletion.ctx.add_exclusion"), command=lambda: add_exclusion(guild_members_tree, "players"))
             menu.add_command(label=t("deletion.ctx.remove_exclusion"), command=lambda: remove_selected_from_regular(guild_members_tree, "players"))
@@ -2968,21 +3681,21 @@ def all_in_one_tools():
         iid = exclusions_guilds_tree.identify_row(event.y)
         if iid:
             exclusions_guilds_tree.selection_set(iid)
-            menu = tk.Menu(window, tearoff=0)
+            menu = tk.Menu(window, tearoff=0, bg=MENU_BG, fg=MENU_FG, activebackground=MENU_ACTIVE_BG, activeforeground=MENU_FG)
             menu.add_command(label=t("deletion.ctx.remove_exclusion"), command=lambda: remove_selected_exclusion(exclusions_guilds_tree, "guilds"))
             menu.tk_popup(event.x_root, event.y_root)
     def exclusions_players_tree_menu(event):
         iid = exclusions_players_tree.identify_row(event.y)
         if iid:
             exclusions_players_tree.selection_set(iid)
-            menu = tk.Menu(window, tearoff=0)
+            menu = tk.Menu(window, tearoff=0, bg=MENU_BG, fg=MENU_FG, activebackground=MENU_ACTIVE_BG, activeforeground=MENU_FG)
             menu.add_command(label=t("deletion.ctx.remove_exclusion"), command=lambda: remove_selected_exclusion(exclusions_players_tree, "players"))
             menu.tk_popup(event.x_root, event.y_root)
     def exclusions_bases_tree_menu(event):
         iid = exclusions_bases_tree.identify_row(event.y)
         if iid:
             exclusions_bases_tree.selection_set(iid)
-            menu = tk.Menu(window, tearoff=0)
+            menu = tk.Menu(window, tearoff=0, bg=MENU_BG, fg=MENU_FG, activebackground=MENU_ACTIVE_BG, activeforeground=MENU_FG)
             menu.add_command(label=t("deletion.ctx.remove_exclusion"), command=lambda: remove_selected_exclusion(exclusions_bases_tree, "bases"))
             menu.tk_popup(event.x_root, event.y_root)
     guild_tree.bind("<Button-3>", guild_tree_menu)
@@ -2992,69 +3705,16 @@ def all_in_one_tools():
     exclusions_guilds_tree.bind("<Button-3>", exclusions_guilds_tree_menu)
     exclusions_players_tree.bind("<Button-3>", exclusions_players_tree_menu)
     exclusions_bases_tree.bind("<Button-3>", exclusions_bases_tree_menu)
-    menubar = tk.Menu(window)
-    file_menu = tk.Menu(menubar, tearoff=0)
-    file_menu.add_command(label=t("menu.file.load_save"), command=load_save)
-    file_menu.add_command(label=t("menu.file.save_changes"), command=save_changes)
-    file_menu.add_separator()
-    file_menu.add_command(label=t("menu.file.convert_sav_to_json"), command=open_convert_level_to_json)
-    file_menu.add_command(label=t("menu.file.convert_json_to_sav"), command=open_convert_json_to_level)
-    file_menu.add_command(label=t("menu.file.convert_players_to_json"), command=open_convert_players_to_json)
-    file_menu.add_command(label=t("menu.file.convert_players_to_sav"), command=open_convert_players_to_sav)
-    file_menu.add_separator()
-    file_menu.add_command(label=t("menu.file.gamepass_converter"), command=open_gamepass_converter)
-    file_menu.add_command(label=t("menu.file.id_converter"), command=open_id_converter)
-    file_menu.add_command(label=t("menu.file.slot_injector"), command=open_slot_injector)
-    file_menu.add_command(label=t("menu.file.modify_save"), command=open_modify_save)
-    file_menu.add_command(label=t("menu.file.character_transfer"), command=open_character_transfer)
-    file_menu.add_command(label=t("menu.file.fix_host_save"), command=open_fix_host_save)
-    file_menu.add_command(label=t("menu.file.restore_map"), command=open_restore_map)
-    file_menu.add_command(label=t("menu.file.rename_world"), command=rename_world)
-    menubar.add_cascade(label=t("deletion.menu.file"), menu=file_menu)
-    delete_menu = tk.Menu(menubar, tearoff=0)
-    delete_menu.add_command(label=t("deletion.menu.delete_selected_guild"), command=delete_selected_guild)
-    delete_menu.add_command(label=t("deletion.menu.delete_empty_guilds"), command=delete_empty_guilds)
-    delete_menu.add_separator()
-    delete_menu.add_command(label=t("deletion.menu.delete_selected_base"), command=delete_selected_base)
-    delete_menu.add_command(label=t("deletion.menu.delete_inactive_bases"), command=delete_inactive_bases)
-    delete_menu.add_separator()
-    delete_menu.add_command(label=t("deletion.menu.delete_selected_player"), command=delete_selected_player)
-    delete_menu.add_command(label=t("deletion.menu.delete_duplicate_players"), command=delete_duplicated_players)
-    delete_menu.add_command(label=t("deletion.menu.delete_inactive_players"), command=delete_inactive_players_button)
-    delete_menu.add_separator()
-    delete_menu.add_command(label=t("deletion.menu.delete_unreferenced"), command=delete_unreferenced_data)
-    delete_menu.add_separator()
-    delete_menu.add_command(label=t("deletion.menu.generate_killnearestbase"), command=open_kill_nearest_base_ui)
-    delete_menu.add_command(label=t("deletion.menu.reset_anti_air"), command=reset_anti_air_turrets)
-    delete_menu.add_command(label=t("deletion.menu.unlock_private_chests"), command=unlock_all_private_chests)
-    delete_menu.add_command(label=t("deletion.menu.remove_invalid_items"), command=remove_invalid_items_from_save)
-    delete_menu.add_command(label=t("deletion.menu.remove_invalid_pals"), command=remove_invalid_pals_from_save)
-    delete_menu.add_command(label=t("deletion.menu.reset_missions"), command=fix_missions)
-    menubar.add_cascade(label=t("deletion.menu.delete"), menu=delete_menu)
-    view_menu = tk.Menu(menubar, tearoff=0)
-    view_menu.add_command(label=t("deletion.menu.show_map"), command=show_base_map)
-    view_menu.add_command(label=t("deletion.menu.generate_map"), command=generate_map)
-    menubar.add_cascade(label=t("deletion.menu.view"), menu=view_menu)
-    exclusions_menu = tk.Menu(menubar, tearoff=0)
-    exclusions_menu.add_command(label=t("deletion.menu.save_exclusions"), command=save_exclusions_func)
-    menubar.add_cascade(label=t("deletion.menu.exclusions"), menu=exclusions_menu)
-    guild_menu = tk.Menu(menubar, tearoff=0)
-    guild_menu.add_command(label=t("guild.menu.move_selected_player_to_selected_guild"), command=move_selected_player_to_selected_guild)
-    guild_menu.add_command(label=t("guild.menu.rebuild_all_guilds"), command=rebuild_all_guilds)
-    menubar.add_cascade(label=t("guild.menu.title"), menu=guild_menu)
-    window.config(menu=menubar)
     def on_f5_press(event):
         folder = current_save_path
         if not folder: return
         refresh_all()
-        guild_tree.selection_remove(guild_tree.selection())
-        player_tree.selection_remove(player_tree.selection())
-        base_tree.selection_remove(base_tree.selection())
-        guild_result.config(text=t("deletion.selected_guild", name="N/A"))
-        base_result.config(text=t("deletion.selected_base", id="N/A"))
-        player_result.config(text=t("deletion.selected_player", name="N/A"))
     window.bind("<F5>", on_f5_press)
+    window.refresh_texts_all_in_one()
+    window.update()
     center_window(window)
+    try: window.iconbitmap(ICON_PATH)
+    except: pass
     def on_exit():
         window.running=False
         try: window.destroy()

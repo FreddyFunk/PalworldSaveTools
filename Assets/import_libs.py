@@ -50,7 +50,15 @@ def center_window(win):
     x, y = (ws - w) // 2, (hs - h) // 2
     win.geometry(f'{w}x{h}+{x}+{y}')
 try:
-    from i18n import t
+    from i18n import init_language, t, set_language, get_language, load_resources
 except Exception:
     def t(key, **fmt):
         return key.format(**fmt) if fmt else key
+    def init_language(default_lang: str = "zh_CN"):
+        pass
+    def set_language(lang: str):
+        pass
+    def get_language():
+        return "zh_CN"
+    def load_resources(lang: str | None = None):
+        pass

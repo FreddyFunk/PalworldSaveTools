@@ -1,10 +1,14 @@
-import os, sys, shutil, subprocess, re, tempfile, urllib.request, zipfile
+import os, sys, shutil, subprocess, re, tempfile, urllib.request, zipfile, ctypes
 from pathlib import Path
 import importlib.util
 import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
+import customtkinter as ctk
+ctk.set_appearance_mode("Dark")
+ctk.set_default_color_theme("blue")
 def unlock_self_folder():
+    print(f"Attempting to unlock the folder...")
     folder=os.path.dirname(os.path.abspath(sys.argv[0]))
     script=(
         f"$target=\"{folder}\"\n"
@@ -19,17 +23,16 @@ def unlock_self_folder():
     si=subprocess.STARTUPINFO()
     si.dwFlags=subprocess.STARTF_USESHOWWINDOW
     subprocess.Popen(["powershell","-WindowStyle","Hidden","-ExecutionPolicy","Bypass","-File",tmp.name],startupinfo=si,creationflags=subprocess.CREATE_NO_WINDOW)
+    print("Operation completed.")
     os._exit(0)
 def hide_console():
     return
-    import sys, ctypes
     if sys.platform == "win32":
         hwnd = ctypes.windll.kernel32.GetConsoleWindow()
         if hwnd:
             ctypes.windll.user32.ShowWindow(hwnd, 0)
 def show_console():
     return
-    import sys, ctypes
     if sys.platform == "win32":
         hwnd = ctypes.windll.kernel32.GetConsoleWindow()
         if hwnd:
@@ -107,10 +110,10 @@ except Exception:
         return "zh_CN"
     def load_resources(lang: str | None = None):
         pass
-class LazyImporter:    
+class LazyImporter:      
     def __init__(self):
         self._modules = {}
-        self._common_funcs = None    
+        self._common_funcs = None     
     def _try_import(self, module_name):
         import importlib
         if module_name in sys.modules:
@@ -148,13 +151,13 @@ class LazyImporter:
             pass
         raise ImportError(t("error.module") + f" {module_name}")
     def get_module(self, module_name):
-        return self._try_import(module_name)    
+        return self._try_import(module_name)      
     def get_function(self, module_name, function_name):
         module = self.get_module(module_name)
-        return getattr(module, function_name)    
+        return getattr(module, function_name)      
     def get_common_functions(self):
         if self._common_funcs is not None:
-            return self._common_funcs        
+            return self._common_funcs         
         try:
             common_module = self._try_import('common')
             self._common_funcs = {
@@ -167,7 +170,7 @@ class LazyImporter:
                 'ICON_PATH': 'Assets/resources/pal.ico',
                 'get_versions': lambda: ("Unknown", "Unknown"),
                 'open_file_with_default_app': lambda x: None
-            }        
+            }         
         return self._common_funcs
 lazy_importer = LazyImporter()
 common_funcs = lazy_importer.get_common_functions()
@@ -253,7 +256,7 @@ management_tool_keys = [
     "tool.fix_host_save",
     "tool.restore_map",
 ]
-class MenuGUI(tk.Tk):
+class MenuGUI(ctk.CTk):
     def tk_error_handler(self, exc, val, tb):
         from traceback import format_exception
         err_type=exc.__name__
@@ -268,150 +271,151 @@ class MenuGUI(tk.Tk):
         messagebox.showerror("PST Error",f"[ERROR TYPE] {err_type}\n[DESCRIPTION] {err_msg}\n\n========================\nFull Traceback Logged\n========================")
         hide_console()
     def __init__(self):
-        self.running = True 
         super().__init__()
+        self.running = True 
         self.report_callback_exception = self.tk_error_handler
+        self.geometry("850x650")
+        self.resizable(True, True)
+        tools_version, _ = get_versions()
+        self.title(t("app.title", version=tools_version))
         try:
             if os.name == 'nt' and os.path.exists(ICON_PATH):
                 self.iconbitmap(ICON_PATH)
         except Exception as e:
-            pprint(f"{t('error.icon')} {e}")
-        style = ttk.Style(self)
-        style.theme_use('clam')
-        style.configure("TFrame", background="#2f2f2f")
-        style.configure("TLabel", background="#2f2f2f", foreground="white")
-        style.configure("TEntry", fieldbackground="#444444", foreground="white")
-        style.configure("Treeview.Heading", font=("Arial", 12, "bold"), background="#444444", foreground="white")
-        style.configure("Treeview", background="#333333", foreground="white", rowheight=25, fieldbackground="#333333", borderwidth=0)
-        style.configure("Dark.TButton", background="#555555", foreground="white", padding=6)
-        style.map("Dark.TButton", background=[("active", "#666666"), ("!disabled", "#555555")], foreground=[("disabled", "#888888"), ("!disabled", "white")])
-        tools_version, _ = get_versions()
-        self.title(t("app.title", version=tools_version))
-        self.configure(bg="#2f2f2f")
-        self.geometry("800x550")
-        self.resizable(False, True)
+            pass
         self.info_labels = []
+        self.version_labels = []
         self.category_frames = []
         self.tool_buttons = []
         self.lang_combo = None
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
         self.setup_ui()
         center_window(self)
+    def _create_tool_section(self, parent_frame, col_idx, categories, start_idx=0):
+        current_row = 0
+        BUTTON_WIDTH = 300 
+        for idx, (title, tools) in enumerate(categories, start=start_idx):
+            cat_frame = ctk.CTkFrame(parent_frame, fg_color="transparent")
+            cat_frame.grid(row=current_row, column=col_idx, padx=10, pady=10, sticky="nsew") 
+            cat_frame.grid_columnconfigure(0, weight=1)
+            lbl = ctk.CTkLabel(cat_frame, text=t(title), font=("Segoe UI", 16, "bold"), text_color="#A9A9A9")
+            lbl.grid(row=0, column=0, pady=10)
+            self.category_frames.append((lbl, title))
+            for btn_i, tool_key in enumerate(tools):
+                tool_idx = (idx, btn_i)
+                btn_fg_color = None
+                btn_hover_color = None
+                btn = ctk.CTkButton(
+                    cat_frame, 
+                    text=t(tool_key), 
+                    height=35,
+                    width=BUTTON_WIDTH,
+                    font=("Segoe UI", 13),
+                    fg_color=btn_fg_color,
+                    hover_color=btn_hover_color,
+                    command=lambda idx=tool_idx: self.run_tool(idx)
+                )
+                btn.grid(row=btn_i+1, column=0, padx=0, pady=5) 
+                self.tool_buttons.append((btn, tool_key))
+            current_row += 1
     def setup_ui(self):
-        root_frame = ttk.Frame(self, style="TFrame")
-        root_frame.pack(fill="both", expand=True, padx=10, pady=10)
-        canvas = tk.Canvas(root_frame, bg="#2f2f2f", highlightthickness=0)
-        vbar = ttk.Scrollbar(root_frame, orient="vertical", command=canvas.yview)
-        canvas.configure(yscrollcommand=vbar.set)
-        canvas.pack(side="left", fill="both", expand=True)
-        vbar.pack(side="right", fill="y")
-        container = ttk.Frame(canvas, style="TFrame")
-        win = canvas.create_window((0, 0), window=container, anchor="nw")
-        def _on_frame_configure(event):
-            canvas.configure(scrollregion=canvas.bbox("all"))
-        def _on_canvas_configure(event):
-            canvas.itemconfigure(win, width=event.width)
-        container.bind("<Configure>", _on_frame_configure)
-        canvas.bind("<Configure>", _on_canvas_configure)
-        def _on_mousewheel(event):
-            delta = -1 * int(event.delta / 120) if event.delta else 0
-            canvas.yview_scroll(delta, "units")
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
-        topbar = ttk.Frame(container, style="TFrame")
-        topbar.pack(fill="x", pady=(0, 6))
-        self.lang_combo = ttk.Combobox(topbar, state="readonly", values=[])
-        self.lang_combo.pack(side="right", padx=(0,6))
-        self.lang_combo.bind("<<ComboboxSelected>>", lambda e: self.on_language_change())
+        tools_version, game_version = get_versions()
+        import webbrowser
+        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame.grid(row=0, column=0, padx=20, pady=(15, 0), sticky="ew")
+        header_frame.grid_columnconfigure(0, weight=1)
+        header_frame.grid_columnconfigure(1, weight=0)
+        header_frame.grid_columnconfigure(2, weight=1)
         logo_path = os.path.join("Assets", "resources", "PalworldSaveTools.png")
         if os.path.exists(logo_path):
-            img = Image.open(logo_path)
-            img = img.resize((400, 100), Image.LANCZOS)
-            self.logo_img = ImageTk.PhotoImage(img)
-            ttk.Label(container, image=self.logo_img, style="TLabel").pack(anchor="center", pady=(0,10))
+            pil_img = Image.open(logo_path)
+            ctk_img = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(300, 75))
+            logo_label = ctk.CTkLabel(header_frame, text="", image=ctk_img)
+            logo_label.grid(row=0, column=1, pady=(5, 5), sticky="n")
         else:
-            ascii_font = ("Consolas", 12)
-            logo_text = r"""
-          ___      _                _    _ ___              _____         _    
-         | _ \__ _| |_ __ _____ _ _| |__| / __| __ ___ ____|_   _|__  ___| |___
-         |  _/ _` | \ V  V / _ \ '_| / _` \__ \/ _` \ V / -_)| |/ _ \/ _ \ (_-<
-         |_| \__,_|_|\_/\_/\___/_| |_\__,_|___/\__,_|\_/\___||_|\___/\___/_/__/
-                """
-            for line in logo_text.strip('\n').split('\n'):
-                ttk.Label(container, text=line, font=ascii_font, style="TLabel").pack(anchor="center")
-        tools_version, game_version = get_versions()
+            logo_text = "PALWORLD SAVE TOOLS"
+            logo_label = ctk.CTkLabel(header_frame, text=logo_text, font=("Segoe UI", 24, "bold"), text_color="#3B8ED0")
+            logo_label.grid(row=0, column=1, pady=(5, 5), sticky="n")
+        self.lang_combo = ctk.CTkOptionMenu(
+            header_frame,
+            width=120,
+            values=[],
+            command=self.on_language_change_cmd
+        )
+        self.lang_combo.place(relx=1.0, rely=0.0, x=-10, y=5, anchor="ne")
+        info_frame = ctk.CTkFrame(self, fg_color="transparent", corner_radius=0)
+        info_frame.grid(row=1, column=0, padx=20, pady=(10, 5), sticky="ew")
+        info_frame.grid_columnconfigure(0, weight=1)
+        info_frame.grid_columnconfigure(1, weight=0)
+        info_frame.grid_columnconfigure(2, weight=1)
+        update_info = get_cached_update_info()
+        status_text = t("app.subtitle", game_version=game_version)
+        status_color = "#2CC985"
+        status_label = ctk.CTkLabel(info_frame, text=status_text, text_color=status_color,
+                                     font=("Segoe UI", 13, "bold"), justify="center", wraplength=780)
+        status_label.grid(row=0, column=1, padx=10, pady=5)
+        self.info_labels.append((status_label, "app.subtitle", {"game_version": game_version}))
         import webbrowser
         update_info=get_cached_update_info()
         if update_info:
             has_update,latest_version=update_info
             tools_version,_=get_versions()
-            self.version_frame=tk.Frame(self,bg="#2f2f2f")
+            self.version_frame=ctk.CTkFrame(self, fg_color="transparent")
             self.version_frame.place(x=10,y=10)
-            self.latest_label=tk.Label(self.version_frame,text=f"{t('update.latest')}: {latest_version}",bg="#2f2f2f",fg="white",font=("Consolas",8,"bold"))
+            latest_text_key = 'update.latest'
+            latest_text_fmt = {'version': latest_version}
+            self.latest_label=ctk.CTkLabel(self.version_frame,text=f"{t(latest_text_key)}: {latest_version}",fg_color="transparent",text_color="white",font=("Consolas",12,"bold"))
             self.latest_label.pack(anchor="w")
-            separator=tk.Frame(self.version_frame,height=1,bg="#666",bd=0)
+            self.version_labels.append((self.latest_label, latest_text_key, latest_text_fmt))
+            separator=ctk.CTkFrame(self.version_frame,height=1,fg_color="#666",corner_radius=0)
             separator.pack(fill="x",pady=1)
-            self.current_label=tk.Label(self.version_frame,text=f"{t('update.current')}: {tools_version}",bg="#2f2f2f",fg="lightgreen",font=("Consolas",8,"bold"),cursor="hand2")
+            current_text_key = 'update.current'
+            current_text_fmt = {'version': tools_version}
+            self.current_label=ctk.CTkLabel(self.version_frame,text=f"{t(current_text_key)}: {tools_version}",fg_color="transparent",text_color="white",font=("Consolas",12,"bold"))
             self.current_label.pack(anchor="w")
             self.current_label.bind("<Button-1>",lambda e:webbrowser.open("https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest"))
+            self.version_labels.append((self.current_label, current_text_key, current_text_fmt))
             if not has_update:
                 def pulse_current():
                     if not self.running: return
-                    self.current_label["fg"]="yellow" if self.current_label["fg"]=="lightgreen" else "lightgreen"
-                    self.current_label.after(700,pulse_current)
+                    self.latest_label.configure(text_color="red" if self.latest_label.cget("text_color")=="white" else "white")
+                    self.latest_label.after(700,pulse_current)
                 pulse_current()
-        info_items = [
-            ("app.subtitle", {"game_version": game_version}, "#6f9", ("Consolas", 10)),
-            ("notice.backup", {}, "#f44", ("Consolas", 9, "bold")),
-            ("notice.patch", {"game_version": game_version}, "#f44", ("Consolas", 9, "bold")),
-            ("notice.errors", {}, "#f44", ("Consolas", 9, "bold")),
+        critical_warnings = [
+            ("notice.backup", {}, "#FF5555", ("Segoe UI", 11)),
+            ("notice.patch", {"game_version": game_version}, "#FF5555", ("Segoe UI", 11)),
+            ("notice.errors", {}, "#FF5555", ("Segoe UI", 11)),
         ]
-        for key, fmt, color, font in info_items:
-            label = ttk.Label(container, text=t(key, **fmt), style="TLabel")
-            label.configure(foreground=color, font=font)
-            label.pack(pady=(0,2))
+        for i, (key, fmt, color, font) in enumerate(critical_warnings):
+            f_family = font[0]
+            f_size = font[1]
+            f_weight = "bold" if len(font) > 2 and "bold" in font else "normal"
+            label = ctk.CTkLabel(info_frame, text=t(key, **fmt), text_color=color,
+                                     font=(f_family, f_size, f_weight), justify="center", wraplength=780)
+            label.grid(row=i+1, column=1, padx=10, pady=1)
             self.info_labels.append((label, key, fmt))
-        ttk.Label(container, text="="*85, font=("Consolas", 12), style="TLabel").pack(pady=(5,10))
-        tools_frame = ttk.Frame(container, style="TFrame")
-        tools_frame.pack(fill="both", expand=True)
-        tools_frame.columnconfigure(0, weight=1)
-        tools_frame.columnconfigure(1, weight=1)
-        tools_frame.columnconfigure(0, weight=1, uniform="cols")
-        tools_frame.columnconfigure(1, weight=1, uniform="cols")
-        left_frame = ttk.Frame(tools_frame, style="TFrame")
-        left_frame.grid(row=0, column=0, sticky="nsew", padx=(0,5))
-        left_frame.columnconfigure(0, weight=1)
-        right_frame = ttk.Frame(tools_frame, style="TFrame")
-        right_frame.grid(row=0, column=1, sticky="nsew", padx=(5,0))
-        right_frame.columnconfigure(0, weight=1)
+        scroll_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        scroll_frame.grid(row=2, column=0, padx=20, pady=10, sticky="nsew")
+        self.grid_rowconfigure(2, weight=1)
+        scroll_frame.grid_columnconfigure(0, weight=1)
+        scroll_frame.grid_columnconfigure(1, weight=1)
         left_categories = [
-            ("cat.converting", converting_tool_keys, "#2196F3"),
+            ("cat.converting", converting_tool_keys),
         ]
         right_categories = [
-            ("cat.management", management_tool_keys, "#4CAF50")
+            ("cat.management", management_tool_keys)
         ]
-        for idx, (title, tools, color) in enumerate(left_categories):
-            frame = self.create_labeled_frame(left_frame, title, color)
-            frame.columnconfigure(0, weight=1)
-            self.populate_tools(frame, tools, idx)
-        for idx, (title, tools, color) in enumerate(right_categories, start=len(left_categories)):
-            frame = self.create_labeled_frame(right_frame, title, color)
-            frame.columnconfigure(0, weight=1)
-            self.populate_tools(frame, tools, idx)
+        self._create_tool_section(scroll_frame, 0, left_categories, 0)
+        self._create_tool_section(scroll_frame, 1, right_categories, 1)
         self.refresh_texts()
-    def create_labeled_frame(self, parent, title_key, color):
-        style_name = f"{title_key.replace('.', '_')}.TLabelframe"
-        ttk.Style().configure(style_name, background="#2a2a2a", foreground=color, font=("Consolas", 12, "bold"), labelanchor="n")
-        ttk.Style().configure(f"{style_name}.Label", background="#2a2a2a", foreground=color, font=("Consolas", 12, "bold"))
-        frame = ttk.LabelFrame(parent, text=t(title_key), style=style_name, labelanchor="n")
-        frame.pack(fill="x", pady=5)
-        self.category_frames.append((frame, title_key))
-        return frame
-    def populate_tools(self, parent, tool_keys, category_offset):
-        parent.columnconfigure(0, weight=1)
-        for i, tool_key in enumerate(tool_keys):
-            idx = (category_offset, i)
-            btn = ttk.Button(parent, text=t(tool_key), style="Dark.TButton", command=lambda idx=idx: self.run_tool(idx))
-            btn.grid(row=i, column=0, sticky="ew", pady=3, padx=5)
-            self.tool_buttons.append((btn, tool_key))
+    def on_language_change_cmd(self, choice):
+        sel = choice
+        lang_map = {t(f'lang.{code}'): code for code in ["zh_CN","en_US","ru_RU","fr_FR","es_ES","de_DE","ja_JP","ko_KR"]}
+        lang = lang_map.get(sel, "zh_CN")
+        set_language(lang)
+        load_resources(lang)
+        self.refresh_texts()
     def get_tool_name(self, choice):
         try:
             category_index, tool_index = choice
@@ -436,25 +440,32 @@ class MenuGUI(tk.Tk):
         self.refresh_texts()
         print(t('status.close', name=tool_name))
         self.deiconify()
-    def on_language_change(self):
-        sel = self.lang_combo.get()
-        lang_map = {t(f'lang.{code}'): code for code in ["zh_CN","en_US","ru_RU","fr_FR","es_ES","de_DE","ja_JP","ko_KR"]}
-        lang = lang_map.get(sel, "zh_CN")
-        set_language(lang)
-        load_resources(lang)
-        self.refresh_texts()
     def refresh_texts(self):
         tools_version,_=get_versions()
-        update_info=get_cached_update_info()
-        if update_info:
-            has_update,latest_version=update_info
-            self.latest_label.configure(text=f"{t('update.latest')}: {latest_version}")
-            self.current_label.configure(text=f"{t('update.current')}: {tools_version}")
         self.title(t("app.title", version=tools_version))
+        for label, key, fmt in self.version_labels:
+            if key == 'update.latest':
+                _, version = get_cached_update_info()
+                text = f"{t(key)}: {version}"
+            elif key == 'update.current':
+                version, _ = get_versions()
+                text = f"{t(key)}: {version}"
+            else:
+                text = t(key, **fmt)
+            current_color = label.cget("text_color")
+            label.configure(text=text)
+            label.configure(text_color=current_color)
         for label, key, fmt in self.info_labels:
-            label.configure(text=t(key, **fmt))
-        for frame, key in self.category_frames:
-            frame.configure(text=t(key))
+            if key == "app.subtitle":
+                update_info = get_cached_update_info()
+                status_text = t("app.subtitle", game_version=get_versions()[1])
+                if update_info and not update_info[0]:
+                    status_text += f" | {t('update.new_available')} v{update_info[1]}"
+                label.configure(text=status_text)
+            else:
+                label.configure(text=t(key, **fmt))
+        for label, key in self.category_frames:
+            label.configure(text=t(key))
         for btn, key in self.tool_buttons:
             btn.configure(text=t(key))
         values = [t(f'lang.{code}') for code in ["zh_CN","en_US","ru_RU","fr_FR","es_ES","de_DE","ja_JP","ko_KR"]]
@@ -475,6 +486,17 @@ if __name__=="__main__":
     set_console_title(f"PalworldSaveTools v{tv}")
     clear_console()
     app = MenuGUI()
+    try: 
+        all_in_one_tool_choice = (1, 0)
+        app.run_tool(all_in_one_tool_choice)
+    except Exception:
+        show_console()
+        import traceback
+        traceback.print_exc()
+        input("\nPress Enter to exit...")
+        raise
+    finally:
+        on_exit()
     try:
         app.mainloop()
     except Exception:
