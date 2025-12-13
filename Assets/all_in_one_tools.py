@@ -582,7 +582,6 @@ def save_changes():
         except FileNotFoundError: pass
         try: os.remove(f_dps)
         except FileNotFoundError: pass
-    apply_player_remaps_on_save()
     files_to_delete.clear()
     window.focus_force()
     messagebox.showinfo(t("Saved"), t("Changes saved and files deleted!"), parent=window)
