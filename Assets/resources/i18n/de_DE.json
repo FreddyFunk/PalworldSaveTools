@@ -448,5 +448,7 @@
 "map_obj.reason_null_id": "Basis-ID fehlt oder ist null",
 "map_obj.reason_orphaned": "Basis-ID: {base_camp_id} ist NICHT in der Liste der aktiven Basen (VERWAIST)",
 "map_obj.deleting_orphan": "LÖSCHE Verwaistes/Nicht-Basis-Kartenobjekt ID: {instance_id} ({object_name}) - GRUND: {reason}",
-"map_obj.deleted_summary": "{deleted_count} verwaiste/Nicht-Basis-Kartenobjekte gelöscht. {remaining_count} Kartenobjekte verbleiben."
+"map_obj.deleted_summary": "{deleted_count} verwaiste/Nicht-Basis-Kartenobjekte gelöscht. {remaining_count} Kartenobjekte verbleiben.",
+"deletion.menu.remove_invalid_structures": "Alle ungültigen Strukturen entfernen",
+"deletion.menu.remove_invalid_structures_summary": "{deleted_count} ungültige Struktur-Kartenobjekte gelöscht. {remaining_count} Strukturen verbleiben."
 }

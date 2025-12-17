@@ -2278,6 +2278,39 @@ def unlock_all_private_chests():
     print(msg)
     messagebox.showinfo(t("Unlocked"),msg)
     refresh_all()
+def delete_invalid_structure_map_objects():
+    global loaded_level_json
+    import json, os
+    valid_assets = set()
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        fp = os.path.join(base_dir, "resources", "game_data", "structuredata.json")
+        with open(fp, "r", encoding="utf-8") as f:
+            js = json.load(f)
+            for x in js.get("structures", []):
+                asset = x.get("asset")
+                if isinstance(asset, str):
+                    valid_assets.add(asset.lower())
+    except:
+        pass
+    wsd = loaded_level_json['properties']['worldSaveData']['value']
+    map_objs = wsd['MapObjectSaveData']['value']['values']
+    initial_count = len(map_objs)
+    new_map_objs = []
+    for m in map_objs:
+        object_id_node = m.get('MapObjectId', {})
+        object_name = object_id_node.get('value')
+        if isinstance(object_name, str) and object_name.lower() in valid_assets:
+            new_map_objs.append(m)
+        else:
+            instance_id = m.get('Model', {}).get('value', {}).get('RawData', {}).get('value', {}).get('instance_id', 'UNKNOWN_ID')
+            print(f"Removing invalid structure: {object_name} (ID: {instance_id})")
+    deleted_count = initial_count - len(new_map_objs)
+    map_objs[:] = new_map_objs
+    print(t("deletion.menu.remove_invalid_structures_summary", deleted_count=deleted_count, remaining_count=len(map_objs)))
+    refresh_all()
+    refresh_stats("After")
+    return deleted_count
 def remove_invalid_raw_items_from_level():
     import json,os
     folder_path=current_save_path
@@ -3108,6 +3141,7 @@ def all_in_one_tools():
     delete_menu_add("deletion.menu.delete_non_base_map_objs", delete_non_base_map_objects)    
     delete_menu_add("deletion.menu.unlock_private_chests", unlock_all_private_chests)
     delete_menu_add("deletion.menu.remove_invalid_items", remove_invalid_items_from_save)
+    delete_menu_add("deletion.menu.remove_invalid_structures", delete_invalid_structure_map_objects)
     delete_menu_add("deletion.menu.remove_invalid_pals", remove_invalid_pals_from_save)
     delete_menu_add("deletion.menu.reset_missions", fix_missions)
     delete_menu_add("deletion.menu.reset_anti_air", reset_anti_air_turrets)

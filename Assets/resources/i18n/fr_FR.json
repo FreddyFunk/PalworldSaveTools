@@ -448,5 +448,7 @@
 "map_obj.reason_null_id": "L'ID de Base est manquant ou nul",
 "map_obj.reason_orphaned": "L'ID de Base : {base_camp_id} N'est PAS dans la Liste des Bases Actives (ORPHELIN)",
 "map_obj.deleting_orphan": "SUPPRESSION de l'Objet de Carte Orphelin/Hors-Base ID : {instance_id} ({object_name}) - RAISON : {reason}",
-"map_obj.deleted_summary": "{deleted_count} objets de carte orphelins/hors-base supprimés. {remaining_count} objets de carte restants."
+"map_obj.deleted_summary": "{deleted_count} objets de carte orphelins/hors-base supprimés. {remaining_count} objets de carte restants.",
+"deletion.menu.remove_invalid_structures": "Supprimer toutes les structures invalides",
+"deletion.menu.remove_invalid_structures_summary": "{deleted_count} objets de carte de structure invalides supprimés. {remaining_count} structures restantes."
 }

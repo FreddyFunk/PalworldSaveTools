@@ -445,5 +445,7 @@
 "map_obj.reason_null_id": "ID базы отсутствует или равно нулю",
 "map_obj.reason_orphaned": "ID базы: {base_camp_id} ОТСУТСТВУЕТ в списке активных баз (ОСИРОТЕВШИЙ)",
 "map_obj.deleting_orphan": "УДАЛЕНИЕ осиротевшего/внебазового объекта карты ID: {instance_id} ({object_name}) - ПРИЧИНА: {reason}",
-"map_obj.deleted_summary": "Удалено {deleted_count} осиротевших/внебазовых объектов карты. Осталось {remaining_count} объектов карты."
+"map_obj.deleted_summary": "Удалено {deleted_count} осиротевших/внебазовых объектов карты. Осталось {remaining_count} объектов карты.",
+"deletion.menu.remove_invalid_structures": "Удалить все недопустимые строения",
+"deletion.menu.remove_invalid_structures_summary": "Удалено {deleted_count} недопустимых объектов карты строений. Осталось {remaining_count} строений."
 }

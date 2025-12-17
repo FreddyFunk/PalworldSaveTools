@@ -448,5 +448,7 @@
 "map_obj.reason_null_id": "La ID de Base falta o es nula",
 "map_obj.reason_orphaned": "ID de Base: {base_camp_id} NO está en la Lista de Bases Activas (HUÉRFANO)",
 "map_obj.deleting_orphan": "ELIMINANDO Objeto de Mapa Huérfano/No Base ID: {instance_id} ({object_name}) - RAZÓN: {reason}",
-"map_obj.deleted_summary": "Se eliminaron {deleted_count} objetos de mapa huérfanos/no base. Quedan {remaining_count} objetos de mapa."
+"map_obj.deleted_summary": "Se eliminaron {deleted_count} objetos de mapa huérfanos/no base. Quedan {remaining_count} objetos de mapa.",
+"deletion.menu.remove_invalid_structures": "Eliminar todas las estructuras inválidas",
+"deletion.menu.remove_invalid_structures_summary": "Se eliminaron {deleted_count} objetos de mapa de estructuras inválidas. Quedan {remaining_count} estructuras."
 }

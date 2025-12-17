@@ -15,10 +15,10 @@ except Exception:
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QFrame, QScrollArea, QMessageBox, QToolButton, QStyle, QStatusBar,
-    QSpacerItem, QSizePolicy
+    QSpacerItem, QSizePolicy, QGraphicsOpacityEffect
 )
-from PySide6.QtGui import QPixmap, QIcon, QFont, QFontDatabase, QCursor
-from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtGui import QPixmap, QIcon, QFont, QFontDatabase, QCursor, QColor, QPalette
+from PySide6.QtCore import Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve
 try:
     from PIL import Image
 except Exception:
@@ -659,7 +659,6 @@ class MenuGUI(QMainWindow):
                         tool_window.protocol("WM_DELETE_WINDOW", tk_exit_handler)
                     tool_window.mainloop()
                 else:
-                    # Check if it's a tkinter toplevel window
                     if hasattr(tool_window, 'winfo_exists'):
                         loop = QEventLoop()
                         def check_closed():
@@ -733,8 +732,9 @@ class MenuGUI(QMainWindow):
         try:
             ok, latest = check_github_update(force_test=False)
             if not ok:
-                self.app_version_label.setProperty("pulse", True)
+                self.app_version_label.setProperty("pulse", "true")
                 self.app_version_label.style().polish(self.app_version_label)
+                self._start_pulse_animation()
                 tools_version, _ = get_versions()
                 self.app_version_label.setText(f"{nf.icons['nf-cod-github']} {tools_version}")
             global UPDATE_CACHE
@@ -742,6 +742,19 @@ class MenuGUI(QMainWindow):
             self.refresh_texts()
         except Exception:
             pass
+    def _start_pulse_animation(self):
+        if hasattr(self, "_pulse_anim"):
+            return
+        from PySide6.QtWidgets import QGraphicsOpacityEffect
+        self._pulse_effect = QGraphicsOpacityEffect(self.app_version_label)
+        self.app_version_label.setGraphicsEffect(self._pulse_effect)
+        self._pulse_anim = QPropertyAnimation(self._pulse_effect, b"opacity")
+        self._pulse_anim.setDuration(1000)
+        self._pulse_anim.setStartValue(1.0)
+        self._pulse_anim.setEndValue(0.4)
+        self._pulse_anim.setEasingCurve(QEasingCurve.InOutQuad)
+        self._pulse_anim.setLoopCount(-1)
+        self._pulse_anim.start()
     def _open_github(self, event):
         url = GITHUB_LATEST_ZIP
         import webbrowser
