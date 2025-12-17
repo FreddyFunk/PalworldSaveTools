@@ -2,51 +2,59 @@
 from __future__ import annotations
 import os
 import sys
-import shutil
 import subprocess
 import threading
 import queue
 import time
+import traceback
 from pathlib import Path
+from typing import Optional, Tuple
+
 PROJECT_DIR = Path(__file__).resolve().parent
-VENV_DIR = PROJECT_DIR / "pst_venv"
-MENU_PY = PROJECT_DIR / "menu.py"
-REQ_FILE = PROJECT_DIR / "requirements.txt"
-PYPROJECT = PROJECT_DIR / "pyproject.toml"
-GIT_PACKAGE_TO_CHECK = "pyooz"
-TEMP_REQ_FILE_NAME = "temp_requirements_no_git.txt"
+
+if os.environ.get("PST_NO_GUI", "") in ("1", "true", "True"):
+    GUI_AVAILABLE = False
+else:
+    try:
+        from PySide6.QtWidgets import (
+            QApplication, QWidget, QVBoxLayout, QLabel, QProgressBar,
+            QGraphicsOpacityEffect, QFrame, QHBoxLayout, QSpacerItem, QSizePolicy
+        )
+        from PySide6.QtGui import QPixmap
+        from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QObject, Signal, Slot
+        GUI_AVAILABLE = True
+    except Exception:
+        GUI_AVAILABLE = False
+
+DEBUG = bool(os.environ.get("PST_DEBUG", "") in ("1", "true", "True"))
+
 USE_ANSI = True
 if os.name == "nt":
     try:
         import ctypes
         kernel32 = ctypes.windll.kernel32
-        kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 5)
+        kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
     except Exception:
         pass
+
 def ansi(code: str) -> str:
     return code if USE_ANSI else ""
+
 RESET = ansi("\x1b[0m")
 BOLD = ansi("\x1b[1m")
 GREEN = ansi("\x1b[32m")
-YELLOW = ansi("\x1b[33m")
 RED = ansi("\x1b[31m")
 CYAN = ansi("\x1b[36m")
 DIM = ansi("\x1b[2m")
-def step_label(n: int, total: int, text: str) -> str:
-    return f"[{n}/{total}] {text}"
-def print_step_working(label: str):
-    sys.stdout.write(f"{BOLD}{label}...{RESET}\r")
-    sys.stdout.flush()
-def print_ok(label: str):
-    sys.stdout.write("\r" + " " * 80 + "\r")
-    print(f"{BOLD}{label} {GREEN}OK{RESET}")
-def print_fail(label: str):
-    sys.stdout.write("\r" + " " * 80 + "\r")
-    print(f"{BOLD}{label} {RED}FAILED{RESET}")
-def print_info(label: str):
-    print(f"{BOLD}{label}{RESET}")
+
+def progress_bar_console(pct: int, width: int = 30) -> str:
+    filled = int((pct / 100.0) * width)
+    empty = width - filled
+    return "[" + "#" * filled + "-" * empty + "]"
+
 def print_small(msg: str):
     print(f"{DIM}{msg}{RESET}")
+
 def reader_thread(proc: subprocess.Popen, q: queue.Queue):
     assert proc.stdout is not None
     try:
@@ -55,11 +63,23 @@ def reader_thread(proc: subprocess.Popen, q: queue.Queue):
     except Exception:
         pass
     finally:
-        proc.stdout.close()
+        try:
+            proc.stdout.close()
+        except Exception:
+            pass
         q.put(None)
-def run_and_watch(cmd, cwd=None, env=None, filter_keys=None):
+
+def run_and_watch(cmd, cwd=None, env=None, filter_keys=None, update_callback=None):
+    """
+    Run subprocess, stream output, call update_callback(raw_line, pct).
+    Full messages are printed to console (verbose when DEBUG).
+    """
     if filter_keys is None:
-        filter_keys = ("Collecting", "Downloading", "%", "Building wheel for", "Installing collected packages", "Successfully installed", "ERROR", "Failed", "Cloning", "Running command git")
+        filter_keys = (
+            "Collecting", "Downloading", "%", "Building wheel for",
+            "Installing collected packages", "Successfully installed",
+            "ERROR", "Failed", "Cloning", "Running command git"
+        )
     proc = subprocess.Popen(
         list(map(str, cmd)),
         stdout=subprocess.PIPE,
@@ -72,8 +92,10 @@ def run_and_watch(cmd, cwd=None, env=None, filter_keys=None):
     q: queue.Queue = queue.Queue()
     t = threading.Thread(target=reader_thread, args=(proc, q), daemon=True)
     t.start()
-    progress_pct = None
+
+    progress_pct: Optional[int] = None
     last_shown_msg = None
+
     try:
         while True:
             try:
@@ -83,8 +105,6 @@ def run_and_watch(cmd, cwd=None, env=None, filter_keys=None):
             if line is None:
                 if proc.poll() is not None and q.empty():
                     break
-                continue
-            if line is None:
                 continue
             s = line.strip()
             show = False
@@ -104,147 +124,603 @@ def run_and_watch(cmd, cwd=None, env=None, filter_keys=None):
                 progress_pct = max(0, min(100, pct))
             if show or pct is not None:
                 if s != last_shown_msg:
-                    if progress_pct is not None:
-                        bar = progress_bar(progress_pct, width=28)
-                        sys.stdout.write(f"\r{CYAN}{bar} {progress_pct:3d}%{RESET}")
-                        sys.stdout.flush()
-                        if "Downloading" not in s and "Collecting" not in s:
-                             progress_pct = None
+                    if DEBUG:
+                        print_small(f"> {s}")
+                    if update_callback:
+                        try:
+                            update_callback(s, progress_pct)
+                        except Exception:
+                            if DEBUG:
+                                traceback.print_exc()
                     else:
-                        sys.stdout.write("\r" + " " * 80 + "\r")
-                        print(f"{CYAN}> {s}{RESET}")
+                        if progress_pct is not None:
+                            bar = progress_bar_console(progress_pct, width=28)
+                            sys.stdout.write(f"\r{CYAN}{bar} {progress_pct:3d}%{RESET}")
+                            sys.stdout.flush()
+                        else:
+                            sys.stdout.write("\r" + " " * 120 + "\r")
+                            print(f"{CYAN}> {s}{RESET}")
                     last_shown_msg = s
     finally:
-        sys.stdout.write("\r" + " " * 80 + "\r")
-        sys.stdout.flush()
+        if not update_callback:
+            sys.stdout.write("\r" + " " * 120 + "\r")
+            sys.stdout.flush()
     return proc.wait()
-def progress_bar(pct: int, width: int = 30) -> str:
-    filled = int((pct / 100.0) * width)
-    empty = width - filled
-    return "[" + "#" * filled + "-" * empty + "]"
-def find_system_python() -> str:
-    for name in ("python3", "python"):
-        p = shutil.which(name)
-        if p:
-            return p
-    return sys.executable
-def venv_python_path() -> Path:
-    if os.name == "nt":
-        return VENV_DIR / "Scripts" / "python.exe"
-    return VENV_DIR / "bin" / "python"
-def check_package_installed(venv_py: Path, package_name: str) -> bool:
+
+VENV_DIR = PROJECT_DIR / "pst_venv"
+MENU_PY = PROJECT_DIR / "menu.py"
+REQ_FILE = PROJECT_DIR / "requirements.txt"
+PYPROJECT = PROJECT_DIR / "pyproject.toml"
+TEMP_REQ_FILE_NAME = "Assets/resources/temp_req.txt"
+
+DARK_STYLE_SPLASH = r"""
+QWidget { color: #dfeefc; font-family: "Segoe UI", Roboto, Arial; }
+QFrame#glass {
+    background: rgba(18,20,24,0.92);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 12px;
+}
+QFrame#logoBox {
+    background: rgba(10,12,16,0.6);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.03);
+    min-height: 84px;
+    max-height: 140px;
+}
+QLabel#short {
+    font-size: 13px;
+    color: #dfeefc;
+    font-weight: 600;
+}
+QLabel#tiny {
+    font-size: 11px;
+    color: rgba(223,238,252,0.7);
+}
+QProgressBar {
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 8px;
+    height: 14px;
+    text-align: center;
+    background: rgba(18,20,24,0.60);
+    color: #dfeefc;
+}
+QProgressBar::chunk {
+    background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #7DD3FC, stop:1 #A78BFA);
+    border-radius: 8px;
+}
+"""
+
+app = None
+splash_window = None
+short_label: Optional["QLabel"] = None
+tiny_label: Optional["QLabel"] = None
+gui_progress_bar: Optional["QProgressBar"] = None
+_logo_original_pixmap: Optional["QPixmap"] = None
+
+_target_pct = 0                 
+_displayed_pct = 0              
+_tick_timer = None              
+_install_timer = None           
+_joke_timer = None              
+_last_real_pct: Optional[int] = None
+_current_step = 0               
+_worker_thread: Optional[threading.Thread] = None
+
+def _compute_target_overall(step: int, sub_pct: Optional[int]) -> int:
     try:
-        result = subprocess.run(
-            [str(venv_py), "-m", "pip", "show", package_name],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        return result.returncode == 0
-    except FileNotFoundError:
-        return False
-def create_venv():
-    label = step_label(1, 4, "Creating virtual environment")
-    if VENV_DIR.exists():
-        print_small(f"Venv exists: {VENV_DIR}")
-        return True
-    print_info(f"[{1}/4] Creating virtual environment")    
-    creator = find_system_python()
-    print_small(f"Using python: {creator}")
-    print_step_working("Create virtual environment")    
-    rc = subprocess.call([creator, "-m", "venv", str(VENV_DIR)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)    
-    if rc != 0:
-        print_fail(label)
-        return False
-    print_ok(label)
-    return True
-def ensure_packaging_tools(venv_py: Path):
-    label = step_label(2, 4, "Upgrading pip / setuptools / wheel")
-    print_step_working(label)
-    rc = run_and_watch([str(venv_py), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"], 
-                       filter_keys=("Installing collected packages", "Successfully installed", "ERROR", "Failed", "%"))    
-    if rc == 0:
-        print_ok(label)
-    else:
-        print_fail(label)
-        print_small("Continuing (pip upgrade failure may still allow installs).")
-def install_deps(venv_py: Path):
-    label = step_label(3, 4, "Installing dependencies")
-    print_step_working(label)
-    cmd = None
-    temp_req_path = PROJECT_DIR / TEMP_REQ_FILE_NAME
-    git_package_installed = False    
-    if REQ_FILE.exists():
-        print_small(f"Source: {REQ_FILE}")
-        git_package_installed = check_package_installed(venv_py, GIT_PACKAGE_TO_CHECK)        
-        if git_package_installed:
-            print_small(f"Skipping Git install: '{GIT_PACKAGE_TO_CHECK}' already installed.")
-            try:
-                with open(REQ_FILE, 'r') as f_in, open(temp_req_path, 'w') as f_out:
-                    for line in f_in:
-                        if GIT_PACKAGE_TO_CHECK not in line:
-                            f_out.write(line)
-                cmd = [str(venv_py), "-m", "pip", "install", "-r", str(temp_req_path)]
-            except Exception as e:
-                print_small(f"Warning: Failed to process requirements file. Installing all dependencies. Error: {e}")
-                cmd = [str(venv_py), "-m", "pip", "install", "-r", str(REQ_FILE)]
+        if step <= 1:
+            base_min, base_max = 0, 33
+        elif step == 2:
+            base_min, base_max = 33, 66
         else:
-            cmd = [str(venv_py), "-m", "pip", "install", "-r", str(REQ_FILE)]            
-    elif PYPROJECT.exists():
-        print_small("requirements.txt not found — falling back to pip install . (pyproject.toml)")
-        cmd = [str(venv_py), "-m", "pip", "install", "."]        
+            base_min, base_max = 66, 100
+        if sub_pct is None:
+            # return middle of slice for smooth progression when no pct
+            return int(base_min + (base_max - base_min) * 0.5)
+        frac = max(0.0, min(1.0, sub_pct / 100.0))
+        return int(base_min + frac * (base_max - base_min))
+    except Exception:
+        return 0
+
+JOKES = [
+    "starting matrix",
+    "warming up",
+    "fetching bytes",
+    "spawning helpers",
+    "polishing files",
+    "tucking files in",
+    "summoning pip",
+    "stirring coffee",
+    "feeding the gremlins",
+    "calibrating flux",
+    "untangling cables",
+    "whispering to motherboard",
+    "bribing the OS",
+    "feeding bytes to engine",
+    "aligning pixels",
+    "optimizing unicorns",
+    "herding packets",
+    "tickling the scheduler",
+    "hiring tiny ninjas",
+]
+
+if GUI_AVAILABLE:
+    class WorkerSignals(QObject):
+        raw = Signal(str, int)      # raw message, pct (pct may be -1 for none)
+        finished = Signal(int)      # exit code (0 success)
+        started = Signal()          # optional, not used heavily
+
+    _signals: Optional[WorkerSignals] = None
+
+def build_splash_ui():
+    """
+    Create splash with:
+      - boxed logo area at the top (logo centered and dynamically resized)
+      - single short label
+      - single progress bar for whole flow
+      - tiny one-line hint
+    """
+    global app, _logo_original_pixmap
+
+    container = QWidget(None, Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    container.setAttribute(Qt.WA_TranslucentBackground, True)
+    container.setFixedSize(600, 320)
+    container.setStyleSheet(DARK_STYLE_SPLASH)
+
+    frame = QFrame(container)
+    frame.setObjectName("glass")
+    frame.setGeometry(12, 12, container.width() - 24, container.height() - 24)
+
+    layout = QVBoxLayout(frame)
+    layout.setContentsMargins(16, 16, 16, 16)
+    layout.setSpacing(12)
+
+    logo_box = QFrame()
+    logo_box.setObjectName("logoBox")
+    logo_layout = QHBoxLayout(logo_box)
+    logo_layout.setContentsMargins(12, 8, 12, 8)
+    logo_layout.setSpacing(8)
+    logo_label = QLabel()
+    logo_label.setAlignment(Qt.AlignCenter)
+    logo_layout.addItem(QSpacerItem(8, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+    logo_layout.addWidget(logo_label)
+    logo_layout.addItem(QSpacerItem(8, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+    layout.addWidget(logo_box)
+
+    logo_path = PROJECT_DIR / "Assets" / "resources" / "PalworldSaveTools_Blue.png"
+    if logo_path.exists():
+        pix = QPixmap(str(logo_path))
+        if not pix.isNull():
+            _logo_original_pixmap = pix
     else:
-        print_small("No requirements.txt or pyproject.toml — nothing to install.")
-        print_ok(label)
-        return True
-    if cmd:
-        rc = run_and_watch(cmd)
+        logo_label.setText("PALWORLD")
+        logo_label.setStyleSheet("font-weight: 800; color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #7DD3FC, stop:1 #A78BFA);")
+
+    short_lbl = QLabel("starting")
+    short_lbl.setObjectName("short")
+    short_lbl.setAlignment(Qt.AlignCenter)
+    layout.addWidget(short_lbl)
+
+    pbar = QProgressBar()
+    pbar.setRange(0, 100)
+    pbar.setValue(0)
+    pbar.setFixedWidth(frame.width() - 60)
+    pbar.setTextVisible(False)
+    layout.addWidget(pbar, alignment=Qt.AlignCenter)
+
+    tiny = QLabel("Please wait...")
+    tiny.setObjectName("tiny")
+    tiny.setAlignment(Qt.AlignCenter)
+    layout.addWidget(tiny)
+
+    try:
+        effect = QGraphicsOpacityEffect(frame)
+        frame.setGraphicsEffect(effect)
+        effect.setOpacity(0.0)
+        anim = QPropertyAnimation(effect, b"opacity", container)
+        anim.setDuration(700)
+        anim.setStartValue(0.0)
+        anim.setEndValue(1.0)
+        anim.setEasingCurve(QEasingCurve.InOutQuad)
+        anim.start()
+        container._fade_anim = anim
+    except Exception:
+        if DEBUG:
+            traceback.print_exc()
+
+    def adjust_logo():
+        nonlocal logo_label, logo_box
+        try:
+            if _logo_original_pixmap is None:
+                return
+            w = max(16, logo_box.width() - 24)
+            h = max(16, logo_box.height() - 16)
+            scaled = _logo_original_pixmap.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            logo_label.setPixmap(scaled)
+        except Exception:
+            if DEBUG:
+                traceback.print_exc()
+
+    orig_resize = getattr(logo_box, "resizeEvent", None)
+    def logo_box_resize_event(ev):
+        try:
+            adjust_logo()
+        except Exception:
+            if DEBUG:
+                traceback.print_exc()
+        if orig_resize:
+            try:
+                return orig_resize(ev)
+            except Exception:
+                pass
+    logo_box.resizeEvent = logo_box_resize_event
+
+    screen = QApplication.primaryScreen().availableGeometry()
+    container.move((screen.width() - container.width()) // 2, (screen.height() - container.height()) // 2)
+
+    QTimer.singleShot(60, adjust_logo)
+
+    return container, short_lbl, pbar, tiny
+
+def _start_tick_timer():
+    global _tick_timer, _displayed_pct, gui_progress_bar
+    if _tick_timer is not None:
+        return
+    try:
+        _tick_timer = QTimer()
+        _tick_timer.setInterval(60)
+        def tick():
+            global _displayed_pct, _target_pct, gui_progress_bar
+            if gui_progress_bar is None:
+                return
+            if _displayed_pct < _target_pct:
+                step = max(1, int((_target_pct - _displayed_pct) * 0.16))
+                _displayed_pct = min(_target_pct, _displayed_pct + step)
+                gui_progress_bar.setValue(_displayed_pct)
+            elif _displayed_pct > _target_pct:
+                _displayed_pct = max(_target_pct, _displayed_pct - 2)
+                gui_progress_bar.setValue(_displayed_pct)
+        _tick_timer.timeout.connect(tick)
+        _tick_timer.start()
+    except Exception:
+        if DEBUG:
+            traceback.print_exc()
+
+def _stop_tick_timer():
+    global _tick_timer
+    try:
+        if _tick_timer:
+            _tick_timer.stop()
+            _tick_timer = None
+    except Exception:
+        pass
+
+def _start_install_timer():
+    """
+    When inside installing step (no fine-grained pct), gently nudge the target upward frequently
+    so the bar moves smoothly rather than stalling.
+    """
+    global _install_timer
+    if _install_timer is not None:
+        return
+    try:
+        _install_timer = QTimer()
+        _install_timer.setInterval(700)
+        def nudge():
+            global _target_pct, _current_step
+            if _current_step != 2:
+                return
+            if _target_pct < 65:
+                _target_pct = min(65, _target_pct + 1)
+        _install_timer.timeout.connect(nudge)
+        _install_timer.start()
+    except Exception:
+        if DEBUG:
+            traceback.print_exc()
+
+def _stop_install_timer():
+    global _install_timer
+    try:
+        if _install_timer:
+            _install_timer.stop()
+            _install_timer = None
+    except Exception:
+        pass
+
+def _start_joke_timer():
+    global _joke_timer
+    if _joke_timer is not None:
+        return
+    try:
+        _joke_timer = QTimer()
+        _joke_timer.setInterval(2500)
+        import random
+        def pick():
+            if short_label is None:
+                return
+            try:
+                short_label.setText(random.choice(JOKES))
+            except Exception:
+                pass
+        _joke_timer.timeout.connect(pick)
+        _joke_timer.start()
+    except Exception:
+        if DEBUG:
+            traceback.print_exc()
+
+def _stop_joke_timer():
+    global _joke_timer
+    try:
+        if _joke_timer:
+            _joke_timer.stop()
+            _joke_timer = None
+    except Exception:
+        pass
+
+def _pick_short(raw: str) -> str:
+    lowered = raw.lower()
+    if "collecting" in lowered or "download" in lowered:
+        return "downloading"
+    if "installing" in lowered or "building wheel" in lowered:
+        return "installing"
+    if "successfully installed" in lowered or "installed" in lowered:
+        return "installed"
+    if "error" in lowered:
+        return "error"
+    import random
+    return random.choice(JOKES)
+
+def handle_raw_signal(raw: str, pct: int):
+    """
+    Slot connected to WorkerSignals.raw; called in main (GUI) thread.
+    pct is -1 if not provided.
+    """
+    global _target_pct, _last_real_pct, _current_step, short_label, tiny_label
+
+    sub_pct = None if pct < 0 else pct
+
+    if DEBUG:
+        print_small(f"RAW: {raw} ({sub_pct})")
+
+    if any(k in raw for k in ("pip", "setuptools", "wheel", "Upgrading pip")):
+        _current_step = 1
+    elif any(k in raw for k in ("Installing collected packages", "Collecting", "Downloading", "Building wheel")):
+        _current_step = 2
+    elif "menu.py" in raw or "Launching" in raw or "Successfully installed" in raw:
+        _current_step = 3
+
+    if sub_pct is not None:
+        try:
+            _last_real_pct = int(max(0, min(100, int(sub_pct))))
+        except Exception:
+            _last_real_pct = None
+
+    new_target = _compute_target_overall(_current_step, _last_real_pct)
+    global _target_pct
+    if new_target < _target_pct:
+        if (_target_pct - new_target) > 6:
+            new_target = _target_pct - 6
+    if _current_step == 2 and _last_real_pct is not None:
+        _target_pct = max(_target_pct, new_target)
     else:
-        rc = 1 
-    if temp_req_path.exists():
-        temp_req_path.unlink()    
-    if rc == 0:
-        if git_package_installed and not cmd:
-             print_ok(label)
-             return True
-        print_ok(label)
-        return True
-    else:
-        print_fail(label)
-        print_small(f"pip exited with code {rc}. See messages above.")
-        return False
-def run_menu(venv_py: Path):
-    label = step_label(4, 4, "Launching menu.py")
-    print_step_working(label)
-    if not MENU_PY.exists():
-        print_fail(label)
-        print_small(f"menu.py not found at {MENU_PY}")
-        return 3
-    rc = subprocess.call([str(venv_py), str(MENU_PY)])
-    return rc 
-def main():
-    print()
-    print(f"{BOLD}##################################{RESET}")
-    print(f"{BOLD}#    Palworld Save Tools         #{RESET}")
-    print(f"{BOLD}##################################{RESET}")
-    print()
-    ok = create_venv()
-    if not ok:
-        sys.exit(1)
-    venv_py = venv_python_path()
-    if not venv_py.exists():
-        print_small("Venv python not found after creation; attempting to create using system python...")
-        creator = find_system_python()
-        rc = subprocess.call([creator, "-m", "venv", str(VENV_DIR)])
+        _target_pct = max(_target_pct, new_target)
+
+    if tiny_label is not None:
+        excerpt = raw if len(raw) <= 64 else (raw[:61] + "...")
+        try:
+            tiny_label.setText(excerpt)
+        except Exception:
+            pass
+
+    try:
+        if short_label is not None:
+            short_label.setText(_pick_short(raw))
+    except Exception:
+        pass
+
+def backend_worker(venv_py: Path, signals: "WorkerSignals"):
+    """
+    Runs packaging upgrade and dependency installs in background thread.
+    Emits signals.raw(raw_line, pct) when interesting lines appear (pct may be -1).
+    Emits signals.finished(rc) at the end.
+    """
+    def emit_raw(raw_line: str, pct: Optional[int]):
+        try:
+            signals.raw.emit(raw_line, pct if pct is not None else -1)
+        except Exception:
+            if DEBUG:
+                traceback.print_exc()
+
+    rc_final = 0
+    try:
+        cmd_upg = [str(venv_py), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"]
+        rc = run_and_watch(cmd_upg, update_callback=emit_raw)
         if rc != 0:
-            sys.stdout.write("\r" + " " * 80 + "\r")
-            print_fail("Failed to create venv with system python")
-            sys.exit(2)
-    ensure_packaging_tools(venv_py)
-    deps_ok = install_deps(venv_py)
-    if not deps_ok:
-        print_small("Dependency installation failed; you can re-run the script to retry.")
-        sys.exit(3)
-    rc = run_menu(venv_py)
-    sys.exit(rc)
-if __name__ == "__main__": main()
+            rc_final = rc
+        temp_req_path = PROJECT_DIR / TEMP_REQ_FILE_NAME
+        if REQ_FILE.exists():
+            try:
+                with open(REQ_FILE, "r") as f_in, open(temp_req_path, "w") as f_out:
+                    for line in f_in:
+                        if "pyside6-essentials" not in line:
+                            f_out.write(line)
+                cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(temp_req_path)]
+            except Exception:
+                cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(REQ_FILE)]
+        elif PYPROJECT.exists():
+            cmd_install = [str(venv_py), "-m", "pip", "install", "."]
+        else:
+            cmd_install = None
+        if cmd_install:
+            rc2 = run_and_watch(cmd_install, update_callback=emit_raw)
+            if rc2 != 0:
+                rc_final = rc2
+        try:
+            if temp_req_path.exists():
+                temp_req_path.unlink()
+        except Exception:
+            pass
+    except Exception as e:
+        rc_final = 2
+        if DEBUG:
+            print("Worker exception:", e)
+            traceback.print_exc()
+    finally:
+        try:
+            signals.finished.emit(int(rc_final))
+        except Exception:
+            if DEBUG:
+                traceback.print_exc()
+
+def update_gui_progress(step: int, message: str, pct: int = 0):
+    """
+    Coarse updates from code paths outside pip output.
+    """
+    global _target_pct, _current_step, short_label, tiny_label
+    _current_step = max(0, min(3, int(step)))
+    _target_pct = max(_target_pct, _compute_target_overall(_current_step, pct if pct > 0 else None))
+    if short_label:
+        try:
+            short_label.setText(message if len(message) <= 18 else message[:18])
+        except Exception:
+            pass
+    if tiny_label:
+        try:
+            tiny_label.setText("")
+        except Exception:
+            pass
+
+def spawn_menu_and_exit(venv_py: Path):
+    """
+    Spawn menu.py using the same python interpreter and exit start.py. We use Popen so we don't block here.
+    """
+    try:
+        subprocess.Popen([str(venv_py), str(MENU_PY)])
+    except Exception:
+        if DEBUG:
+            traceback.print_exc()
+    os._exit(0)
+
+def main():
+    global app, splash_window, short_label, gui_progress_bar, tiny_label, _target_pct, _worker_thread, _signals
+
+    venv_py = Path(sys.executable)
+
+    if GUI_AVAILABLE:
+        try:
+            app = QApplication(sys.argv)
+            app.setQuitOnLastWindowClosed(False)
+            try:
+                splash_window, short_label, gui_progress_bar, tiny_label = build_splash_ui()
+                splash_window.show()
+                app.processEvents()
+                _start_tick_timer()
+                _start_install_timer()
+                _start_joke_timer()
+            except Exception:
+                if DEBUG:
+                    traceback.print_exc()
+                splash_window = None
+                short_label = None
+                gui_progress_bar = None
+                tiny_label = None
+        except Exception:
+            if DEBUG:
+                traceback.print_exc()
+            splash_window = None
+            short_label = None
+            gui_progress_bar = None
+            tiny_label = None
+    else:
+        print()
+        print(f"{BOLD}##################################{RESET}")
+        print(f"{BOLD}#      Palworld Save Tools       #{RESET}")
+        print(f"{BOLD}##################################{RESET}")
+        print()
+
+    def start_worker():
+        global _worker_thread, _signals
+        if GUI_AVAILABLE:
+            _signals = WorkerSignals()
+            _signals.raw.connect(handle_raw_signal)
+            def on_finished(rc: int):
+                _stop_install_timer()
+                _stop_tick_timer()
+                _stop_joke_timer()
+                _target_pct = 100
+                if gui_progress_bar:
+                    gui_progress_bar.setValue(100)
+                if short_label:
+                    short_label.setText("done" if rc == 0 else "failed")
+                if tiny_label:
+                    try:
+                        tiny_label.setText("Finished" if rc == 0 else "Finished with errors")
+                    except Exception:
+                        pass
+                QTimer.singleShot(350, lambda: spawn_menu_and_exit(venv_py))
+            _signals.finished.connect(on_finished)
+            _worker_thread = threading.Thread(target=backend_worker, args=(venv_py, _signals), daemon=True)
+            _worker_thread.start()
+        else:
+            def emit_raw_console(raw_line: str, pct: Optional[int]):
+                if DEBUG:
+                    print_small(f"> {raw_line}")
+            rc_final = 0
+            try:
+                cmd_upg = [str(venv_py), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"]
+                rc = run_and_watch(cmd_upg, update_callback=lambda r, p: emit_raw_console(r, p))
+                if rc != 0:
+                    rc_final = rc
+                temp_req_path = PROJECT_DIR / TEMP_REQ_FILE_NAME
+                if REQ_FILE.exists():
+                    try:
+                        with open(REQ_FILE, "r") as f_in, open(temp_req_path, "w") as f_out:
+                            for line in f_in:
+                                if "pyside6-essentials" not in line:
+                                    f_out.write(line)
+                        cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(temp_req_path)]
+                    except Exception:
+                        cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(REQ_FILE)]
+                elif PYPROJECT.exists():
+                    cmd_install = [str(venv_py), "-m", "pip", "install", "."]
+                else:
+                    cmd_install = None
+                if cmd_install:
+                    rc2 = run_and_watch(cmd_install, update_callback=lambda r, p: emit_raw_console(r, p))
+                    if rc2 != 0:
+                        rc_final = rc2
+                try:
+                    if temp_req_path.exists():
+                        temp_req_path.unlink()
+                except Exception:
+                    pass
+            except Exception:
+                rc_final = 2
+                if DEBUG:
+                    traceback.print_exc()
+            if rc_final == 0:
+                try:
+                    subprocess.Popen([str(venv_py), str(MENU_PY)])
+                except Exception:
+                    if DEBUG:
+                        traceback.print_exc()
+                sys.exit(0)
+            else:
+                print_small("Startup failed")
+                sys.exit(rc_final)
+
+    start_worker()
+
+    if GUI_AVAILABLE and app is not None:
+        try:
+            sys.exit(app.exec())
+        except KeyboardInterrupt:
+            if DEBUG:
+                print("Interrupted")
+            sys.exit(1)
+    else:
+        pass
+
+if __name__ == "__main__":
+    main()

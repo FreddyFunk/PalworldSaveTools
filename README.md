@@ -1,4 +1,4 @@
-[English](README.en_US.md) | [简体中文](README.zh_CN.md) | [Deutsch](README.de_DE.md) | [Español](README.es_ES.md) | [Français](README.fr_FR.md) | [Русский](README.ru_RU.md) | [日本語](README.ja_JP.md) | [한국어](README.ko_KR.md)
+[English](Assets/resources/readme/README.en_US.md) | [简体中文](Assets/resources/readme/README.zh_CN.md) | [Deutsch](Assets/resources/readme/README.de_DE.md) | [Español](Assets/resources/readme/README.es_ES.md) | [Français](Assets/resources/readme/README.fr_FR.md) | [Русский](Assets/resources/readme/README.ru_RU.md) | [日本語](Assets/resources/readme/README.ja_JP.md) | [한국어](Assets/resources/readme/README.ko_KR.md)
 
 ![PalworldSaveTools Logo](Assets/resources/PalworldSaveTools_Black.png)
 ---
@@ -193,8 +193,4 @@ Reinstalling the program may fix this problem.
  
 **Solution:**  
 - Install the latest **Microsoft Visual C++ Redistributable**  
-- Download here: [Microsoft Visual C++ 2015–2022 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)  
-
-
-
-
+- Download here: [Microsoft Visual C++ 2015–2022 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)

@@ -445,6 +445,17 @@ class MenuGUI(QMainWindow):
         self.tool_icons = load_tool_icons()
         self.setup_ui()
         self._fit_window_to_listing()
+        # Setup fade-in animation
+        self.effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.effect)
+        self.effect.setOpacity(0)
+        self.animation = QPropertyAnimation(self.effect, b"opacity")
+        self.animation.setDuration(1000)
+        self.animation.setStartValue(0)
+        self.animation.setEndValue(1)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuad)
+    def start_fade_in(self):
+        self.animation.start()
     def center_window(self):
         screen = QApplication.primaryScreen().availableGeometry()
         size = self.size()
@@ -802,6 +813,7 @@ if __name__ == "__main__":
     app.setQuitOnLastWindowClosed(False)
     gui = MenuGUI()
     gui.show()
+    gui.start_fade_in()
     gui._automatic_check_updates()
     try:
         sys.exit(app.exec())
