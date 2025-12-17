@@ -143,39 +143,53 @@ def check_package_installed(venv_py: Path, package_name: str) -> bool:
     except FileNotFoundError:
         return False
 def create_venv():
-    print_step_working(step_label(1, 3, "Creating virtual environment"))
+    print_step_working(step_label(1, 4, "Creating virtual environment"))
     if VENV_DIR.exists():
         print_small(f"Venv exists: {VENV_DIR}")
-        print_ok(step_label(1, 3, "Virtual environment already exists"))
+        print_ok(step_label(1, 4, "Virtual environment already exists"))
         return True
     creator = find_system_python()
     rc = subprocess.call([creator, "-m", "venv", str(VENV_DIR)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if rc != 0:
-        print_fail(step_label(1, 3, "Creating virtual environment"))
+        print_fail(step_label(1, 4, "Creating virtual environment"))
         return False
-    print_ok(step_label(1, 3, "Virtual environment created"))
+    print_ok(step_label(1, 4, "Virtual environment created"))
     return True
 def ensure_packaging_tools(venv_py: Path):
-    print_step_working(step_label(2, 3, "Upgrading pip / setuptools / wheel"))
+    print_step_working(step_label(2, 4, "Upgrading pip / setuptools / wheel"))
     rc = run_and_watch([str(venv_py), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"],
                        filter_keys=("Installing collected packages", "Successfully installed", "ERROR", "Failed", "%"))
     if rc == 0:
-        print_ok(step_label(2, 3, "Pip / tools upgraded"))
+        print_ok(step_label(2, 4, "Pip / tools upgraded"))
     else:
-        print_fail(step_label(2, 3, "Upgrading pip / setuptools / wheel"))
+        print_fail(step_label(2, 4, "Upgrading pip / setuptools / wheel"))
         print_small("Continuing (pip upgrade failure may still allow installs).")
+def install_packaging(venv_py: Path):
+    if check_package_installed(venv_py, "packaging"):
+        print_info("Packaging already installed")
+        return True
+    print_step_working(step_label(3, 4, "Installing packaging"))
+    rc = run_and_watch([str(venv_py), "-m", "pip", "install", "packaging"],
+                       filter_keys=("Installing collected packages", "Successfully installed", "ERROR", "Failed", "%"))
+    if rc == 0:
+        print_ok(step_label(3, 4, "Packaging installed"))
+        return True
+    else:
+        print_fail(step_label(3, 4, "Installing packaging"))
+        return False
+
 def install_pyside(venv_py: Path):
     if check_package_installed(venv_py, "pyside6-essentials"):
         print_info("PySide6 Essentials already installed")
         return True
-    print_step_working(step_label(3, 3, "Installing PySide6 Essentials"))
+    print_step_working(step_label(4, 4, "Installing PySide6 Essentials"))
     rc = run_and_watch([str(venv_py), "-m", "pip", "install", "pyside6-essentials"],
                        filter_keys=("Installing collected packages", "Successfully installed", "ERROR", "Failed", "%"))
     if rc == 0:
-        print_ok(step_label(3, 3, "PySide6 Essentials installed"))
+        print_ok(step_label(4, 4, "PySide6 Essentials installed"))
         return True
     else:
-        print_fail(step_label(3, 3, "Installing PySide6 Essentials"))
+        print_fail(step_label(4, 4, "Installing PySide6 Essentials"))
         return False
 def main():
     print()
@@ -194,6 +208,10 @@ def main():
             print_fail("Failed to create venv with system python")
             sys.exit(2)
     ensure_packaging_tools(venv_py)
+    packaging_ok = install_packaging(venv_py)
+    if not packaging_ok:
+        print_small("Packaging installation failed.")
+        sys.exit(3)
     deps_ok = install_pyside(venv_py)
     if not deps_ok:
         print_small("PySide6 Essentials installation failed; you can re-run the script to retry.")

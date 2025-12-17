@@ -7,7 +7,11 @@ import threading
 import queue
 import time
 import traceback
+import tempfile
+import json
 from pathlib import Path
+from packaging.requirements import Requirement
+from importlib.metadata import version, PackageNotFoundError
 from typing import Optional, Tuple
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -207,14 +211,23 @@ _last_real_pct: Optional[int] = None
 _current_step = 0               
 _worker_thread: Optional[threading.Thread] = None
 
+def get_config_value(key: str, default=None):
+    config_path = PROJECT_DIR / "Assets" / "resources" / "i18n" / "config.json"
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        return config.get(key, default)
+    except Exception:
+        return default
+
 def _compute_target_overall(step: int, sub_pct: Optional[int]) -> int:
     try:
         if step <= 1:
-            base_min, base_max = 0, 33
+            base_min, base_max = 0, 20
         elif step == 2:
-            base_min, base_max = 33, 66
+            base_min, base_max = 20, 80
         else:
-            base_min, base_max = 66, 100
+            base_min, base_max = 80, 100
         if sub_pct is None:
             # return middle of slice for smooth progression when no pct
             return int(base_min + (base_max - base_min) * 0.5)
@@ -411,8 +424,8 @@ def _start_install_timer():
             global _target_pct, _current_step
             if _current_step != 2:
                 return
-            if _target_pct < 65:
-                _target_pct = min(65, _target_pct + 1)
+            if _target_pct < 75:
+                _target_pct = min(75, _target_pct + 1)
         _install_timer.timeout.connect(nudge)
         _install_timer.start()
     except Exception:
@@ -538,29 +551,80 @@ def backend_worker(venv_py: Path, signals: "WorkerSignals"):
         rc = run_and_watch(cmd_upg, update_callback=emit_raw)
         if rc != 0:
             rc_final = rc
-        temp_req_path = PROJECT_DIR / TEMP_REQ_FILE_NAME
-        if REQ_FILE.exists():
-            try:
-                with open(REQ_FILE, "r") as f_in, open(temp_req_path, "w") as f_out:
-                    for line in f_in:
-                        if "pyside6-essentials" not in line:
-                            f_out.write(line)
-                cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(temp_req_path)]
-            except Exception:
-                cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(REQ_FILE)]
-        elif PYPROJECT.exists():
-            cmd_install = [str(venv_py), "-m", "pip", "install", "."]
-        else:
-            cmd_install = None
-        if cmd_install:
-            rc2 = run_and_watch(cmd_install, update_callback=emit_raw)
-            if rc2 != 0:
-                rc_final = rc2
+        all_req_satisfied = True
         try:
-            if temp_req_path.exists():
-                temp_req_path.unlink()
+            if REQ_FILE.exists():
+                with open(REQ_FILE, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#'):
+                            try:
+                                req = Requirement(line)
+                                try:
+                                    v = version(req.name)
+                                    if not req.specifier.contains(v):
+                                        all_req_satisfied = False
+                                        break
+                                except PackageNotFoundError:
+                                    all_req_satisfied = False
+                                    break
+                            except Exception:
+                                # invalid requirement or git, assume not satisfied
+                                all_req_satisfied = False
+                                break
         except Exception:
-            pass
+            all_req_satisfied = False
+        if not all_req_satisfied:
+            temp_req_path = PROJECT_DIR / TEMP_REQ_FILE_NAME
+            git_packages = []
+            if REQ_FILE.exists():
+                with open(REQ_FILE, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#'):
+                            if line.startswith('git+'):
+                                git_packages.append(line)
+                            elif "pyside6-essentials" not in line:
+                                with open(temp_req_path, 'a') as f_out:
+                                    f_out.write(line + '\n')
+            # install git packages
+            for git_req in git_packages:
+                if '#egg=' in git_req:
+                    url_part, egg_part = git_req.split('#egg=', 1)
+                    url = url_part[4:]  # remove git+
+                    egg = egg_part
+                    try:
+                        version(egg)
+                        # already installed, skip
+                    except PackageNotFoundError:
+                        # clone and install
+                        try:
+                            with tempfile.TemporaryDirectory() as temp_dir:
+                                subprocess.run(['git', 'clone', '--recursive', url, temp_dir], check=True, capture_output=True)
+                                rc = run_and_watch([str(venv_py), "-m", "pip", "install", temp_dir], update_callback=emit_raw)
+                                if rc != 0:
+                                    rc_final = rc
+                        except Exception:
+                            # fallback to direct pip install
+                            cmd_install = [str(venv_py), "-m", "pip", "install", git_req]
+                            rc = run_and_watch(cmd_install, update_callback=emit_raw)
+                            if rc != 0:
+                                rc_final = rc
+            # install standard packages
+            cmd_install = None
+            if temp_req_path.exists() and temp_req_path.stat().st_size > 0:
+                cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(temp_req_path)]
+            elif PYPROJECT.exists() and not REQ_FILE.exists():
+                cmd_install = [str(venv_py), "-m", "pip", "install", "."]
+            if cmd_install:
+                rc2 = run_and_watch(cmd_install, update_callback=emit_raw)
+                if rc2 != 0:
+                    rc_final = rc2
+            try:
+                if temp_req_path.exists():
+                    temp_req_path.unlink()
+            except Exception:
+                pass
     except Exception as e:
         rc_final = 2
         if DEBUG:
@@ -600,6 +664,8 @@ def spawn_menu_and_exit(venv_py: Path):
     except Exception:
         if DEBUG:
             traceback.print_exc()
+    import time
+    time.sleep(0.2)  # Allow Qt threads to clean up before exit
     os._exit(0)
 
 def main():
@@ -658,6 +724,8 @@ def main():
                         tiny_label.setText("Finished" if rc == 0 else "Finished with errors")
                     except Exception:
                         pass
+                if get_config_value("checkstartlogs", False):
+                    input("Press Enter to continue to menu...")
                 QTimer.singleShot(350, lambda: spawn_menu_and_exit(venv_py))
             _signals.finished.connect(on_finished)
             _worker_thread = threading.Thread(target=backend_worker, args=(venv_py, _signals), daemon=True)
@@ -672,34 +740,87 @@ def main():
                 rc = run_and_watch(cmd_upg, update_callback=lambda r, p: emit_raw_console(r, p))
                 if rc != 0:
                     rc_final = rc
-                temp_req_path = PROJECT_DIR / TEMP_REQ_FILE_NAME
-                if REQ_FILE.exists():
-                    try:
-                        with open(REQ_FILE, "r") as f_in, open(temp_req_path, "w") as f_out:
-                            for line in f_in:
-                                if "pyside6-essentials" not in line:
-                                    f_out.write(line)
-                        cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(temp_req_path)]
-                    except Exception:
-                        cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(REQ_FILE)]
-                elif PYPROJECT.exists():
-                    cmd_install = [str(venv_py), "-m", "pip", "install", "."]
-                else:
-                    cmd_install = None
-                if cmd_install:
-                    rc2 = run_and_watch(cmd_install, update_callback=lambda r, p: emit_raw_console(r, p))
-                    if rc2 != 0:
-                        rc_final = rc2
+                all_req_satisfied = True
                 try:
-                    if temp_req_path.exists():
-                        temp_req_path.unlink()
+                    if REQ_FILE.exists():
+                        with open(REQ_FILE, 'r') as f:
+                            for line in f:
+                                line = line.strip()
+                                if line and not line.startswith('#'):
+                                    try:
+                                        req = Requirement(line)
+                                        try:
+                                            v = version(req.name)
+                                            if not req.specifier.contains(v):
+                                                all_req_satisfied = False
+                                                break
+                                        except PackageNotFoundError:
+                                            all_req_satisfied = False
+                                            break
+                                    except Exception:
+                                        # invalid requirement or git, assume not satisfied
+                                        all_req_satisfied = False
+                                        break
                 except Exception:
-                    pass
+                    all_req_satisfied = False
+                if not all_req_satisfied:
+                    temp_req_path = PROJECT_DIR / TEMP_REQ_FILE_NAME
+                    git_packages = []
+                    if REQ_FILE.exists():
+                        with open(REQ_FILE, 'r') as f:
+                            for line in f:
+                                line = line.strip()
+                                if line and not line.startswith('#'):
+                                    if line.startswith('git+'):
+                                        git_packages.append(line)
+                                    elif "pyside6-essentials" not in line:
+                                        with open(temp_req_path, 'a') as f_out:
+                                            f_out.write(line + '\n')
+                    # install git packages
+                    for git_req in git_packages:
+                        if '#egg=' in git_req:
+                            url_part, egg_part = git_req.split('#egg=', 1)
+                            url = url_part[4:]  # remove git+
+                            egg = egg_part
+                            try:
+                                version(egg)
+                                # already installed, skip
+                            except PackageNotFoundError:
+                                # clone and install
+                                try:
+                                    with tempfile.TemporaryDirectory() as temp_dir:
+                                        subprocess.run(['git', 'clone', '--recursive', url, temp_dir], check=True, capture_output=True)
+                                        rc = run_and_watch([str(venv_py), "-m", "pip", "install", temp_dir], update_callback=lambda r, p: emit_raw_console(r, p))
+                                        if rc != 0:
+                                            rc_final = rc
+                                except Exception:
+                                    # fallback to direct pip install
+                                    cmd_install = [str(venv_py), "-m", "pip", "install", git_req]
+                                    rc = run_and_watch(cmd_install, update_callback=lambda r, p: emit_raw_console(r, p))
+                                    if rc != 0:
+                                        rc_final = rc
+                    # install standard packages
+                    cmd_install = None
+                    if temp_req_path.exists() and temp_req_path.stat().st_size > 0:
+                        cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(temp_req_path)]
+                    elif PYPROJECT.exists() and not REQ_FILE.exists():
+                        cmd_install = [str(venv_py), "-m", "pip", "install", "."]
+                    if cmd_install:
+                        rc2 = run_and_watch(cmd_install, update_callback=lambda r, p: emit_raw_console(r, p))
+                        if rc2 != 0:
+                            rc_final = rc2
+                    try:
+                        if temp_req_path.exists():
+                            temp_req_path.unlink()
+                    except Exception:
+                        pass
             except Exception:
                 rc_final = 2
                 if DEBUG:
                     traceback.print_exc()
             if rc_final == 0:
+                if get_config_value("checkstartlogs", False):
+                    input("Press Enter to continue to menu...")
                 try:
                     subprocess.Popen([str(venv_py), str(MENU_PY)])
                 except Exception:
