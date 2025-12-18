@@ -15,10 +15,10 @@ except Exception:
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QFrame, QScrollArea, QMessageBox, QToolButton, QStyle, QStatusBar,
-    QSpacerItem, QSizePolicy, QGraphicsOpacityEffect
+    QSpacerItem, QSizePolicy, QGraphicsOpacityEffect, QGraphicsDropShadowEffect
 )
 from PySide6.QtGui import QPixmap, QIcon, QFont, QFontDatabase, QCursor, QColor, QPalette
-from PySide6.QtCore import Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve, QPoint
 try:
     from PIL import Image
 except Exception:
@@ -416,15 +416,32 @@ QStatusBar {
     color: rgba(255,255,255,0.6);
     border-top: 1px solid rgba(255,255,255,0.02);
 }
+
+/* Control chips */
+QPushButton#controlChip {
+    background: rgba(128,128,128,0.1);
+    border: 1px solid rgba(128,128,128,0.2);
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 18px;
+    color: #ffffff;
+    text-align: center;
+}
+QPushButton#controlChip:hover {
+    background: rgba(128,128,128,0.2);
+    border: 1px solid rgba(128,128,128,0.3);
+}
 """
 class MenuGUI(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowFlags(Qt.FramelessWindowHint)
         self.running = True
         tv, _ = get_versions()
         self.setWindowTitle(t("app.title", version=tv))
-        self._default_width = 950
+        self._default_width = 1050
         self.setStyleSheet(DARK_STYLE)
+        self._drag_pos = None
         font_path = os.path.join(get_assets_path(), "resources", "HackNerdFont-Regular.ttf")
         if os.path.exists(font_path):
             families = QFontDatabase.families()
@@ -464,6 +481,11 @@ class MenuGUI(QMainWindow):
         tools_version, game_version = get_versions()
         central = QWidget()
         central.setObjectName("central")
+        glow_effect = QGraphicsDropShadowEffect()
+        glow_effect.setColor(QColor(125, 211, 252, 80))  # Subtle blue glow
+        glow_effect.setBlurRadius(15)
+        glow_effect.setOffset(0, 0)
+        central.setGraphicsEffect(glow_effect)
         self.setCentralWidget(central)
         main_v = QVBoxLayout(central)
         main_v.setContentsMargins(14, 14, 14, 14)
@@ -511,6 +533,16 @@ class MenuGUI(QMainWindow):
         self.lang_combo.setFixedWidth(93)
         self.lang_combo.currentTextChanged.connect(self.on_language_change_cmd)
         top_h.addWidget(self.lang_combo)
+        minimize_btn = QPushButton(nf.icons['nf-md-circle_medium'])
+        minimize_btn.setObjectName("controlChip")
+        minimize_btn.setFlat(True)
+        minimize_btn.clicked.connect(self.showMinimized)
+        top_h.addWidget(minimize_btn)
+        close_btn = QPushButton(nf.icons['nf-fa-close'])
+        close_btn.setObjectName("controlChip")
+        close_btn.setFlat(True)
+        close_btn.clicked.connect(self.close)
+        top_h.addWidget(close_btn)
         main_v.addLayout(top_h)
         content_h = QHBoxLayout()
         content_h.setSpacing(12)
@@ -788,6 +820,18 @@ class MenuGUI(QMainWindow):
         final_w = min(desired_width, max_w)
         self.resize(final_w, int(final_h))
         self.center_window()
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+    def mouseMoveEvent(self, event):
+        if self._drag_pos is not None:
+            self.move(event.globalPosition().toPoint() - self._drag_pos)
+            event.accept()
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_pos = None
+            event.accept()
     def closeEvent(self, event):
         QApplication.quit()
         event.accept()
