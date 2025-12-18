@@ -260,9 +260,9 @@ JOKES = [
 
 if GUI_AVAILABLE:
     class WorkerSignals(QObject):
-        raw = Signal(str, int)      # raw message, pct (pct may be -1 for none)
-        finished = Signal(int)      # exit code (0 success)
-        started = Signal()          # optional, not used heavily
+        raw = Signal(str, int)    
+        finished = Signal(int)     
+        started = Signal()         
 
     _signals: Optional[WorkerSignals] = None
 
@@ -569,7 +569,6 @@ def backend_worker(venv_py: Path, signals: "WorkerSignals"):
                                     all_req_satisfied = False
                                     break
                             except Exception:
-                                # invalid requirement or git, assume not satisfied
                                 all_req_satisfied = False
                                 break
         except Exception:
@@ -587,17 +586,14 @@ def backend_worker(venv_py: Path, signals: "WorkerSignals"):
                             elif "pyside6-essentials" not in line:
                                 with open(temp_req_path, 'a') as f_out:
                                     f_out.write(line + '\n')
-            # install git packages
             for git_req in git_packages:
                 if '#egg=' in git_req:
                     url_part, egg_part = git_req.split('#egg=', 1)
-                    url = url_part[4:]  # remove git+
+                    url = url_part[4:] 
                     egg = egg_part
                     try:
                         version(egg)
-                        # already installed, skip
                     except PackageNotFoundError:
-                        # clone and install
                         try:
                             with tempfile.TemporaryDirectory() as temp_dir:
                                 subprocess.run(['git', 'clone', '--recursive', url, temp_dir], check=True, capture_output=True)
@@ -605,12 +601,10 @@ def backend_worker(venv_py: Path, signals: "WorkerSignals"):
                                 if rc != 0:
                                     rc_final = rc
                         except Exception:
-                            # fallback to direct pip install
                             cmd_install = [str(venv_py), "-m", "pip", "install", git_req]
                             rc = run_and_watch(cmd_install, update_callback=emit_raw)
                             if rc != 0:
                                 rc_final = rc
-            # install standard packages
             cmd_install = None
             if temp_req_path.exists() and temp_req_path.stat().st_size > 0:
                 cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(temp_req_path)]
@@ -665,7 +659,7 @@ def spawn_menu_and_exit(venv_py: Path):
         if DEBUG:
             traceback.print_exc()
     import time
-    time.sleep(0.2)  # Allow Qt threads to clean up before exit
+    time.sleep(0.2) 
     os._exit(0)
 
 def main():
@@ -758,7 +752,6 @@ def main():
                                             all_req_satisfied = False
                                             break
                                     except Exception:
-                                        # invalid requirement or git, assume not satisfied
                                         all_req_satisfied = False
                                         break
                 except Exception:
@@ -776,17 +769,15 @@ def main():
                                     elif "pyside6-essentials" not in line:
                                         with open(temp_req_path, 'a') as f_out:
                                             f_out.write(line + '\n')
-                    # install git packages
                     for git_req in git_packages:
                         if '#egg=' in git_req:
                             url_part, egg_part = git_req.split('#egg=', 1)
-                            url = url_part[4:]  # remove git+
+                            url = url_part[4:]
                             egg = egg_part
                             try:
                                 version(egg)
-                                # already installed, skip
+
                             except PackageNotFoundError:
-                                # clone and install
                                 try:
                                     with tempfile.TemporaryDirectory() as temp_dir:
                                         subprocess.run(['git', 'clone', '--recursive', url, temp_dir], check=True, capture_output=True)
@@ -794,12 +785,10 @@ def main():
                                         if rc != 0:
                                             rc_final = rc
                                 except Exception:
-                                    # fallback to direct pip install
                                     cmd_install = [str(venv_py), "-m", "pip", "install", git_req]
                                     rc = run_and_watch(cmd_install, update_callback=lambda r, p: emit_raw_console(r, p))
                                     if rc != 0:
                                         rc_final = rc
-                    # install standard packages
                     cmd_install = None
                     if temp_req_path.exists() and temp_req_path.stat().st_size > 0:
                         cmd_install = [str(venv_py), "-m", "pip", "install", "-r", str(temp_req_path)]
