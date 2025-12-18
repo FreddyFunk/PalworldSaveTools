@@ -462,7 +462,6 @@ class MenuGUI(QMainWindow):
         self.tool_icons = load_tool_icons()
         self.setup_ui()
         self._fit_window_to_listing()
-        # Setup fade-in animation
         self.effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.effect)
         self.effect.setOpacity(0)
@@ -482,7 +481,7 @@ class MenuGUI(QMainWindow):
         central = QWidget()
         central.setObjectName("central")
         glow_effect = QGraphicsDropShadowEffect()
-        glow_effect.setColor(QColor(125, 211, 252, 80))  # Subtle blue glow
+        glow_effect.setColor(QColor(125, 211, 252, 80))
         glow_effect.setBlurRadius(15)
         glow_effect.setOffset(0, 0)
         central.setGraphicsEffect(glow_effect)
