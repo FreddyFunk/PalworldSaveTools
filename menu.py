@@ -785,18 +785,17 @@ class MenuGUI(QMainWindow):
         except Exception:
             pass
     def _start_pulse_animation(self):
-        if hasattr(self, "_pulse_anim"):
+        if hasattr(self, "_pulse_timer"):
             return
-        from PySide6.QtWidgets import QGraphicsOpacityEffect
-        self._pulse_effect = QGraphicsOpacityEffect(self.app_version_label)
-        self.app_version_label.setGraphicsEffect(self._pulse_effect)
-        self._pulse_anim = QPropertyAnimation(self._pulse_effect, b"opacity")
-        self._pulse_anim.setDuration(1000)
-        self._pulse_anim.setStartValue(1.0)
-        self._pulse_anim.setEndValue(0.4)
-        self._pulse_anim.setEasingCurve(QEasingCurve.InOutQuad)
-        self._pulse_anim.setLoopCount(-1)
-        self._pulse_anim.start()
+        self._pulse_timer = QTimer()
+        self._pulse_timer.timeout.connect(self._toggle_pulse)
+        self._pulse_timer.start(500)  # toggle every 500ms
+
+    def _toggle_pulse(self):
+        current = self.app_version_label.property("pulse")
+        new_val = "false" if current == "true" else "true"
+        self.app_version_label.setProperty("pulse", new_val)
+        self.app_version_label.style().polish(self.app_version_label)
     def _open_github(self, event):
         url = GITHUB_LATEST_ZIP
         import webbrowser
