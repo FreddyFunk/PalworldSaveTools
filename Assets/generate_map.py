@@ -17,26 +17,29 @@ def to_image_coordinates(x_world,y_world):
     y_img=(y_max-y_world)*y_scale
     return int(x_img),int(y_img)
 def parse_logfile(log_path):
-    with open(log_path,'r',encoding='utf-8') as file:
-        lines=file.readlines()
-    guild_data=[]
-    current={}
-    base_keys=set()
+    with open(log_path, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+    guild_data = []
+    current = {}
+    base_keys = set()
     for line in lines:
+        line = line.strip()
         if line.startswith('Guild:'):
-            if current: guild_data.append(current); current={}
-            m=re.search(r'Guild:\s*(.*?)\s*\|\s*Guild Leader:\s*(.*?)\s*\|',line)
+            if current: guild_data.append(current)
+            current = {}
+            m = re.search(r'Guild:\s*(.*?)\s*\|\s*Guild Leader:\s*(.*?)\s*\|', line)
             if m:
-                current['Guild']=m.group(1)
-                current['Guild Leader']=m.group(2)
-        if line.startswith('Base ') and any(line.startswith(f"Base {i}:") for i in range(1,11)):
-            key=line.split(':')[0].strip()
-            parts=line.strip().split('|')
-            if len(parts)>=2:
-                current[key]=parts[1].strip()
-                base_keys.add(key)
+                current['Guild'] = m.group(1).strip()
+                current['Guild Leader'] = m.group(2).strip()
+        elif line.startswith('Base ') and 'New:' in line:
+            parts = line.split(':')
+            key_part = parts[0].strip()
+            m = re.search(r'New:\s*(-?\d+)\s*,\s*(-?\d+)', line)
+            if m:
+                current[key_part] = f"{m.group(1)},{m.group(2)}"
+                base_keys.add(key_part)
     if current: guild_data.append(current)
-    return guild_data,sorted(base_keys)
+    return guild_data, sorted(base_keys)
 def write_csv(guild_data,base_keys,output_file):
     print(t("mapgen.write_csv"))
     fieldnames=['Guild','Guild Leader']+base_keys
@@ -47,57 +50,23 @@ def write_csv(guild_data,base_keys,output_file):
             row={field:g.get(field,'') for field in fieldnames}
             w.writerow(row)
 Image.MAX_IMAGE_PIXELS=None
-def sanitize_text(text):
-    try: return text.encode('utf-8','ignore').decode('utf-8')
-    except: return text.replace('\uFFFD','?')
 def extract_info_from_log():
     print(t("mapgen.extract"))
     try:
         with open('Scan Save Logger/scan_save.log', 'r', encoding='utf-8') as f:
             log_content = f.read()
-    except UnicodeDecodeError:
+    except:
         raise ValueError("UTF-8 read error.")
-    stats = {
-        'Total Players': 'N/A',
-        'Total Caught Pals': 'N/A',
-        'Total Overall Pals': 'N/A',
-        'Total Owned Pals': 'N/A',
-        'Total Worker/Dropped Pals': 'N/A',
-        'Total Active Guilds': 'N/A',
-        'Total Bases': 'N/A'
-    }
-    block = re.search(r"PST_STATS_BEGIN(.*?)PST_STATS_END", log_content, re.S)
-    if not block:
-        return stats
-    text = block.group(1)
+    stats = {}
     patterns = {
-        'Total Players': r":\s*(\d+)",
-        'Total Caught Pals': r":\s*(\d+)",
-        'Total Overall Pals': r":\s*(\d+)",
-        'Total Owned Pals': r":\s*(\d+)",
-        'Total Worker/Dropped Pals': r":\s*(\d+)",
-        'Total Active Guilds': r":\s*(\d+)",
-        'Total Bases': r":\s*(\d+)"
+        'Total Players': r"Total Players:\s*(\d+)",
+        'Total Caught Pals': r"Total Caught Pals:\s*(\d+)",
+        'Total Overall Pals': r"Total Overall Pals:\s*(\d+)",
+        'Total Owned Pals': r"Total Owned Pals:\s*(\d+)",
+        'Total Worker/Dropped Pals': r"Total Worker/Dropped Pals:\s*(\d+)",
+        'Total Active Guilds': r"Total Active Guilds:\s*(\d+)",
+        'Total Bases': r"Total Bases:\s*(\d+)"
     }
-    keys_in_order = [
-        'Total Players',
-        'Total Caught Pals',
-        'Total Overall Pals',
-        'Total Owned Pals',
-        'Total Worker/Dropped Pals',
-        'Total Active Guilds',
-        'Total Bases'
-    ]
-    lines = text.splitlines()
-    ki = 0
-    for line in lines:
-        if ki >= len(keys_in_order):
-            break
-        key = keys_in_order[ki]
-        m = re.search(patterns[key], line)
-        if m:
-            stats[key] = m.group(1)
-            ki += 1
     translation_map = {
         "Total Players": "stats.total_players",
         "Total Caught Pals": "stats.total_caught",
@@ -107,18 +76,14 @@ def extract_info_from_log():
         "Total Active Guilds": "stats.total_guilds",
         "Total Bases": "stats.total_bases"
     }
-    for key, value in stats.items():
-        print(f"{t(translation_map[key])}: {value}")
+    for key, pattern in patterns.items():
+        m = re.search(pattern, log_content)
+        val = m.group(1) if m else '0'
+        stats[key] = val
+        print(f"{t(translation_map[key])}: {val}")
     return stats
 def render_text_pil(text,size=20,color=(255,0,0)):
-    font_paths=[
-        r"C:\Windows\Fonts\msgothic.ttc",
-        r"C:\Windows\Fonts\YuGothicUI.ttf",
-        r"C:\Windows\Fonts\YuGothic.ttf",
-        r"C:\Windows\Fonts\meiryo.ttc",
-        r"C:\Windows\Fonts\meiryob.ttc",
-        r"C:\Windows\Fonts\msmincho.ttc"
-    ]
+    font_paths=[r"C:\Windows\Fonts\msgothic.ttc",r"C:\Windows\Fonts\YuGothicUI.ttf",r"C:\Windows\Fonts\YuGothic.ttf",r"C:\Windows\Fonts\meiryo.ttc"]
     font=None
     for fp in font_paths:
         if os.path.exists(fp):
@@ -127,13 +92,13 @@ def render_text_pil(text,size=20,color=(255,0,0)):
                 break
             except: pass
     if font is None: font=ImageFont.load_default()
-    dummy=Image.new("RGBA",(10,10))
+    dummy=Image.new("RGBA",(1,1))
     d=ImageDraw.Draw(dummy)
-    left,top,right,bottom=d.textbbox((0,0),text,font=font)
-    w,h=right-left,bottom-top
-    img=Image.new("RGBA",(w,h),(0,0,0,0))
+    bbox=d.textbbox((0,0),text,font=font)
+    w,h=bbox[2]-bbox[0],bbox[3]-bbox[1]
+    img=Image.new("RGBA",(w+10,h+10),(0,0,0,0))
     d2=ImageDraw.Draw(img)
-    d2.text((0,0),text,font=font,fill=color)
+    d2.text((5,5),text,font=font,fill=color)
     return img
 def create_world_map():
     import pygame
@@ -149,66 +114,49 @@ def create_world_map():
     scale=4
     font_path=os.path.join(base_dir,"resources","NotoSansCJKsc-Regular.otf")
     font=pygame.font.Font(font_path,20*scale)
-    def render_text(text,color=(255,0,0)):
+    def render_pygame_text(text,color=(255,0,0)):
         surf=font.render(text,True,color)
         data=pygame.image.tostring(surf,"RGBA")
         return Image.frombytes("RGBA",surf.get_size(),data)
     overlay=Image.new('RGBA',(image.width*scale,image.height*scale),(0,0,0,0))
     draw=ImageDraw.Draw(overlay)
     marker_resized=marker.resize((marker_size[0]*scale,marker_size[1]*scale),Image.Resampling.LANCZOS)
-    def to_image_coordinates_scaled(x,y):
-        xi,yi=to_image_coordinates(x,y)
-        return xi*scale,yi*scale
     for _,row in df.iterrows():
         guild=row.get('Guild',t("mapgen.unknown"))
         leader=row.get('Guild Leader',t("mapgen.unknown"))
         for col in base_cols:
-            if pd.notna(row[col]):
-                coords_str=row[col]
-                coords_part=coords_str.split('|')[0].strip()
+            if pd.notna(row[col]) and row[col] != '':
                 try:
-                    x_str,y_str=coords_part.split(', ')
+                    coords=str(row[col]).strip()
+                    x,y=map(int,coords.split(','))
+                    xi,yi=to_image_coordinates(x,y)
+                    x_img,y_img=xi*scale,yi*scale
+                    r=35*scale
+                    draw.ellipse((x_img-r,y_img-r,x_img+r,y_img+r),outline='red',width=4*scale)
+                    mx,my=x_img-marker_resized.width//2,y_img-marker_resized.height//2
+                    overlay.paste(marker_resized,(mx,my),marker_resized)
+                    text=f"{guild} | {leader}"
+                    txt=render_text_pil(text,size=20*scale,color=(255,0,0))
+                    shadow=render_text_pil(text,size=20*scale,color=(0,0,0))
+                    for dx,dy in [(-2,-2),(-2,2),(2,-2),(2,2)]:
+                        overlay.paste(shadow,(x_img-txt.width//2+dx,my+marker_resized.height+10*scale+dy),shadow)
+                    overlay.paste(txt,(x_img-txt.width//2,my+marker_resized.height+10*scale),txt)
                 except: continue
-                x,y=int(x_str),int(y_str)
-                x_img,y_img=to_image_coordinates_scaled(x,y)
-                r=35*scale
-                draw.ellipse((x_img-r,y_img-r,x_img+r,y_img+r),outline='red',width=4*scale)
-                mx=x_img-marker_resized.width//2
-                my=y_img-marker_resized.height//2
-                overlay.paste(marker_resized,(mx,my),marker_resized)
-                text=f"{guild} | {leader}"
-                txt=render_text_pil(text,size=20*scale,color=(255,0,0))
-                shadow=render_text_pil(text,size=20*scale,color=(0,0,0))
-                for dx,dy in [(-1,-1),(-1,1),(1,-1),(1,1)]:
-                    overlay.paste(shadow,(x_img-txt.width//2+dx*scale,my+marker_resized.height+10*scale+dy*scale),shadow)
-                overlay.paste(txt,(x_img-txt.width//2,my+marker_resized.height+10*scale),txt)
     stats=extract_info_from_log()
-    ordered_stats=[
-        ("Total Bases","stats.total_bases"),
-        ("Total Active Guilds","stats.total_guilds"),
-        ("Total Worker/Dropped Pals","stats.total_workers"),
-        ("Total Owned Pals","stats.total_owned"),
-        ("Total Overall Pals","stats.total_overall"),
-        ("Total Caught Pals","stats.total_caught"),
-        ("Total Players","stats.total_players")
-    ]
-    stats_text_lines=[
-        f"{t(langkey)}: {stats[raw]}"
-        for raw,langkey in ordered_stats
-    ]
-    stats_text="\n".join(stats_text_lines)
+    ordered_stats=[("Total Bases","stats.total_bases"),("Total Active Guilds","stats.total_guilds"),("Total Worker/Dropped Pals","stats.total_workers"),("Total Owned Pals","stats.total_owned"),("Total Overall Pals","stats.total_overall"),("Total Caught Pals","stats.total_caught"),("Total Players","stats.total_players")]
     y_offset=overlay.height-50*scale
-    for line in stats_text.split('\n'):
-        line_img=render_text(line,color=(255,0,0))
-        shadow_img=render_text(line,color=(0,0,0))
+    for raw,langkey in ordered_stats:
+        line=f"{t(langkey)}: {stats.get(raw,'0')}"
+        line_img=render_pygame_text(line,color=(255,0,0))
+        shadow_img=render_pygame_text(line,color=(0,0,0))
         y_offset-=line_img.height
-        overlay.paste(shadow_img,(overlay.width-line_img.width-50*scale-1,y_offset-1),shadow_img)
+        overlay.paste(shadow_img,(overlay.width-line_img.width-50*scale-2,y_offset-2),shadow_img)
         overlay.paste(line_img,(overlay.width-line_img.width-50*scale,y_offset),line_img)
     small=overlay.resize(image.size,Image.Resampling.LANCZOS)
     image.alpha_composite(small)
     print(t("mapgen.populate"))
     print(t("mapgen.generate"))
-    image.save('updated_worldmap.png',format='PNG',dpi=(100,100),optimize=True)
+    image.save('updated_worldmap.png',format='PNG')
     if os.path.exists('bases.csv'): os.remove('bases.csv')
 def generate_map():
     start=time.time()
