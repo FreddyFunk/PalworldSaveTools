@@ -672,10 +672,15 @@ def delete_selected_guild():
         messagebox.showerror(t("Error"), t("guild.rebuild.no_save"))
         return
     sel = guild_tree.selection()
+    src = "guild"
+    if not sel:
+        sel = player_tree.selection()
+        src = "player"
     if not sel:
         messagebox.showerror(t("Error"), t("Select guild"))
         return
-    raw_gid = guild_tree.item(sel[0])['values'][1]
+    vals = guild_tree.item(sel[0])['values'] if src == "guild" else player_tree.item(sel[0])['values']
+    raw_gid = vals[1] if src == "guild" else vals[6]
     gid = raw_gid.replace('-', '')
     if any(gid == ex.replace('-', '') for ex in exclusions.get("guilds", [])):
         print(t("guild.excluded", gid=raw_gid))
@@ -699,7 +704,6 @@ def delete_selected_guild():
                 pid_raw = str(p.get('player_uid', ''))
                 pid = pid_raw.replace('-', '')
                 if any(pid == ex.replace('-', '') for ex in exclusions.get("players", [])):
-                    print(t("player.excluded_in_guild", pid=pid_raw))
                     continue
                 deleted_uids.add(pid)
             group_data_list.remove(g)
@@ -708,11 +712,7 @@ def delete_selected_guild():
         files_to_delete.update(deleted_uids)
         delete_player_pals(wsd, deleted_uids)
     char_map = wsd.get('CharacterSaveParameterMap', {}).get('value', [])
-    char_map[:] = [entry for entry in char_map
-                   if str(entry.get('key', {}).get('PlayerUId', {}).get('value', '')).replace('-', '') not in deleted_uids
-                   and str(entry.get('value', {}).get('RawData', {}).get('value', {})
-                          .get('object', {}).get('SaveParameter', {}).get('value', {})
-                          .get('OwnerPlayerUId', {}).get('value', '')).replace('-', '') not in deleted_uids]
+    char_map[:] = [entry for entry in char_map if str(entry.get('key', {}).get('PlayerUId', {}).get('value', '')).replace('-', '') not in deleted_uids and str(entry.get('value', {}).get('RawData', {}).get('value', {}).get('object', {}).get('SaveParameter', {}).get('value', {}).get('OwnerPlayerUId', {}).get('value', '')).replace('-', '') not in deleted_uids]
     for b in wsd.get('BaseCampSaveData', {}).get('value', [])[:]:
         base_gid_raw = as_uuid(b['value']['RawData']['value'].get('group_id_belong_to'))
         if base_gid_raw.replace('-', '') == gid:
@@ -2906,10 +2906,16 @@ def make_selected_member_leader():
     messagebox.showinfo(t("guild.leader_updated.title"),t("guild.leader_updated.msg").format(old=old_leader_name,new=p_name))
 def rename_guild():
     sel = guild_tree.selection()
+    src = "guild"
+    if not sel:
+        sel = player_tree.selection()
+        src = "player"
     if not sel:
         messagebox.showerror(t("error.title"), t("guild.rename.select"))
         return
-    old_name, gid = guild_tree.item(sel[0])['values']
+    vals = guild_tree.item(sel[0])['values'] if src == "guild" else player_tree.item(sel[0])['values']
+    old_name = vals[0] if src == "guild" else vals[5]
+    gid = vals[1] if src == "guild" else vals[6]
     new_name = ask_string_with_icon(t("guild.rename.title"), t("guild.rename.prompt"), ICON_PATH)
     if not new_name:
         return
@@ -3487,6 +3493,9 @@ def all_in_one_tools():
             menu.add_command(label=t("deletion.ctx.remove_exclusion"), command=lambda: remove_selected_from_regular(player_tree, "players"))
             menu.add_command(label=t("deletion.ctx.delete_player"), command=delete_selected_player)
             menu.add_command(label=t("player.rename.menu"), command=rename_player)
+            menu.add_separator()
+            menu.add_command(label=t("deletion.ctx.delete_guild"), command=delete_selected_guild) 
+            menu.add_command(label=t("guild.rename.menu"), command=rename_guild)           
             menu.add_separator()
             menu.add_command(label=t("guild.menu.move_selected_player_to_selected_guild"), command=move_selected_player_to_selected_guild)
             menu.tk_popup(event.x_root, event.y_root)
