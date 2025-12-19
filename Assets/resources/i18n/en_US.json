@@ -447,5 +447,6 @@
 "map_obj.deleted_summary": "Deleted {deleted_count} orphaned/non-base map objects. {remaining_count} map objects remain.",
 "deletion.menu.remove_invalid_structures": "Remove All Invalid Structures",
 "deletion.menu.remove_invalid_structures_summary": "Deleted {deleted_count} invalid structure map objects. {remaining_count} structures remain.",
-"deletion.menu.remove_invalid_skins_summary": "Deleted {removed_level_skins} skin entries from Level.sav. Cleaned {fixed_player_files} player files."
+"deletion.menu.remove_invalid_skins_summary": "Deleted {removed_level_skins} skin entries from Level.sav. Cleaned {fixed_player_files} player files.",
+"deletion.menu.delete_all_skins": "Delete All Skins"
 }
