@@ -11,9 +11,6 @@ import re
 from pathlib import Path
 from typing import Optional
 
-# ---------------------------
-# Config
-# ---------------------------
 PROJECT_DIR = Path(__file__).resolve().parent
 VENV_DIR = PROJECT_DIR / "pst_venv"
 USE_ANSI = True
@@ -58,9 +55,6 @@ def print_info(label: str):
 def print_small(msg: str):
     print(f"{DIM}{msg}{RESET}")
 
-# ---------------------------
-# Subprocess streaming helper
-# ---------------------------
 def reader_thread(proc: subprocess.Popen, q: queue.Queue):
     assert proc.stdout is not None
     try:
@@ -165,9 +159,6 @@ def run_and_watch(cmd, cwd=None, env=None, filter_keys=None, update_callback=Non
         print_small(f"Command exit code: {rc}")
     return rc
 
-# ---------------------------
-# Python discovery + validation
-# ---------------------------
 def _probe_python_command(cmd_list, timeout: float = 3.0) -> Optional[dict]:
     """
     Try to run the candidate python command (list form) with:
@@ -184,7 +175,6 @@ def _probe_python_command(cmd_list, timeout: float = 3.0) -> Optional[dict]:
     if res.returncode != 0:
         return None
     out = (res.stdout or "").strip()
-    # expecting a JSON array like ["C:\\...\\python.exe", "3.x.y ..."]
     try:
         import json
         arr = json.loads(out.splitlines()[-1])
@@ -209,21 +199,17 @@ def find_system_python(info_logs: bool = False) -> str:
     """
     candidates = []
 
-    # prefer current interpreter if it's a real python 3
     candidates.append([sys.executable])
 
-    # check common names on PATH
     for name in ("python3", "python"):
         p = shutil.which(name)
         if p:
             candidates.append([p])
 
-    # on Windows, also try the py launcher with -3
     if os.name == "nt":
         if shutil.which("py"):
             candidates.append(["py", "-3"])
 
-    # de-duplicate while preserving order
     seen = set()
     uniq_candidates = []
     for c in candidates:
@@ -247,21 +233,16 @@ def find_system_python(info_logs: bool = False) -> str:
             return exe
 
         if info_logs:
-            # explain quickly why candidate failed
             try:
                 display = shutil.which(cand[0]) or cand[0]
             except Exception:
                 display = cand[0]
             print_small(f"Candidate {display!s} is not usable (probe failed).")
 
-    # last resort: return sys.executable even if probe failed (so caller can still try)
     if info_logs:
         print_small("No usable candidate found via probing; falling back to sys.executable")
     return sys.executable
 
-# ---------------------------
-# Helpers for venv & packages
-# ---------------------------
 def venv_python_path() -> Path:
     if os.name == "nt":
         return VENV_DIR / "Scripts" / "python.exe"
@@ -287,9 +268,6 @@ def check_package_installed(venv_py: Path, package_name: str, info_logs: bool = 
             print_small("venv python not found while checking installed packages")
         return False
 
-# ---------------------------
-# Steps
-# ---------------------------
 def create_venv(info_logs: bool = False) -> bool:
     print_step_working(step_label(1, 4, "Initializing Virtual Environment"))
     if VENV_DIR.exists():
@@ -341,9 +319,6 @@ def install_required_packages(venv_py: Path, info_logs: bool = False) -> bool:
         print_fail(step_label(3, 4, "Installing PySide6 & Shiboken6"))
         return False
 
-# ---------------------------
-# Main
-# ---------------------------
 def main():
     parser = argparse.ArgumentParser(description="Setup script (installs only pyside6 + shiboken6).")
     parser.add_argument('--infologs', action='store_true', help='Show full subprocess output and extra diagnostics')
