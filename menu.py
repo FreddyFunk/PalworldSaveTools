@@ -428,6 +428,10 @@ class MenuGUI(QMainWindow):
         action_toggle.triggered.connect(self.toggle_theme)
         action_settings.triggered.connect(self.show_settings)
         dropdown_btn.clicked.connect(lambda: menu.exec(dropdown_btn.mapToGlobal(QPoint(0, dropdown_btn.height()))))
+        self.dropdown_btn = dropdown_btn
+        self.menu = menu
+        self.action_toggle = action_toggle
+        self.action_settings = action_settings
         top_h.addWidget(dropdown_btn)
         minimize_btn = QPushButton(nf.icons['nf-md-circle_medium'])
         minimize_btn.setObjectName("controlChip")
@@ -639,6 +643,10 @@ class MenuGUI(QMainWindow):
         for container, btn, key, cat, idx in self.tool_widgets:
             btn.setText(t(key))
             btn.setToolTip(t(key))
+        self.action_toggle.setText(nf.icons['nf-md-theme_light_dark'] + " " + t("Toggle Theme"))
+        self.action_settings.setText(nf.icons['nf-md-cog'] + " " + t("Settings"))
+        self.dropdown_btn.setToolTip(t("Menu"))
+        self.warn_btn.setToolTip(t("PalworldSaveTools"))
 
     def _show_warnings(self):
         warnings = [
@@ -689,6 +697,10 @@ class MenuGUI(QMainWindow):
         self.setStyleSheet(mode_qss)
     def toggle_theme(self):
         self.is_dark_mode = not self.is_dark_mode
+        self.user_settings["theme"] = "dark" if self.is_dark_mode else "light"
+        user_cfg_path = os.path.join(get_assets_path(), "data", "configs", "user.cfg")
+        with open(user_cfg_path, "w") as f:
+            json.dump(self.user_settings, f)
         self.load_styles()
         self.update_logo()
     def update_theme_toggle_icon(self):
@@ -743,11 +755,18 @@ class MenuGUI(QMainWindow):
         lang_layout.addWidget(lang_label)
         lang_layout.addWidget(lang_combo)
         layout.addLayout(lang_layout)
-        dialog.exec()
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.close)
+        button_layout.addWidget(close_btn)
+        layout.addLayout(button_layout)
+        dialog.show()
     def _preview_show_icons(self, show):
         self.user_settings["show_icons"] = show
         self._populate_tool_buttons()
     def _auto_save_settings(self, dialog, theme_combo, show_icons_cb, lang_combo):
+        old_lang = self.user_settings.get("language")
         settings = {
             "theme": theme_combo.currentText(),
             "show_icons": show_icons_cb.isChecked(),
@@ -763,10 +782,11 @@ class MenuGUI(QMainWindow):
             self.load_styles()
             dialog.setStyleSheet(self.styleSheet())
             self.update_logo()
-        if settings["language"] != self.user_settings.get("language"):
+        if old_lang != settings["language"]:
             set_language(settings["language"])
             load_resources(settings["language"])
             self.refresh_texts()
+            self.repaint()
         self._populate_tool_buttons()
     def _fit_window_to_listing(self):
         per_row = 55
