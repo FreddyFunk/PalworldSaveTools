@@ -458,5 +458,7 @@
 "delete.base": "Delete Base",
 "button.export": "Export Base",
 "button.import": "Import Base",
-"delete.guild": "Delete Guild"
+"delete.guild": "Delete Guild",
+"base.import.success": "Base imported successfully",
+"base.export.success": "Base exported successfully"
 }

@@ -463,5 +463,7 @@
 "delete.base": "거점 삭제",
 "button.export": "거점 내보내기",
 "button.import": "거점 가져오기",
-"delete.guild": "길드 삭제"
+"delete.guild": "길드 삭제",
+"base.import.success": "거점을 성공적으로 가져왔습니다",
+"base.export.success": "거점을 성공적으로 내보냈습니다"
 }

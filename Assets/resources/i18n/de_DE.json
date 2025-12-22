@@ -462,5 +462,7 @@
 "delete.base": "Basis löschen",
 "button.export": "Basis exportieren",
 "button.import": "Basis importieren",
-"delete.guild": "Gilde löschen"
+"delete.guild": "Gilde löschen",
+"base.import.success": "Basis erfolgreich importiert",
+"base.export.success": "Basis erfolgreich exportiert"
 }

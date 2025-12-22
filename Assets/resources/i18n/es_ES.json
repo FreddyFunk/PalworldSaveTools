@@ -462,5 +462,7 @@
 "delete.base": "Eliminar Base",
 "button.export": "Exportar Base",
 "button.import": "Importar Base",
-"delete.guild": "Eliminar Gremio"
+"delete.guild": "Eliminar Gremio",
+"base.import.success": "Base importada con éxito",
+"base.export.success": "Base exportada con éxito"
 }

@@ -462,5 +462,7 @@
 "delete.base": "拠点を削除",
 "button.export": "拠点をエクスポート",
 "button.import": "拠点をインポート",
-"delete.guild": "ギルドを削除"
+"delete.guild": "ギルドを削除",
+"base.import.success": "拠点のインポートに成功しました",
+"base.export.success": "拠点のエクスポートに成功しました"
 }

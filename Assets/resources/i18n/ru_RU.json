@@ -459,5 +459,7 @@
 "delete.base": "Удалить базу",
 "button.export": "Экспорт базы",
 "button.import": "Импорт базы",
-"delete.guild": "Удалить гильдию"
+"delete.guild": "Удалить гильдию",
+"base.import.success": "База успешно импортирована",
+"base.export.success": "База успешно экспортирована"
 }

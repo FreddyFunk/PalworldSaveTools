@@ -462,5 +462,7 @@
 "delete.base": "删除基地",
 "button.export": "导出基地",
 "button.import": "导入基地",
-"delete.guild": "删除公会"
+"delete.guild": "删除公会",
+"base.import.success": "基地导入成功",
+"base.export.success": "基地导出成功"
 }

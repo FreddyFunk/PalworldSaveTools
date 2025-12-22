@@ -462,5 +462,7 @@
 "delete.base": "Supprimer la Base",
 "button.export": "Exporter la Base",
 "button.import": "Importer la Base",
-"delete.guild": "Supprimer la Guilde"
+"delete.guild": "Supprimer la Guilde",
+"base.import.success": "Base importée avec succès",
+"base.export.success": "Base exportée avec succès"
 }
