@@ -1925,6 +1925,8 @@ def show_base_map():
                 col = (255, 100, 100) if (txt == t("delete.base") or txt == t("delete.guild")) else (255, 255, 255)
                 screen.blit(font.render(txt, True, col), (context_menu_pos[0] + 10, context_menu_pos[1] + 6 + i*32))
         pygame.display.flip()
+        refresh_all()
+        refresh_stats("After")
         clock.tick(60)
     pygame.quit()
 class KillNearestBaseDialog(tk.Toplevel):
