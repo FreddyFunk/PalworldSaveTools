@@ -1863,6 +1863,7 @@ def show_base_map():
         screen.blit(pygame.transform.smoothscale(sub, (map_w, h)), (sh_x, sh_y))
         marker_rects.clear()
         filtered_guilds = filter_guilds_and_bases(guilds_all, user_input)
+        t_now = time.time()
         for gid, guild in filtered_guilds.items():
             for b in guild['bases']:
                 bx, by = b['coords']
@@ -1873,10 +1874,9 @@ def show_base_map():
                     b_shx, b_shy = 0, 0
                     for eff in active_blocked_effects:
                         if eff['target_id'] == str(b['base_id']):
-                            el = time.time() - eff['start_time']
-                            if el < 0.8: b_shx, b_shy = random.randint(-5, 5), random.randint(-5, 5)
-                    if glow_start_time:
-                        el = time.time() - glow_start_time
+                            if (t_now - eff['start_time']) < 0.8: b_shx, b_shy = random.randint(-5, 5), random.randint(-5, 5)
+                    if selected_item and selected_item[0] == 'base' and selected_item[1] == b and glow_start_time:
+                        el = t_now - glow_start_time
                         if el < 5:
                             s = pygame.Surface((120, 120), pygame.SRCALPHA)
                             pulse = (math.sin(el * 10) + 1) / 2
@@ -1886,9 +1886,15 @@ def show_base_map():
                             pygame.draw.line(screen, (255, 255, 255, int(200 * (1 - el/5))), (px - 20, py + scan_y), (px + 20, py + scan_y), 2)
                     mr = pygame.Rect(px - 14 + sh_x + b_shx, py - 14 + sh_y + b_shy, 28, 28)
                     screen.blit(base_icon, mr)
+                    shine_temp = base_icon.copy()
+                    shine_temp.fill((0, 0, 0, 0))
+                    shine_pos = ((t_now * 50) % 100) - 50
+                    pygame.draw.polygon(shine_temp, (255, 255, 255, 120), [(shine_pos, 0), (shine_pos+15, 0), (shine_pos-5, 28), (shine_pos-20, 28)])
+                    shine_temp.blit(base_icon, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+                    screen.blit(shine_temp, mr, special_flags=pygame.BLEND_RGBA_ADD)
                     marker_rects.append((b, mr))
         for shock in active_shocks[:]:
-            el = time.time() - shock['start_time']
+            el = t_now - shock['start_time']
             if el > 1.0: active_shocks.remove(shock); continue
             shock['radius'] += 20; shock['alpha'] = int(255 * (1 - el))
             s = pygame.Surface((map_w, h), pygame.SRCALPHA)
@@ -1897,7 +1903,7 @@ def show_base_map():
             flash.fill((255, 255, 180, int(shock['alpha'] * 0.4)))
             screen.blit(flash, (0, 0)); screen.blit(s, (0, 0))
         for eff in active_blocked_effects[:]:
-            el = time.time() - eff['start_time']
+            el = t_now - eff['start_time']
             if el > 0.8: active_blocked_effects.remove(eff); continue
             eff['alpha'] = int(255 * (1 - el/0.8))
             px, py = eff['pos']
@@ -3337,10 +3343,9 @@ def import_base_json(loaded_level_json, exported_data, target_guild_id, offset=(
     def _get_concrete_raw(map_obj):
         try: return map_obj["ConcreteModel"]["value"]["RawData"]["value"]
         except: return None
-    def _offset_translation(t, apply_offset):
-        if not apply_offset: return
+    def _apply_translation(t, off_vec):
         try:
-            t["x"]+=offset[0];t["y"]+=offset[1];t["z"]+=offset[2] if len(offset)>2 else 0
+            t["x"]+=off_vec[0];t["y"]+=off_vec[1];t["z"]+=off_vec[2] if len(off_vec)>2 else 0
         except: pass
     raw_prop=loaded_level_json["properties"]["worldSaveData"]["value"]
     data=raw_prop if isinstance(raw_prop,dict) else {}
@@ -3376,16 +3381,21 @@ def import_base_json(loaded_level_json, exported_data, target_guild_id, offset=(
     new_worker_container_id=_new_uuid()
     new_palbox_inst_id=instance_id_map.get(palbox_model_id)
     src_base_raw = exported_data["base_camp"]["value"]["RawData"]["value"]
-    src_pos = src_base_raw["transform"]["translation"]
-    apply_off = False
-    for existing_base in base_camp_data:
-        try:
-            ex_pos = existing_base["value"]["RawData"]["value"]["transform"]["translation"]
-            dist = math.sqrt((src_pos["x"]-ex_pos["x"])**2 + (src_pos["y"]-ex_pos["y"])**2 + (src_pos["z"]-ex_pos["z"])**2)
-            if dist < collision_threshold:
-                apply_off = True
-                break
-        except: continue
+    cur_pos = _deep(src_base_raw["transform"]["translation"])
+    total_offset = [0, 0, 0]
+    collision = True
+    while collision:
+        collision = False
+        for existing_base in base_camp_data:
+            try:
+                ex_pos = existing_base["value"]["RawData"]["value"]["transform"]["translation"]
+                dist = math.sqrt((cur_pos["x"]-ex_pos["x"])**2 + (cur_pos["y"]-ex_pos["y"])**2 + (cur_pos["z"]-ex_pos["z"])**2)
+                if dist < collision_threshold:
+                    cur_pos["x"]+=offset[0];cur_pos["y"]+=offset[1];cur_pos["z"]+=offset[2] if len(offset)>2 else 0
+                    total_offset[0]+=offset[0];total_offset[1]+=offset[1];total_offset[2]+=offset[2] if len(offset)>2 else 0
+                    collision = True
+                    break
+            except: continue
     cloned_works=[]
     new_work_ids_for_collection=[]
     work_id_map={}
@@ -3408,7 +3418,7 @@ def import_base_json(loaded_level_json, exported_data, target_guild_id, offset=(
             tr=nwr.get("transform",{})
             mid=_s(tr.get("map_object_instance_id",""))
             if mid in instance_id_map: tr["map_object_instance_id"]=instance_id_map[mid]
-            if "translation" in tr: _offset_translation(tr["translation"], apply_off)
+            if "translation" in tr: _apply_translation(tr["translation"], total_offset)
         except: pass
         cloned_works.append(nwe)
         new_work_ids_for_collection.append(nw_id)
@@ -3423,7 +3433,7 @@ def import_base_json(loaded_level_json, exported_data, target_guild_id, offset=(
         wd_raw = nb["value"]["WorkerDirector"]["value"]["RawData"]["value"]
         wd_raw["id"] = new_base_id
         wd_raw["container_id"] = new_worker_container_id
-        _offset_translation(wd_raw["spawn_transform"]["translation"], apply_off)
+        _apply_translation(wd_raw["spawn_transform"]["translation"], total_offset)
     except: pass
     try:
         nb["value"]["WorkCollection"]["value"]["RawData"]["value"]["id"] = new_base_id
@@ -3432,7 +3442,7 @@ def import_base_json(loaded_level_json, exported_data, target_guild_id, offset=(
     if new_palbox_inst_id:
         try: nb["value"]["RawData"]["value"]["owner_map_object_instance_id"] = new_palbox_inst_id
         except: pass
-    try: _offset_translation(nb["value"]["RawData"]["value"]["transform"]["translation"], apply_off)
+    try: _apply_translation(nb["value"]["RawData"]["value"]["transform"]["translation"], total_offset)
     except: pass
     base_camp_data.append(nb)
     target_group=next((g for g in groups if _s(g.get("key"))==tgt_gid_str),None)
@@ -3498,7 +3508,7 @@ def import_base_json(loaded_level_json, exported_data, target_guild_id, offset=(
         nmr["concrete_model_instance_id"]=new_conc
         nmr["base_camp_id_belong_to"]=new_base_id
         nmr["group_id_belong_to"]=target_guild_id
-        try: _offset_translation(nmr["initital_transform_cache"]["translation"], apply_off)
+        try: _apply_translation(nmr["initital_transform_cache"]["translation"], total_offset)
         except: pass
         cr=_get_concrete_raw(no)
         if isinstance(cr,dict):
