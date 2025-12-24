@@ -1,4 +1,5 @@
 from import_libs import *
+from all_in_one_tools import *
 import nerdfont as nf
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QFrame, QMessageBox, QFileDialog, QStyleFactory, QApplication
 from PySide6.QtCore import Qt, Signal, QObject, QTimer, QMetaObject, Q_ARG
@@ -241,8 +242,40 @@ class GamePassSaveFixWidget(QWidget):
             print(t("xgp.err.copy_exception",err=e))
             traceback.print_exc()
             self.message_signal.emit("critical",t("Error"),t("xgp.err.copy_failed",err=e))
-    def transfer_steam_to_gamepass(self, source_folder):
+    def is_admin(self):
         try:
+            return ctypes.windll.shell32.IsUserAnAdmin() != 0
+        except:
+            return False
+    def stop_gaming_services(self):
+        try:
+            subprocess.run(["cmd", "/c", "net stop GamingServices /y"], check=False, capture_output=True)
+            subprocess.run(["cmd", "/c", "net stop GamingServicesNet /y"], check=False, capture_output=True)
+            subprocess.run(["taskkill", "/f", "/im", "GamingServices.exe"], check=False, capture_output=True)
+            subprocess.run(["taskkill", "/f", "/im", "GamingServicesNet.exe"], check=False, capture_output=True)
+        except Exception as e:
+            print(f"Service stop failed: {e}")
+    def start_gaming_services(self):
+        try:
+            subprocess.run(["cmd", "/c", "net start GamingServices"], check=False, capture_output=True)
+            subprocess.run(["cmd", "/c", "net start GamingServicesNet"], check=False, capture_output=True)
+        except Exception as e:
+            print(f"Service start failed: {e}")
+    def transfer_steam_to_gamepass(self, source_folder):
+        if not self.is_admin():
+            self.message_signal.emit("critical", "Admin Required", "Please restart this app as Administrator to modify Game Pass files.")
+            return
+        try:
+            meta_path = os.path.join(source_folder, "LevelMeta.sav")
+            if os.path.exists(meta_path):
+                meta_json = sav_to_json(meta_path)
+                old_name = meta_json["properties"]["SaveData"]["value"].get("WorldName", {}).get("value", "Unknown World")
+                new_name = ask_string_with_icon(t("world.rename.title"), t("world.rename.prompt", old=old_name), ICON_PATH, mode="text")
+                if new_name:
+                    meta_json["properties"]["SaveData"]["value"]["WorldName"]["value"] = new_name
+                    json_to_sav(meta_json, meta_path)
+            self.stop_gaming_services()
+            time.sleep(1)
             import_path = os.path.join(base_dir, "palworld_xgp_import")
             sys.path.insert(0, import_path)
             from palworld_xgp_import import main as xgp_main
@@ -250,16 +283,16 @@ class GamePassSaveFixWidget(QWidget):
             try:
                 sys.argv = ["main.py", source_folder]
                 xgp_main.main()
-                self.message_signal.emit("info", t("Success"), t("xgp.msg.steam_to_xgp_ok"))
+                time.sleep(2)
+                self.message_signal.emit("info", "Success", "Steam save imported. Launch Palworld and select 'Local Save' if prompted.")
             except Exception as e:
-                print(t("xgp.err.conversion_exception", err=e))
-                self.message_signal.emit("critical", t("Error"), t("xgp.err.conversion_failed", err=e))
+                self.message_signal.emit("critical", "Error", str(e))
             finally:
                 sys.argv = old_argv
                 if import_path in sys.path: sys.path.remove(import_path)
-        except ImportError as e:
-            print(t("xgp.err.import_exception", err=e))
-            self.message_signal.emit("critical", t("Error"), t("xgp.err.import_failed", err=e))
+                self.start_gaming_services()
+        except Exception as e:
+            self.message_signal.emit("critical", "Import Failed", str(e))
     def update_combobox(self, saveList):
         global saves
         saves = saveList
