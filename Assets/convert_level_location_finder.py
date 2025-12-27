@@ -1,44 +1,52 @@
-import sys ,os ,glob 
+import sys ,os ,glob ,gc ,threading ,time 
 from import_libs import *
+from all_in_one_tools import *
 import tkinter as tk 
 from tkinter import filedialog 
+from PySide6 .QtCore import QEventLoop 
 sys .path .insert (0 ,os .path .join (os .path .dirname (__file__ ),"palworld_save_tools","commands"))
 from convert import main as convert_main 
 def convert_sav_to_json (input_file ,output_file ):
     old_argv =sys .argv 
     try :
-        sys .argv =["convert",input_file ,"--output",output_file ]
+        sys .argv =["convert",input_file ,"--output",output_file ,"--force"]
         convert_main ()
     finally :
         sys .argv =old_argv 
 def convert_json_to_sav (input_file ,output_file ):
     old_argv =sys .argv 
     try :
-        sys .argv =["convert",input_file ,"--output",output_file ]
+        sys .argv =["convert",input_file ,"--output",output_file ,"--force"]
         convert_main ()
     finally :
         sys .argv =old_argv 
 def file_picker (ext ):
     root =tk .Tk ()
     root .withdraw ()
-    while True :
-        if ext =="sav":
-            path =filedialog .askopenfilename (title ="Select Level.json",filetypes =[("Level.json","Level.json")])
-            if path and os .path .basename (path )=="Level.json":return path 
-        elif ext =="json":
-            path =filedialog .askopenfilename (title ="Select Level.sav",filetypes =[("Level.sav","Level.sav")])
-            if path and os .path .basename (path )=="Level.sav":return path 
-        print ("Invalid file. Please select the correct Level."+ext )
-        if not path :return None 
+    path =None 
+    if ext =="sav":
+        path =filedialog .askopenfilename (title ="Select Level.json",filetypes =[("Level.json","Level.json")])
+    elif ext =="json":
+        path =filedialog .askopenfilename (title ="Select Level.sav",filetypes =[("Level.sav","Level.sav")])
+    root .destroy ()
+    return path 
 def convert_level_location_finder (ext ):
     level_file =file_picker (ext )
     if not level_file :return False 
+    loop =QEventLoop ()
     if ext =="sav":
         output_path =level_file .replace (".json",".sav")
-        convert_json_to_sav (level_file ,output_path )
+        def task ():
+            convert_json_to_sav (level_file ,output_path )
+            gc .collect ()
     else :
         output_path =level_file .replace (".sav",".json")
-        convert_sav_to_json (level_file ,output_path )
+        def task ():
+            convert_sav_to_json (level_file ,output_path )
+            gc .collect ()
+    run_with_loading (lambda _ :loop .quit (),task )
+    loop .exec ()
+    time .sleep (0.5 )
     print (f"Converted {level_file } to {output_path }")
     return True 
 def main ():

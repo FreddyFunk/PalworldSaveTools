@@ -464,5 +464,16 @@
 "button.import": "Importer la Base",
 "delete.guild": "Supprimer la Guilde",
 "base.import.success": "Base importée avec succès",
-"base.export.success": "Base exportée avec succès"
+"base.export.success": "Base exportée avec succès",
+"button.export": "Exporter la base",
+"button.import": "Importer la base",
+"delete.guild": "Supprimer la guilde",
+"base.import.success": "Base importée avec succès",
+"guild.menu.max_level": "Niveau de guilde max",
+"guild.menu.outdated_blueprint": "Plan obsolète",
+"blueprint.error.outdated": "Ce plan a été créé avec une ancienne version de l'outil. Veuillez réexporter la base pour vous assurer que tous les correctifs sont appliqués.",
+"blueprint.status.up_to_date": "Le plan est à jour.",
+"guild.level.maxed": "Le niveau du camp de base de la guilde a été défini sur 30 avec succès.",
+"base.error.no_base_found": "Aucun camp de base trouvé dans la sauvegarde cible. Veuillez créer au moins un camp de base (Boîte Pal) en jeu avant d'importer.",
+"base.error.title": "Erreur d'importation"
 }

@@ -76,12 +76,15 @@ class GamePassSaveFixWidget (QWidget ):
     def find_valid_saves (self ,base_path ):
         valid =[]
         if not os .path .isdir (base_path ):return valid 
-        for name in os .listdir (base_path ):
-            root =os .path .join (base_path ,name )
-            level =os .path .join (root ,"Level")
-            if not os .path .isdir (level ):continue 
-            if os .path .isfile (os .path .join (level ,"01.sav")):
-                valid .append (root )
+        for root ,dirs ,files in os .walk (base_path ):
+            if "01.sav"in files :
+                parent_dir =os .path .basename (root )
+                if parent_dir =="Level":
+                    save_root =os .path .dirname (root )
+                    folder_name =os .path .basename (save_root )
+                    if folder_name .lower ().startswith ("slot"):continue 
+                    if save_root not in valid :
+                        valid .append (save_root )
         return valid 
     def handle_message (self ,message_type :str ,title :str ,text :str ):
         if message_type =="info":
@@ -103,13 +106,10 @@ class GamePassSaveFixWidget (QWidget ):
         self .xgp_source_folder =folder 
         def is_xgp_container (path ):
             for root ,_ ,files in os .walk (path ):
-                for f in files :
-                    if f .lower ().startswith ("container.")or f .lower ().endswith ((".dat",".bin")):
-                        return True 
+                if any (f .lower ().startswith ("container.")for f in files ):return True 
             return False 
         if is_xgp_container (folder ):
-            if os .path .exists ("./saves"):shutil .rmtree ("./saves")
-            threading .Thread (target =self .run_save_extractor ,daemon =True ).start ()
+            run_with_loading (None ,self .run_save_extractor )
             return 
         saves =self .find_valid_saves (folder )
         if not saves :
@@ -118,9 +118,27 @@ class GamePassSaveFixWidget (QWidget ):
         self .direct_saves_map ={os .path .basename (s ):s for s in saves }
         self .update_combobox_signal .emit (list (self .direct_saves_map .keys ()))
     def get_save_steam (self ):
+        import gc 
         folder =QFileDialog .getExistingDirectory (self ,"Select Steam Save Folder to Transfer")
         if not folder :return 
-        threading .Thread (target =self .transfer_steam_to_gamepass ,args =(folder ,),daemon =True ).start ()
+        sav_path =os .path .join (folder ,"Level.sav")
+        if not os .path .exists (sav_path ):
+            self .message_signal .emit ("critical",t ("Error"),"Selected folder does not contain Level.sav")
+            return 
+        meta_path =os .path .join (folder ,"LevelMeta.sav")
+        if os .path .exists (meta_path ):
+            try :
+                meta_json =sav_to_json (meta_path )
+                old_name =meta_json ["properties"]["SaveData"]["value"].get ("WorldName",{}).get ("value","Unknown World")
+                new_name =ask_string_with_icon (t ("world.rename.title"),t ("world.rename.prompt",old =old_name ),ICON_PATH ,mode ="text")
+                if new_name :
+                    meta_json ["properties"]["SaveData"]["value"]["WorldName"]["value"]=new_name 
+                    json_to_sav (meta_json ,meta_path )
+                del meta_json 
+            except Exception as e :
+                print (f"Metadata processing failed: {e }")
+        gc .collect ()
+        run_with_loading (None ,lambda :self .transfer_steam_to_gamepass (folder ))
     @staticmethod 
     def list_folders_in_directory (directory ):
         try :
@@ -157,65 +175,79 @@ class GamePassSaveFixWidget (QWidget ):
         self .update_combobox_signal .emit (saveList )
         print ("Choose a save to convert:")
     def run_save_extractor (self ):
+        import gc 
         try :
             import xgp_save_extract as extractor 
-            zip_path =extractor .main ()
-            if not zip_path or not os .path .isfile (zip_path ):
-                raise RuntimeError ("Extractor did not return a valid zip")
+            extractor .main ()
+            zip_files =[f for f in os .listdir (base_dir )if f .startswith ("palworld_")and f .endswith (".zip")]
+            if not zip_files :return 
+            valid_zip_path =max ([os .path .join (base_dir ,f )for f in zip_files ],key =os .path .getsize )
             if os .path .exists ("./saves"):shutil .rmtree ("./saves")
-            if not self .unzip_file (zip_path ,"./saves"):
-                self .message_signal .emit ("critical",t ("Error"),t ("xgp.err.unzip_failed"))
-                return 
-            saves =self .find_valid_saves ("./saves")
-            if not saves :
+            if not self .unzip_file (valid_zip_path ,"./saves"):return 
+            backup_dir =os .path .join (root_dir ,"XGP_converted_saves")
+            os .makedirs (backup_dir ,exist_ok =True )
+            for f in zip_files :
+                try :
+                    dest =os .path .join (backup_dir ,f )
+                    if os .path .exists (dest ):os .remove (dest )
+                    shutil .move (os .path .join (base_dir ,f ),dest )
+                except :
+                    pass 
+            saves_found =self .find_valid_saves ("./saves")
+            if not saves_found :
                 self .message_signal .emit ("critical",t ("Error"),t ("xgp.err.no_valid_saves"))
                 return 
-            self .update_combobox_signal .emit ([os .path .basename (s )for s in saves ])
+            self .update_combobox_signal .emit ([os .path .basename (s )for s in saves_found ])
         except Exception as e :
-            print (f"Extractor error: {e }")
-            traceback .print_exc ()
-            self .message_signal .emit ("critical",t ("Error"),t ("xgp.err.extract_failed",err =e ))
+            self .message_signal .emit ("critical",t ("Error"),str (e ))
+        finally :
+            gc .collect ()
     def convert_sav_JSON (self ,saveName ):
-        save_path =os .path .join (root_dir ,"saves",saveName ,"Level","01.sav")
+        source_base =getattr (self ,"direct_saves_map",{}).get (saveName ,os .path .join (root_dir ,"saves",saveName ))
+        save_path =os .path .join (source_base ,"Level","01.sav")
         if not os .path .exists (save_path ):return None 
-        try :
-            from palworld_save_tools .commands import convert 
-            old_argv =sys .argv 
+        def task ():
             try :
+                from palworld_save_tools .commands import convert 
+                old_argv =sys .argv 
                 sys .argv =["convert",save_path ]
                 convert .main ()
+                sys .argv =old_argv 
+                return saveName 
             except Exception as e :
-                print (f"Error converting save: {e }")
+                print (f"Error: {e }")
                 return None 
-            finally :sys .argv =old_argv 
-        except ImportError :
-            print (t ("xgp.err.module_missing"))
-            return None 
-        return saveName 
+        run_with_loading (self .update_combobox_signal .emit ,task )
     def convert_JSON_sav (self ,saveName ):
         source_base =getattr (self ,"direct_saves_map",{}).get (saveName ,os .path .join (root_dir ,"saves",saveName ))
         json_path =os .path .join (source_base ,"Level","01.sav.json")
         sav_path =os .path .join (source_base ,"Level","01.sav")
         out_level =os .path .join (source_base ,"Level.sav")
-        if os .path .exists (sav_path )and not os .path .exists (json_path ):
-            from palworld_save_tools .commands import convert 
-            old =sys .argv 
+        def run_conversion ():
             try :
-                sys .argv =["convert",sav_path ]
+                from palworld_save_tools .commands import convert 
+                if os .path .exists (sav_path )and not os .path .exists (json_path ):
+                    old =sys .argv 
+                    sys .argv =["convert",sav_path ]
+                    convert .main ()
+                    sys .argv =old 
+                if not os .path .exists (json_path ):return "err_no_json"
+                old =sys .argv 
+                sys .argv =["convert",json_path ,"--output",out_level ]
                 convert .main ()
-            finally :sys .argv =old 
-        if not os .path .exists (json_path ):
-            self .message_signal .emit ("critical",t ("Error"),t ("xgp.err.no_valid_saves"))
-            return 
-        from palworld_save_tools .commands import convert 
-        old =sys .argv 
-        try :
-            sys .argv =["convert",json_path ,"--output",out_level ]
-            convert .main ()
-        finally :sys .argv =old 
-        try :os .remove (json_path )
-        except :pass 
-        self .move_save_steam (saveName )
+                sys .argv =old 
+                if os .path .exists (json_path ):os .remove (json_path )
+                return "success"
+            except Exception as e :
+                return str (e )
+        def on_conversion_finished (result ):
+            if result =="success":
+                self .move_save_steam (saveName )
+            elif result =="err_no_json":
+                self .message_signal .emit ("critical",t ("Error"),t ("xgp.err.no_valid_saves"))
+            else :
+                self .message_signal .emit ("critical",t ("Error"),f"Conversion failed: {result }")
+        run_with_loading (on_conversion_finished ,run_conversion )
     @staticmethod 
     def generate_random_name (length =32 ):
         return "".join (random .choices (string .ascii_uppercase +string .digits ,k =length ))
@@ -263,33 +295,22 @@ class GamePassSaveFixWidget (QWidget ):
             print (f"Service start failed: {e }")
     def transfer_steam_to_gamepass (self ,source_folder ):
         if not self .is_admin ():
-            self .message_signal .emit ("critical","Admin Required","Please restart this app as Administrator to modify Game Pass files.")
+            self .message_signal .emit ("critical","Admin Required","Please restart as Administrator.")
             return 
         try :
-            meta_path =os .path .join (source_folder ,"LevelMeta.sav")
-            if os .path .exists (meta_path ):
-                meta_json =sav_to_json (meta_path )
-                old_name =meta_json ["properties"]["SaveData"]["value"].get ("WorldName",{}).get ("value","Unknown World")
-                new_name =ask_string_with_icon (t ("world.rename.title"),t ("world.rename.prompt",old =old_name ),ICON_PATH ,mode ="text")
-                if new_name :
-                    meta_json ["properties"]["SaveData"]["value"]["WorldName"]["value"]=new_name 
-                    json_to_sav (meta_json ,meta_path )
             self .stop_gaming_services ()
             time .sleep (1 )
             import_path =os .path .join (base_dir ,"palworld_xgp_import")
-            sys .path .insert (0 ,import_path )
+            if import_path not in sys .path :sys .path .insert (0 ,import_path )
             from palworld_xgp_import import main as xgp_main 
             old_argv =sys .argv 
             try :
                 sys .argv =["main.py",source_folder ]
                 xgp_main .main ()
                 time .sleep (2 )
-                self .message_signal .emit ("info","Success","Steam save imported. Launch Palworld and select 'Local Save' if prompted.")
-            except Exception as e :
-                self .message_signal .emit ("critical","Error",str (e ))
+                self .message_signal .emit ("info","Success","Steam save imported successfully.")
             finally :
                 sys .argv =old_argv 
-                if import_path in sys .path :sys .path .remove (import_path )
                 self .start_gaming_services ()
         except Exception as e :
             self .message_signal .emit ("critical","Import Failed",str (e ))

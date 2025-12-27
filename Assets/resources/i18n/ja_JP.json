@@ -464,5 +464,16 @@
 "button.import": "拠点をインポート",
 "delete.guild": "ギルドを削除",
 "base.import.success": "拠点のインポートに成功しました",
-"base.export.success": "拠点のエクスポートに成功しました"
+"base.export.success": "拠点のエクスポートに成功しました",
+"button.export": "拠点をエクスポート",
+"button.import": "拠点をインポート",
+"delete.guild": "ギルドを削除",
+"base.import.success": "拠点のインポートに成功しました",
+"guild.menu.max_level": "ギルドレベルを最大にする",
+"guild.menu.outdated_blueprint": "古いブループリント",
+"blueprint.error.outdated": "このブループリントは古いバージョンのツールで作成されました。すべての修正を適用するために、拠点を再エクスポートしてください。",
+"blueprint.status.up_to_date": "ブループリントは最新です。",
+"guild.level.maxed": "ギルドの拠点レベルが正常に30に設定されました。",
+"base.error.no_base_found": "対象のセーブデータに拠点が見つかりません。インポートする前に、ゲーム内で少なくとも1つの拠点（パルボックス）を作成してください。",
+"base.error.title": "インポートエラー"
 }

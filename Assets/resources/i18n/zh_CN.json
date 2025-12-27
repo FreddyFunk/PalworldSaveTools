@@ -464,5 +464,16 @@
 "button.import": "导入基地",
 "delete.guild": "删除公会",
 "base.import.success": "基地导入成功",
-"base.export.success": "基地导出成功"
+"base.export.success": "基地导出成功",
+"button.export": "导出基地",
+"button.import": "导入基地",
+"delete.guild": "删除公会",
+"base.import.success": "基地导入成功",
+"guild.menu.max_level": "满级公会等级",
+"guild.menu.outdated_blueprint": "旧版蓝图",
+"blueprint.error.outdated": "此蓝图是使用旧版本的工具创建的。请重新导出基地以确保应用所有修复。",
+"blueprint.status.up_to_date": "蓝图已是最新。",
+"guild.level.maxed": "公会终端等级已成功设置为30。",
+"base.error.no_base_found": "在目标存档中未发现终端。请在导入前先在游戏中建造至少一个终端（帕鲁终端）。",
+"base.error.title": "导入错误"
 }

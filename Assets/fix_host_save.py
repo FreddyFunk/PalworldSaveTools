@@ -7,64 +7,62 @@ from PySide6 .QtGui import QIcon ,QFont
 from PySide6 .QtCore import Qt ,QTimer 
 player_list_cache =[]
 def fix_save (save_path ,new_guid ,old_guid ,guild_fix =True ):
-    fmt =lambda g :'{}-{}-{}-{}-{}'.format (g [:8 ],g [8 :12 ],g [12 :16 ],g [16 :20 ],g [20 :]).lower ()
-    old_uid ,new_uid =fmt (old_guid ),fmt (new_guid )
-    lvl =os .path .join (save_path ,"Level.sav")
-    old_sav =os .path .join (save_path ,"Players",old_guid +".sav")
-    new_sav =os .path .join (save_path ,"Players",new_guid +".sav")
-    level =sav_to_json (lvl )
-    old_j =sav_to_json (old_sav )
-    new_j =sav_to_json (new_sav )
-    old_j ["properties"]["SaveData"]["value"]["PlayerUId"]["value"]=new_uid 
-    old_j ["properties"]["SaveData"]["value"]["IndividualId"]["value"]["PlayerUId"]["value"]=new_uid 
-    new_j ["properties"]["SaveData"]["value"]["PlayerUId"]["value"]=old_uid 
-    new_j ["properties"]["SaveData"]["value"]["IndividualId"]["value"]["PlayerUId"]["value"]=old_uid 
-    old_inst =old_j ["properties"]["SaveData"]["value"]["IndividualId"]["value"]["InstanceId"]["value"]
-    new_inst =new_j ["properties"]["SaveData"]["value"]["IndividualId"]["value"]["InstanceId"]["value"]
-    cspm =level ["properties"]["worldSaveData"]["value"]["CharacterSaveParameterMap"]["value"]
-    for e in cspm :
-        if e ["key"]["InstanceId"]["value"]==old_inst :e ["key"]["PlayerUId"]["value"]=new_uid 
-        elif e ["key"]["InstanceId"]["value"]==new_inst :e ["key"]["PlayerUId"]["value"]=old_uid 
-    if guild_fix :
-        for g in level ["properties"]["worldSaveData"]["value"]["GroupSaveDataMap"]["value"]:
-            if g ["value"]["GroupType"]["value"]["value"]!="EPalGroupType::Guild":continue 
-            raw =g ["value"]["RawData"]["value"]
-            for h in raw .get ("individual_character_handle_ids",[]):
-                if h ["instance_id"]==old_inst :h ["guid"]=new_uid 
-                elif h ["instance_id"]==new_inst :h ["guid"]=old_uid 
-            if raw .get ("admin_player_uid")==old_uid :raw ["admin_player_uid"]=new_uid 
-            elif raw .get ("admin_player_uid")==new_uid :raw ["admin_player_uid"]=old_uid 
-            for p in raw .get ("players",[]):
-                if p .get ("player_uid")==old_uid :p ["player_uid"]=new_uid 
-                elif p .get ("player_uid")==new_uid :p ["player_uid"]=old_uid 
-    def deep_swap (data ):
-        if isinstance (data ,dict ):
-            for k in ("OwnerPlayerUId","owner_player_uid","build_player_uid","private_lock_player_uid"):
-                v =data .get (k )
-                if isinstance (v ,dict )and v .get ("value")==old_uid :v ["value"]=new_uid 
-                elif isinstance (v ,dict )and v .get ("value")==new_uid :v ["value"]=old_uid 
-                elif v ==old_uid :data [k ]=new_uid 
-                elif v ==new_uid :data [k ]=old_uid 
-            for x in data .values ():deep_swap (x )
-        elif isinstance (data ,list ):
-            for i in data :deep_swap (i )
-    deep_swap (level )
-    copy_dps_file (os .path .join (os .path .dirname (lvl ),"Players"),old_guid ,os .path .join (os .path .dirname (lvl ),"Players"),new_guid )
-    backup_whole_directory (save_path ,"Backups/Fix Host Save")
-    json_to_sav (level ,lvl )
-    json_to_sav (old_j ,old_sav )
-    json_to_sav (new_j ,new_sav )
-    tmp_path =old_sav +".tmp_swap"
-    os .rename (old_sav ,tmp_path )
-    if os .path .exists (new_sav ):os .rename (new_sav ,os .path .join (save_path ,"Players",old_guid .upper ()+".sav"))
-    os .rename (tmp_path ,os .path .join (save_path ,"Players",new_guid .upper ()+".sav"))
-    print (t ("Success! Fix has been applied! Have fun!"))
-    msg =QMessageBox (QMessageBox .Information ,t ("Success"),t ("Fix has been applied! Have fun!"))
-    try :
-        msg .setWindowIcon (QIcon (ICON_PATH ))
-    except Exception :
-        pass 
-    msg .exec ()
+    def task ():
+        fmt =lambda g :'{}-{}-{}-{}-{}'.format (g [:8 ],g [8 :12 ],g [12 :16 ],g [16 :20 ],g [20 :]).lower ()
+        old_uid ,new_uid =fmt (old_guid ),fmt (new_guid )
+        lvl =os .path .join (save_path ,"Level.sav")
+        old_sav =os .path .join (save_path ,"Players",old_guid +".sav")
+        new_sav =os .path .join (save_path ,"Players",new_guid +".sav")
+        level =sav_to_json (lvl )
+        old_j =sav_to_json (old_sav )
+        new_j =sav_to_json (new_sav )
+        old_j ["properties"]["SaveData"]["value"]["PlayerUId"]["value"]=new_uid 
+        old_j ["properties"]["SaveData"]["value"]["IndividualId"]["value"]["PlayerUId"]["value"]=new_uid 
+        new_j ["properties"]["SaveData"]["value"]["PlayerUId"]["value"]=old_uid 
+        new_j ["properties"]["SaveData"]["value"]["IndividualId"]["value"]["PlayerUId"]["value"]=old_uid 
+        old_inst =old_j ["properties"]["SaveData"]["value"]["IndividualId"]["value"]["InstanceId"]["value"]
+        new_inst =new_j ["properties"]["SaveData"]["value"]["IndividualId"]["value"]["InstanceId"]["value"]
+        cspm =level ["properties"]["worldSaveData"]["value"]["CharacterSaveParameterMap"]["value"]
+        for e in cspm :
+            if e ["key"]["InstanceId"]["value"]==old_inst :e ["key"]["PlayerUId"]["value"]=new_uid 
+            elif e ["key"]["InstanceId"]["value"]==new_inst :e ["key"]["PlayerUId"]["value"]=old_uid 
+        if guild_fix :
+            for g in level ["properties"]["worldSaveData"]["value"]["GroupSaveDataMap"]["value"]:
+                if g ["value"]["GroupType"]["value"]["value"]!="EPalGroupType::Guild":continue 
+                raw =g ["value"]["RawData"]["value"]
+                for h in raw .get ("individual_character_handle_ids",[]):
+                    if h ["instance_id"]==old_inst :h ["guid"]=new_uid 
+                    elif h ["instance_id"]==new_inst :h ["guid"]=old_uid 
+                if raw .get ("admin_player_uid")==old_uid :raw ["admin_player_uid"]=new_uid 
+                elif raw .get ("admin_player_uid")==new_uid :raw ["admin_player_uid"]=old_uid 
+                for p in raw .get ("players",[]):
+                    if p .get ("player_uid")==old_uid :p ["player_uid"]=new_uid 
+                    elif p .get ("player_uid")==new_uid :p ["player_uid"]=old_uid 
+        def deep_swap (data ):
+            if isinstance (data ,dict ):
+                for k in ("OwnerPlayerUId","owner_player_uid","build_player_uid","private_lock_player_uid"):
+                    v =data .get (k )
+                    if isinstance (v ,dict )and v .get ("value")==old_uid :v ["value"]=new_uid 
+                    elif isinstance (v ,dict )and v .get ("value")==new_uid :v ["value"]=old_uid 
+                    elif v ==old_uid :data [k ]=new_uid 
+                    elif v ==new_uid :data [k ]=old_uid 
+                for x in data .values ():deep_swap (x )
+            elif isinstance (data ,list ):
+                for i in data :deep_swap (i )
+        deep_swap (level )
+        copy_dps_file (os .path .join (os .path .dirname (lvl ),"Players"),old_guid ,os .path .join (os .path .dirname (lvl ),"Players"),new_guid )
+        backup_whole_directory (save_path ,"Backups/Fix Host Save")
+        json_to_sav (level ,lvl )
+        json_to_sav (old_j ,old_sav )
+        json_to_sav (new_j ,new_sav )
+        tmp_path =old_sav +".tmp_swap"
+        os .rename (old_sav ,tmp_path )
+        if os .path .exists (new_sav ):os .rename (new_sav ,os .path .join (save_path ,"Players",old_guid .upper ()+".sav"))
+        os .rename (tmp_path ,os .path .join (save_path ,"Players",new_guid .upper ()+".sav"))
+        return True 
+    def on_finished (_ ):
+        QMessageBox .information (None ,t ("Success"),t ("Fix has been applied! Have fun!"))
+    run_with_loading (on_finished ,task )
 def copy_dps_file (src_folder ,src_uid ,tgt_folder ,tgt_uid ):
     src_file =os .path .join (src_folder ,f"{str (src_uid ).replace ('-','').upper ()}_dps.sav")
     tgt_file =os .path .join (tgt_folder ,f"{str (tgt_uid ).replace ('-','').upper ()}_dps.sav")
@@ -159,23 +157,36 @@ def filter_treeview (tree ,query ):
         values =[item .text (col )for col in range (item .columnCount ())]
         if not any (query in str (value ).lower ()for value in values ):
             tree .takeTopLevelItem (tree .indexOfTopLevelItem (item ))
+def background_load_task (path ):
+    level_json =sav_to_json (path )
+    group_data_list =level_json ['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']
+    player_files =[]
+    for group in group_data_list :
+        if group ['value']['GroupType']['value']['value']=='EPalGroupType::Guild':
+            guild_id =group ['key']['InstanceId']['value']if isinstance (group ['key'],dict )else str (group ['key'])
+            players =group ['value']['RawData']['value'].get ('players',[])
+            for p in players :
+                uid =str (p .get ('player_uid','')).replace ('-','')
+                name =p .get ('player_info',{}).get ('player_name','Unknown')
+                player_files .append ((uid ,name ,guild_id ))
+    return player_files 
 def choose_level_file (window ,level_sav_entry ,old_tree ,new_tree ):
-    global player_list_cache 
     path ,_ =QFileDialog .getOpenFileName (window ,t ("Select Level.sav file"),"","SAV Files (*.sav)")
     if not path :return 
-    if not path .endswith ("Level.sav"):
-        QMessageBox .warning (window ,"Error!","This is NOT Level.sav. Please select Level.sav file.")
-        return 
-    folder_path =os .path .dirname (path )
-    players_folder =os .path .join (folder_path ,"Players")
-    if not os .path .exists (players_folder ):
-        QMessageBox .warning (window ,"Error","Players folder not found next to selected Level.sav")
-        return 
-    player_list_cache =[]
-    level_sav_entry .setText (path )
-    populate_player_lists (folder_path )
-    populate_player_tree (old_tree ,folder_path )
-    populate_player_tree (new_tree ,folder_path )
+    def task ():
+        return background_load_task (path )
+    def on_task_complete (player_data_list ):
+        global player_list_cache 
+        level_sav_entry .setText (path )
+        old_tree .clear ()
+        new_tree .clear ()
+        for uid ,name ,guild in player_data_list :
+            old_tree .addTopLevelItem (QTreeWidgetItem ([uid ,name ,guild ]))
+            new_tree .addTopLevelItem (QTreeWidgetItem ([uid ,name ,guild ]))
+        old_tree .original_items =[old_tree .topLevelItem (i )for i in range (old_tree .topLevelItemCount ())]
+        new_tree .original_items =[new_tree .topLevelItem (i )for i in range (new_tree .topLevelItemCount ())]
+        player_list_cache =[f"{u } - {n } - {g }"for u ,n ,g in player_data_list ]
+    run_with_loading (on_task_complete ,task )
 def extract_guid_from_tree_selection (tree ):
     selected =tree .selectedItems ()
     if not selected :
@@ -343,3 +354,8 @@ class FixHostSaveWindow (QWidget ):
 def fix_host_save ():
     window =FixHostSaveWindow ()
     return window 
+if __name__ =="__main__":
+    app =QApplication ([])
+    w =FixHostSaveWindow ()
+    w .show ()
+    sys .exit (app .exec ())

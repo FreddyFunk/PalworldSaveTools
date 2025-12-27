@@ -173,6 +173,22 @@ class CharacterTransferWindow (QWidget ):
         source_level_path_label =self .source_level_path_label 
         target_level_path_label =self .target_level_path_label 
         current_selection_label =self .current_selection_label 
+    def closeEvent (self ,event ):
+        global level_json ,host_json ,targ_lvl ,targ_json 
+        global target_raw_gvas ,targ_json_gvas ,player_list_cache 
+        global modified_target_players ,modified_targets_data 
+        level_json =None 
+        host_json =None 
+        targ_lvl =None 
+        targ_json =None 
+        target_raw_gvas =None 
+        targ_json_gvas =None 
+        player_list_cache =[]
+        modified_target_players =set ()
+        modified_targets_data ={}
+        import gc 
+        gc .collect ()
+        event .accept ()
     def setup_ui (self ):
         self .setWindowTitle (t ("tool.character_transfer"))
         self .setFixedSize (1200 ,640 )
@@ -762,34 +778,43 @@ def get_val_safe (p ):
     try :return p ["value"]["RawData"]["value"]["object"]["SaveParameter"]["value"]
     except :return {}
 def save_and_backup ():
-    print (t ("Now saving the data..."))
-    WORLDSAVESIZEPREFIX =b'\x0e\x00\x00\x00worldSaveData\x00\x0f\x00\x00\x00StructProperty\x00'
-    size_idx =target_raw_gvas .find (WORLDSAVESIZEPREFIX )+len (WORLDSAVESIZEPREFIX )
-    output_data =MyWriter (custom_properties =PALWORLD_CUSTOM_PROPERTIES ).write_sections (targ_lvl ,target_section_ranges ,target_raw_gvas ,size_idx )
-    backup_folder ="Backups/Character Transfer"
-    backup_whole_directory (os .path .dirname (t_level_sav_path ),backup_folder )
-    tmp_world =t_level_sav_path +".tmp"
-    gvas_to_sav (tmp_world ,output_data )
-    os .replace (tmp_world ,t_level_sav_path )
-    src_players_folder =os .path .join (os .path .dirname (level_sav_path ),"Players")
-    tgt_players_folder =os .path .join (os .path .dirname (t_level_sav_path ),"Players")
-    for target_player ,(json_data ,gvas_obj )in modified_targets_data .items ():
-        t_host_sav_path =os .path .join (tgt_players_folder ,target_player +'.sav')
-        os .makedirs (os .path .dirname (t_host_sav_path ),exist_ok =True )
-        gvas_obj .properties =json_data 
-        tmp_player =t_host_sav_path +".tmp"
-        gvas_to_sav (tmp_player ,gvas_obj .write ())
-        os .replace (tmp_player ,t_host_sav_path )
-        src_dps_path =os .path .join (src_players_folder ,target_player +'_dps.sav')
-        tgt_dps_path =os .path .join (tgt_players_folder ,target_player +'_dps.sav')
-        if os .path .exists (src_dps_path ):
-            tmp_dps =tgt_dps_path +".tmp"
-            shutil .copy2 (src_dps_path ,tmp_dps )
-            os .replace (tmp_dps ,tgt_dps_path )
-            print (f"DPS save copied from {src_dps_path } to {tgt_dps_path }")
-        else :
-            print (f"DPS source file missing: {src_dps_path }")
-    print ("Done saving all modified target players!")
+    def task ():
+        print (t ("Now saving the data..."))
+        WORLDSAVESIZEPREFIX =b'\x0e\x00\x00\x00worldSaveData\x00\x0f\x00\x00\x00StructProperty\x00'
+        size_idx =target_raw_gvas .find (WORLDSAVESIZEPREFIX )+len (WORLDSAVESIZEPREFIX )
+        output_data =MyWriter (custom_properties =PALWORLD_CUSTOM_PROPERTIES ).write_sections (targ_lvl ,target_section_ranges ,target_raw_gvas ,size_idx )
+        backup_folder ="Backups/Character Transfer"
+        backup_whole_directory (os .path .dirname (t_level_sav_path ),backup_folder )
+        tmp_world =t_level_sav_path +".tmp"
+        gvas_to_sav (tmp_world ,output_data )
+        os .replace (tmp_world ,t_level_sav_path )
+        src_players_folder =os .path .join (os .path .dirname (level_sav_path ),"Players")
+        tgt_players_folder =os .path .join (os .path .dirname (t_level_sav_path ),"Players")
+        for target_player ,(json_data ,gvas_obj )in modified_targets_data .items ():
+            t_host_sav_path =os .path .join (tgt_players_folder ,target_player +'.sav')
+            os .makedirs (os .path .dirname (t_host_sav_path ),exist_ok =True )
+            gvas_obj .properties =json_data 
+            tmp_player =t_host_sav_path +".tmp"
+            gvas_to_sav (tmp_player ,gvas_obj .write ())
+            os .replace (tmp_player ,t_host_sav_path )
+            src_dps_path =os .path .join (src_players_folder ,target_player +'_dps.sav')
+            tgt_dps_path =os .path .join (tgt_players_folder ,target_player +'_dps.sav')
+            if os .path .exists (src_dps_path ):
+                tmp_dps =tgt_dps_path +".tmp"
+                shutil .copy2 (src_dps_path ,tmp_dps )
+                os .replace (tmp_dps ,tgt_dps_path )
+                print (f"DPS save copied from {src_dps_path } to {tgt_dps_path }")
+            else :
+                print (f"DPS source file missing: {src_dps_path }")
+        return True 
+    def on_finished (success ):
+        if success :
+            msg =QMessageBox (QMessageBox .Information ,t ("Success"),t ("Transfer complete and backup created!"))
+            try :msg .setWindowIcon (QIcon (ICON_PATH ))
+            except :pass 
+            msg .exec ()
+            print ("Done saving all modified target players!")
+    run_with_loading (on_finished ,task )
 def sav_to_gvas (file ):
     with open (file ,'rb')as f :
         data =f .read ()
@@ -853,32 +878,48 @@ def load_all_source_sections_async (group_save_section ,reader ):
 def source_level_file ():
     global level_sav_path ,level_json ,selected_source_player ,source_section_load_handle 
     tmp =select_file ()
-    if tmp :
-        if not tmp .endswith ("Level.sav"):
-            msg =QMessageBox (QMessageBox .Warning ,t ("Error!"),t ("This is NOT Level.sav. Please select Level.sav file."))
-            try :msg .setWindowIcon (QIcon (ICON_PATH ))
-            except :pass 
-            msg .exec ()
-            return 
+    if not tmp :
+        return 
+    if not tmp .endswith ("Level.sav"):
+        msg =QMessageBox (QMessageBox .Warning ,t ("Error!"),t ("This is NOT Level.sav. Please select Level.sav file."))
+        try :
+            msg .setWindowIcon (QIcon (ICON_PATH ))
+        except Exception :
+            pass 
+        msg .exec ()
+        return 
+    level_json =None 
+    import gc 
+    gc .collect ()
+    def task ():
         raw_gvas ,save_type =load_file (tmp )
         if not raw_gvas :
-            msg =QMessageBox (QMessageBox .Warning ,t ("Error!"),t ("Invalid file, must be Level.sav!"))
-            try :msg .setWindowIcon (QIcon (ICON_PATH ))
-            except :pass 
-            msg .exec ()
-            return 
+            return None 
         print ("Now loading the data from Source Save...")
         reader =MyReader (raw_gvas ,PALWORLD_TYPE_HINTS ,PALWORLD_CUSTOM_PROPERTIES )
         group_save_section ,_ =reader .load_section ('GroupSaveDataMap',MAP_START ,reverse =True )
         source_section_load_handle =threading .Thread (target =load_all_source_sections_async ,args =(group_save_section ,reader ))
         source_section_load_handle .start ()
         source_section_load_handle .join ()
-        load_players (group_save_section ,True )
-        source_level_path_label .setText (tmp )
-        level_sav_path =tmp 
+        return tmp ,group_save_section 
+    def on_finished (result ):
+        global level_sav_path ,selected_source_player 
+        if result is None :
+            msg =QMessageBox (QMessageBox .Warning ,t ("Error!"),t ("Invalid file, must be Level.sav!"))
+            try :
+                msg .setWindowIcon (QIcon (ICON_PATH ))
+            except Exception :
+                pass 
+            msg .exec ()
+            return 
+        path ,group_section =result 
+        level_sav_path =path 
+        source_level_path_label .setText (path )
         selected_source_player =None 
+        load_players (group_section ,True )
         current_selection_label .setText (f"Source: {selected_source_player }, Target: {selected_target_player }")
         print ("Done loading the data from Source Save!")
+    run_with_loading (on_finished ,task )
 def load_all_target_sections_async (group_save_section ,group_save_section_range ,reader ):
     global targ_lvl ,target_section_ranges 
     targ_lvl ,target_section_ranges =reader .load_sections ([
@@ -891,34 +932,55 @@ def load_all_target_sections_async (group_save_section ,group_save_section_range
     target_section_ranges .append (group_save_section_range )
 def target_level_file ():
     global t_level_sav_path ,targ_lvl ,target_section_ranges ,target_raw_gvas ,target_save_type ,selected_target_player ,target_section_load_handle 
+    global modified_target_players ,modified_targets_data 
     tmp =select_file ()
-    if tmp :
-        if not tmp .endswith ("Level.sav"):
-            msg =QMessageBox (QMessageBox .Warning ,t ("Error!"),t ("This is NOT Level.sav. Please select Level.sav file."))
-            try :msg .setWindowIcon (QIcon (ICON_PATH ))
-            except :pass 
-            msg .exec ()
-            return 
-        raw_gvas ,target_save_type =load_file (tmp )
+    if not tmp :
+        return 
+    if not tmp .endswith ("Level.sav"):
+        msg =QMessageBox (QMessageBox .Warning ,t ("Error!"),t ("This is NOT Level.sav. Please select Level.sav file."))
+        try :
+            msg .setWindowIcon (QIcon (ICON_PATH ))
+        except Exception :
+            pass 
+        msg .exec ()
+        return 
+    targ_lvl =None 
+    target_raw_gvas =None 
+    modified_target_players =set ()
+    modified_targets_data ={}
+    import gc 
+    gc .collect ()
+    def task ():
+        raw_gvas ,target_save_type_ =load_file (tmp )
         if not raw_gvas :
-            msg =QMessageBox (QMessageBox .Warning ,t ("Error!"),t ("Invalid file, must be Level.sav!"))
-            try :msg .setWindowIcon (QIcon (ICON_PATH ))
-            except :pass 
-            msg .exec ()
-            return 
+            return None 
         print ("Now loading the data from Target Save...")
-        target_raw_gvas =raw_gvas 
         reader =MyReader (raw_gvas ,PALWORLD_TYPE_HINTS ,PALWORLD_CUSTOM_PROPERTIES )
         group_save_section ,group_save_section_range =reader .load_section ('GroupSaveDataMap',MAP_START ,reverse =True )
         target_section_load_handle =threading .Thread (target =load_all_target_sections_async ,args =(group_save_section ,group_save_section_range ,reader ))
         target_section_load_handle .start ()
         target_section_load_handle .join ()
-        load_players (group_save_section ,False )
-        target_level_path_label .setText (tmp )
-        t_level_sav_path =tmp 
+        return tmp ,raw_gvas ,target_save_type_ ,group_save_section 
+    def on_finished (result ):
+        global t_level_sav_path ,target_raw_gvas ,target_save_type ,selected_target_player 
+        if result is None :
+            msg =QMessageBox (QMessageBox .Warning ,t ("Error!"),t ("Invalid file, must be Level.sav!"))
+            try :
+                msg .setWindowIcon (QIcon (ICON_PATH ))
+            except Exception :
+                pass 
+            msg .exec ()
+            return 
+        path ,raw_gvas ,save_type ,group_section =result 
+        t_level_sav_path =path 
+        target_raw_gvas =raw_gvas 
+        target_save_type =save_type 
+        target_level_path_label .setText (path )
         selected_target_player =None 
+        load_players (group_section ,False )
         current_selection_label .setText (f"Source: {selected_source_player }, Target: {selected_target_player }")
         print ("Done loading the data from Target Save!")
+    run_with_loading (on_finished ,task )
 def on_selection_of_source_player ():
     global selected_source_player 
     selections =source_player_list .selectedItems ()
@@ -957,11 +1019,12 @@ def filter_treeview (tree ,query ,is_source ):
 def finalize_save (window ):
     try :
         save_and_backup ()
-        QMessageBox .information (window ,t ("Save Complete"),t ("Changes saved successfully."))
-        window .close ()
     except Exception as e :
         print (f"Exception in finalize_save: {e }")
-        QMessageBox .critical (window ,"Save Failed",f"Save failed:\n{e }")
-        window .close ()
 def character_transfer ():
     return CharacterTransferWindow ()
+if __name__ =="__main__":
+    app =QApplication ([])
+    w =CharacterTransferWindow ()
+    w .show ()
+    sys .exit (app .exec ())

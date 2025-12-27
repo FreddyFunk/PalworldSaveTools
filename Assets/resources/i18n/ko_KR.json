@@ -465,5 +465,16 @@
 "button.import": "거점 가져오기",
 "delete.guild": "길드 삭제",
 "base.import.success": "거점을 성공적으로 가져왔습니다",
-"base.export.success": "거점을 성공적으로 내보냈습니다"
+"base.export.success": "거점을 성공적으로 내보냈습니다",
+"button.export": "거점 내보내기",
+"button.import": "거점 가져오기",
+"delete.guild": "길드 삭제",
+"base.import.success": "거점을 성공적으로 가져왔습니다",
+"guild.menu.max_level": "길드 레벨 최대화",
+"guild.menu.outdated_blueprint": "오래된 청사진",
+"blueprint.error.outdated": "이 청사진은 이전 버전의 도구로 생성되었습니다. 모든 수정 사항이 적용되도록 거점을 다시 내보내십시오.",
+"blueprint.status.up_to_date": "청사진이 최신 상태입니다.",
+"guild.level.maxed": "길드 거점 레벨이 성공적으로 30으로 설정되었습니다.",
+"base.error.no_base_found": "대상 저장 데이터에서 거점을 찾을 수 없습니다. 가져오기 전에 게임 내에서 하나 이상의 거점(팰 상자)을 생성해 주세요。",
+"base.error.title": "가져오기 오류"
 }

@@ -464,5 +464,16 @@
 "button.import": "Importar Base",
 "delete.guild": "Eliminar Gremio",
 "base.import.success": "Base importada con éxito",
-"base.export.success": "Base exportada con éxito"
+"base.export.success": "Base exportada con éxito",
+"button.export": "Exportar base",
+"button.import": "Importar base",
+"delete.guild": "Eliminar gremio",
+"base.import.success": "Base importada con éxito",
+"guild.menu.max_level": "Nivel máximo de gremio",
+"guild.menu.outdated_blueprint": "Plano desactualizado",
+"blueprint.error.outdated": "Este plano se creó con una versión anterior de la herramienta. Vuelve a exportar la base para asegurarte de que se apliquen todas las correcciones.",
+"blueprint.status.up_to_date": "El plano está actualizado.",
+"guild.level.maxed": "El nivel de la base del gremio se ha establecido en 30 con éxito.",
+"base.error.no_base_found": "No se encontraron bases en el archivo guardado de destino. Por favor, crea al menos una base (Caja Pal) en el juego antes de importar.",
+"base.error.title": "Error de importación"
 }

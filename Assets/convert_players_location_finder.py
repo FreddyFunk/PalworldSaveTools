@@ -1,54 +1,60 @@
-import sys ,os 
+import sys ,os ,gc ,time 
 from import_libs import *
+from all_in_one_tools import *
 import tkinter as tk 
 from tkinter import filedialog 
+from PySide6 .QtCore import QEventLoop 
 sys .path .insert (0 ,os .path .join (os .path .dirname (__file__ ),"palworld_save_tools","commands"))
 from convert import main as convert_main 
 def convert_sav_to_json (input_file ,output_file ):
     old_argv =sys .argv 
     try :
-        sys .argv =["convert",input_file ,"--output",output_file ]
+        sys .argv =["convert",input_file ,"--output",output_file ,"--force"]
         convert_main ()
     finally :
         sys .argv =old_argv 
 def convert_json_to_sav (input_file ,output_file ):
     old_argv =sys .argv 
     try :
-        sys .argv =["convert",input_file ,"--output",output_file ]
+        sys .argv =["convert",input_file ,"--output",output_file ,"--force"]
         convert_main ()
     finally :
         sys .argv =old_argv 
 def pick_players_folder ():
     root =tk .Tk ()
     root .withdraw ()
-    while True :
-        folder =filedialog .askdirectory (title ="Select Players Folder")
-        if not folder :
-            print ("No folder selected!")
-            return None 
-        if os .path .basename (folder )=="Players":
-            return folder 
-        print ("Invalid folder. Please select the Players folder only!")
+    folder =filedialog .askdirectory (title ="Select Players Folder")
+    root .destroy ()
+    if folder and os .path .basename (folder )=="Players":
+        return folder 
+    print ("Invalid folder or no folder selected.")
+    return None 
 def convert_players_location_finder (ext ):
     players_folder =pick_players_folder ()
     if not players_folder :return False 
-    empty =True 
+    files_to_convert =[]
     for root ,_ ,files in os .walk (players_folder ):
-        if not files :
-            continue 
-        empty =False 
         for file in files :
             path =os .path .join (root ,file )
             if ext =="sav"and file .endswith (".json"):
-                output_path =path .replace (".json",".sav")
-                convert_json_to_sav (path ,output_path )
-                print (f"Converted {path } to {output_path }")
+                files_to_convert .append ((path ,path .replace (".json",".sav")))
             elif ext =="json"and file .endswith (".sav"):
-                output_path =path .replace (".sav",".json")
-                convert_sav_to_json (path ,output_path )
-                print (f"Converted {path } to {output_path }")
-    if empty :
-        print ("Players folder empty.")
+                files_to_convert .append ((path ,path .replace (".sav",".json")))
+    if not files_to_convert :
+        print ("No valid files found for conversion.")
+        return True 
+    loop =QEventLoop ()
+    def task ():
+        for src ,dst in files_to_convert :
+            if ext =="sav":
+                convert_json_to_sav (src ,dst )
+            else :
+                convert_sav_to_json (src ,dst )
+            print (f"Converted {src } to {dst }")
+        gc .collect ()
+    run_with_loading (lambda _ :loop .quit (),task )
+    loop .exec ()
+    time .sleep (0.5 )
     return True 
 def main ():
     if len (sys .argv )!=2 or sys .argv [1 ]not in ["sav","json"]:

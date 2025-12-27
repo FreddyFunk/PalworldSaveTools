@@ -16,8 +16,9 @@ def clean_python_code(source_code):
         result.append((toktype, ttext))
         prev_toktype = toktype
     return tokenize.untokenize(result)
-def run_cleanup(root_dir):
+def run_cleanup(root_dir="."):
     ignore_folders = {'pst_venv', 'venv', '.venv', '.git', '__pycache__', 'node_modules'}
+    total_cleaned = 0
     for root, dirs, files in os.walk(root_dir):
         dirs[:] = [d for d in dirs if d not in ignore_folders]
         for file in files:
@@ -28,3 +29,7 @@ def run_cleanup(root_dir):
                 cleaned = clean_python_code(content)
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(cleaned)
+                print(f"Cleaned: {file_path}")
+                total_cleaned += 1
+    print(f"Total files cleaned: {total_cleaned}")
+run_cleanup()

@@ -5,8 +5,11 @@ apply_theme ()
 GITHUB_RAW_URL ='https://raw.githubusercontent.com/deafdudecomputers/PalworldSaveTools/main/Assets/common.py'
 def check_for_update ():
     try :
-        r =urllib .request .urlopen (GITHUB_RAW_URL ,timeout =5 )
-        content =r .read ().decode ('utf-8')
+        context =ssl ._create_unverified_context ()
+        req =urllib .request .Request (GITHUB_RAW_URL )
+        req .add_header ('Range','bytes=0-1024')
+        with urllib .request .urlopen (req ,timeout =10 ,context =context )as r :
+            content =r .read ().decode ('utf-8')
         match =re .search ('APP_VERSION\\s*=\\s*"([^"]+)"',content )
         latest =match .group (1 )if match else None 
         local ,_ =get_versions ()
@@ -197,9 +200,13 @@ def top_process_player (p ,playerdir ,log_folder ):
     if os .path .isfile (dps_file ):
         dps_tasks .append ((uid ,pname ,dps_file ,log_folder ))
     return (uid ,pname ,uniques ,caught ,encounters )
+def restart_program ():
+    python =sys .executable 
+    os .execl (python ,python ,*sys .argv )
 def load_save (path =None ):
-    global current_save_path ,loaded_level_json ,backup_save_path ,srcGuildMapping ,player_levels ,original_loaded_level_json ,base_guild_lookup 
-    global PLAYER_PAL_COUNTS 
+    global current_save_path ,loaded_level_json ,backup_save_path ,srcGuildMapping ,player_levels ,original_loaded_level_json ,base_guild_lookup ,PLAYER_PAL_COUNTS 
+    if loaded_level_json is not None :
+        restart_program ()
     base_path =os .path .dirname (sys .executable )if getattr (sys ,'frozen',False )else os .path .dirname (os .path .dirname (os .path .abspath (__file__ )))
     if path is None :
         p =filedialog .askopenfilename (title ='Select Level.sav',filetypes =[('SAV','*.sav')])
@@ -215,135 +222,146 @@ def load_save (path =None ):
     if not os .path .isdir (playerdir ):
         messagebox .showerror (t ('error.title'),t ('error.players_folder_missing'))
         return 
-    print (t ('loading.save'))
-    current_save_path =d 
-    backup_save_path =current_save_path 
-    t0 =time .perf_counter ()
-    loaded_level_json =sav_to_json (p )
-    t1 =time .perf_counter ()
-    print (t ('loading.converted',seconds =f'{t1 -t0 :.2f}'))
-    build_player_levels ()
-    all_in_one_tools .loaded_json =loaded_level_json 
-    data_source =loaded_level_json ['properties']['worldSaveData']['value']
-    try :
-        srcGuildMapping =MappingCacheObject .get (data_source ,use_mp =True )
-        if srcGuildMapping ._worldSaveData .get ('GroupSaveDataMap')is None :
-            srcGuildMapping .GroupSaveDataMap ={}
-    except Exception as e :
-        messagebox .showerror (t ('error.title'),t ('error.guild_mapping_failed',err =e ))
-        srcGuildMapping =None 
-    base_guild_lookup ={}
-    guild_name_map ={}
-    if srcGuildMapping :
-        for gid_uuid ,gdata in srcGuildMapping .GroupSaveDataMap .items ():
-            gid =str (gid_uuid )
-            guild_name =gdata ['value']['RawData']['value'].get ('guild_name','Unnamed Guild')
-            guild_name_map [gid .lower ()]=guild_name 
-            for base_id_uuid in gdata ['value']['RawData']['value'].get ('base_ids',[]):
-                base_guild_lookup [str (base_id_uuid )]={'GuildName':guild_name ,'GuildID':gid }
-    print (t ('loading.done'))
-    log_folder =os .path .join (base_path ,'Scan Save Logger')
-    if os .path .exists (log_folder ):
-        shutil .rmtree (log_folder )
-    os .makedirs (log_folder ,exist_ok =True )
-    player_pals_count ={}
-    count_pals_found (data_source ,player_pals_count ,log_folder ,current_save_path ,sav_to_json ,guild_name_map )
-    PLAYER_PAL_COUNTS =player_pals_count 
-    def count_owned_pals (level_json ):
-        owned_count ={}
+    def task ():
+        global current_save_path ,loaded_level_json ,backup_save_path ,srcGuildMapping ,player_levels ,original_loaded_level_json ,base_guild_lookup ,PLAYER_PAL_COUNTS 
+        print (t ('loading.save'))
+        current_save_path =d 
+        backup_save_path =current_save_path 
+        t0 =time .perf_counter ()
+        loaded_level_json =sav_to_json (p )
+        t1 =time .perf_counter ()
+        print (t ('loading.converted',seconds =f'{t1 -t0 :.2f}'))
+        build_player_levels ()
+        all_in_one_tools .loaded_json =loaded_level_json 
+        if not loaded_level_json :
+            return False 
+        data_source =loaded_level_json ['properties']['worldSaveData']['value']
         try :
-            char_map =level_json ['properties']['worldSaveData']['value']['CharacterSaveParameterMap']['value']
-            for item in char_map :
-                try :
-                    owner_uid =item ['value']['RawData']['value']['object']['SaveParameter']['value']['OwnerPlayerUId']['value']
-                    if owner_uid :
-                        owned_count [owner_uid ]=owned_count .get (owner_uid ,0 )+1 
-                except (KeyError ,TypeError ):
-                    continue 
-        except (KeyError ,TypeError ):
-            pass 
-        return owned_count 
-    owned_counts =count_owned_pals (loaded_level_json )
-    scan_log_path =os .path .join (log_folder ,'scan_save.log')
-    logger =logging .getLogger ('LoadSaveLogger')
-    logger .setLevel (logging .DEBUG )
-    formatter =logging .Formatter ('%(message)s')
-    fh =logging .FileHandler (scan_log_path ,encoding ='utf-8')
-    fh .setFormatter (formatter )
-    ch =logging .StreamHandler (sys .stdout )
-    ch .setFormatter (formatter )
-    logger .addHandler (fh )
-    logger .addHandler (ch )
-    def format_duration (seconds ):
-        seconds =int (seconds )
-        if seconds <60 :
-            return f'{seconds }s ago'
-        m ,s =divmod (seconds ,60 )
-        if m <60 :
-            return f'{m }m {s }s ago'
-        h ,m =divmod (m ,60 )
-        if h <24 :
-            return f'{h }h {m }m ago'
-        d ,h =divmod (h ,24 )
-        return f'{d }d {h }h ago'
-    tick =data_source ['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
-    total_players =total_caught =total_owned =total_bases =active_guilds =0 
-    if srcGuildMapping :
-        for gid ,gdata in srcGuildMapping .GroupSaveDataMap .items ():
-            raw_val =gdata ['value']['RawData']['value']
-            players =raw_val .get ('players',[])
-            if not players :
-                continue 
-            active_guilds +=1 
-            base_ids =raw_val .get ('base_ids',[])
-            total_bases +=len (base_ids )
-            guild_name =raw_val .get ('guild_name','Unnamed Guild')
-            guild_leader =players [0 ].get ('player_info',{}).get ('player_name','Unknown')
-            logger .info ('='*60 )
-            logger .info ('')
-            logger .info (f'Guild: {guild_name } | Guild Leader: {guild_leader } | Guild ID: {gid }')
-            logger .info (f'Base Locations: {len (base_ids )}')
-            for i ,base_id in enumerate (base_ids ,1 ):
-                basecamp =srcGuildMapping .BaseCampMapping .get (toUUID (base_id ))
-                if basecamp :
-                    translation =basecamp ['value']['RawData']['value']['transform']['translation']
-                    tx ,ty ,tz =(translation ['x'],translation ['y'],translation ['z'])
-                    old_c =palworld_coord .sav_to_map (tx ,ty ,new =False )
-                    new_c =palworld_coord .sav_to_map (tx ,ty ,new =True )
-                    logger .info (f'Base {i }: Base ID: {base_id } | Old: {int (old_c [0 ])}, {int (old_c [1 ])} | New: {int (new_c [0 ])}, {int (new_c [1 ])} | RawData: {tx }, {ty }, {tz }')
-            results =[top_process_player (p ,playerdir ,log_folder )for p in players ]
-            for uid ,pname ,uniques ,caught ,encounters in results :
-                level =player_levels .get (str (uid ).replace ('-',''),'?')
-                owned =owned_counts .get (uid ,0 )
-                last =next ((p .get ('player_info',{}).get ('last_online_real_time')for p in players if p .get ('player_uid')==uid ),None )
-                lastseen ='Unknown'if last is None else format_duration ((tick -int (last ))/10000000.0 )
-                logger .info (f'Player: {pname } | UID: {uid } | Level: {level } | Caught: {caught } | Owned: {owned } | Encounters: {encounters } | Uniques: {uniques } | Last Online: {lastseen }')
-                total_players +=1 
-                total_caught +=caught 
-                total_owned +=owned 
-            logger .info ('')
-            logger .info ('='*60 )
-            logger .info ('')
-    total_worker_dropped =PLAYER_PAL_COUNTS .get ('worker_dropped',0 )
-    logger .info ('='*60 )
-    logger .info ('********** PST_STATS_BEGIN **********')
-    logger .info ('')
-    logger .info (f'Total Players: {total_players }')
-    logger .info (f'Total Caught Pals: {total_caught }')
-    logger .info (f'Total Overall Pals: {total_owned +total_worker_dropped }')
-    logger .info (f'Total Owned Pals: {total_owned }')
-    logger .info (f'Total Worker/Dropped Pals: {total_worker_dropped }')
-    logger .info (f'Total Active Guilds: {active_guilds }')
-    logger .info (f'Total Bases: {total_bases }')
-    logger .info ('')
-    logger .info ('********** PST_STATS_END ************')
-    logger .info ('='*60 )
-    for h in logger .handlers [:]:
-        logger .removeHandler (h )
-        h .close ()
-    refresh_all ()
-    refresh_stats ('Before')
-    print (f'Time taken to load save: {t1 -t0 :.2f} seconds')
+            if hasattr (MappingCacheObject ,'clear_cache'):
+                MappingCacheObject .clear_cache ()
+            srcGuildMapping =MappingCacheObject .get (data_source ,use_mp =True )
+            if srcGuildMapping ._worldSaveData .get ('GroupSaveDataMap')is None :
+                srcGuildMapping .GroupSaveDataMap ={}
+        except Exception as e :
+            messagebox .showerror (t ('error.title'),t ('error.guild_mapping_failed',err =e ))
+            srcGuildMapping =None 
+        base_guild_lookup ={}
+        guild_name_map ={}
+        if srcGuildMapping :
+            for gid_uuid ,gdata in srcGuildMapping .GroupSaveDataMap .items ():
+                gid =str (gid_uuid )
+                guild_name =gdata ['value']['RawData']['value'].get ('guild_name','Unnamed Guild')
+                guild_name_map [gid .lower ()]=guild_name 
+                for base_id_uuid in gdata ['value']['RawData']['value'].get ('base_ids',[]):
+                    base_guild_lookup [str (base_id_uuid )]={'GuildName':guild_name ,'GuildID':gid }
+        print (t ('loading.done'))
+        log_folder =os .path .join (base_path ,'Scan Save Logger')
+        if os .path .exists (log_folder ):
+            try :
+                shutil .rmtree (log_folder )
+            except :
+                pass 
+        os .makedirs (log_folder ,exist_ok =True )
+        player_pals_count ={}
+        count_pals_found (data_source ,player_pals_count ,log_folder ,current_save_path ,sav_to_json ,guild_name_map )
+        PLAYER_PAL_COUNTS =player_pals_count 
+        def count_owned_pals (level_json ):
+            owned_count ={}
+            try :
+                char_map =level_json ['properties']['worldSaveData']['value']['CharacterSaveParameterMap']['value']
+                for item in char_map :
+                    try :
+                        owner_uid =item ['value']['RawData']['value']['object']['SaveParameter']['value']['OwnerPlayerUId']['value']
+                        if owner_uid :
+                            owned_count [owner_uid ]=owned_count .get (owner_uid ,0 )+1 
+                    except :
+                        continue 
+            except :
+                pass 
+            return owned_count 
+        owned_counts =count_owned_pals (loaded_level_json )
+        scan_log_path =os .path .join (log_folder ,'scan_save.log')
+        logger =logging .getLogger ('LoadSaveLogger')
+        logger .handlers .clear ()
+        logger .setLevel (logging .DEBUG )
+        logger .propagate =False 
+        formatter =logging .Formatter ('%(message)s')
+        fh =logging .FileHandler (scan_log_path ,encoding ='utf-8')
+        fh .setFormatter (formatter )
+        ch =logging .StreamHandler (sys .stdout )
+        ch .setFormatter (formatter )
+        logger .addHandler (fh )
+        logger .addHandler (ch )
+        def format_duration (seconds ):
+            seconds =int (seconds )
+            if seconds <60 :return f'{seconds }s ago'
+            m ,s =divmod (seconds ,60 )
+            if m <60 :return f'{m }m {s }s ago'
+            h ,m =divmod (m ,60 )
+            if h <24 :return f'{h }h {m }m ago'
+            d ,h =divmod (h ,24 )
+            return f'{d }d {h }h ago'
+        tick =data_source ['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
+        total_players =total_caught =total_owned =total_bases =active_guilds =0 
+        from concurrent .futures import ThreadPoolExecutor 
+        if srcGuildMapping :
+            for gid ,gdata in srcGuildMapping .GroupSaveDataMap .items ():
+                raw_val =gdata ['value']['RawData']['value']
+                players =raw_val .get ('players',[])
+                if not players :continue 
+                active_guilds +=1 
+                base_ids =raw_val .get ('base_ids',[])
+                total_bases +=len (base_ids )
+                guild_name =raw_val .get ('guild_name','Unnamed Guild')
+                guild_leader =players [0 ].get ('player_info',{}).get ('player_name','Unknown')
+                logger .info ('='*60 )
+                logger .info ('')
+                logger .info (f'Guild: {guild_name } | Guild Leader: {guild_leader } | Guild ID: {gid }')
+                logger .info (f'Base Locations: {len (base_ids )}')
+                for i ,base_id in enumerate (base_ids ,1 ):
+                    basecamp =srcGuildMapping .BaseCampMapping .get (toUUID (base_id ))
+                    if basecamp :
+                        translation =basecamp ['value']['RawData']['value']['transform']['translation']
+                        tx ,ty ,tz =(translation ['x'],translation ['y'],translation ['z'])
+                        old_c =palworld_coord .sav_to_map (tx ,ty ,new =False )
+                        new_c =palworld_coord .sav_to_map (tx ,ty ,new =True )
+                        logger .info (f'Base {i }: Base ID: {base_id } | Old: {int (old_c [0 ])}, {int (old_c [1 ])} | New: {int (new_c [0 ])}, {int (new_c [1 ])} | RawData: {tx }, {ty }, {tz }')
+                with ThreadPoolExecutor ()as executor :
+                    results =list (executor .map (lambda p :top_process_player (p ,playerdir ,log_folder ),players ))
+                for uid ,pname ,uniques ,caught ,encounters in results :
+                    level =player_levels .get (str (uid ).replace ('-',''),'?')
+                    owned =owned_counts .get (uid ,0 )
+                    last =next ((p .get ('player_info',{}).get ('last_online_real_time')for p in players if p .get ('player_uid')==uid ),None )
+                    lastseen ='Unknown'if last is None else format_duration ((tick -int (last ))/10000000.0 )
+                    logger .info (f'Player: {pname } | UID: {uid } | Level: {level } | Caught: {caught } | Owned: {owned } | Encounters: {encounters } | Uniques: {uniques } | Last Online: {lastseen }')
+                    total_players +=1 
+                    total_caught +=caught 
+                    total_owned +=owned 
+                logger .info ('')
+                logger .info ('='*60 )
+                logger .info ('')
+        total_worker_dropped =PLAYER_PAL_COUNTS .get ('worker_dropped',0 )
+        logger .info ('='*60 )
+        logger .info ('********** PST_STATS_BEGIN **********')
+        logger .info ('')
+        logger .info (f'Total Players: {total_players }')
+        logger .info (f'Total Caught Pals: {total_caught }')
+        logger .info (f'Total Overall Pals: {total_owned +total_worker_dropped }')
+        logger .info (f'Total Owned Pals: {total_owned }')
+        logger .info (f'Total Worker/Dropped Pals: {total_worker_dropped }')
+        logger .info (f'Total Active Guilds: {active_guilds }')
+        logger .info (f'Total Bases: {total_bases }')
+        logger .info ('')
+        logger .info ('********** PST_STATS_END ************')
+        logger .info ('='*60 )
+        for h in logger .handlers [:]:
+            logger .removeHandler (h )
+            h .close ()
+        refresh_all ()
+        refresh_stats ('Before')
+        return True 
+    def on_finished (success ):pass 
+    run_with_loading (on_finished ,task )
 def extract_value (data ,key ,default_value =''):
     value =data .get (key ,default_value )
     if isinstance (value ,dict ):
@@ -580,27 +598,31 @@ def save_changes ():
         return 
     if not current_save_path or not loaded_level_json :
         return 
-    backup_whole_directory (backup_save_path ,'Backups/AllinOneTools')
-    level_sav_path =os .path .join (current_save_path ,'Level.sav')
-    t0 =time .perf_counter ()
-    json_to_sav (loaded_level_json ,level_sav_path )
-    t1 =time .perf_counter ()
-    players_folder =os .path .join (current_save_path ,'Players')
-    for uid in files_to_delete :
-        f =os .path .join (players_folder ,uid +'.sav')
-        f_dps =os .path .join (players_folder ,f'{uid }_dps.sav')
-        try :
-            os .remove (f )
-        except FileNotFoundError :
-            pass 
-        try :
-            os .remove (f_dps )
-        except FileNotFoundError :
-            pass 
-    files_to_delete .clear ()
-    window .focus_force ()
-    print (f'Time taken to save changes: {t1 -t0 :.2f} seconds')
-    messagebox .showinfo (t ('Saved'),t ('Changes saved and files deleted!'),parent =window )
+    def task ():
+        backup_whole_directory (backup_save_path ,'Backups/AllinOneTools')
+        level_sav_path =os .path .join (current_save_path ,'Level.sav')
+        t0 =time .perf_counter ()
+        json_to_sav (loaded_level_json ,level_sav_path )
+        t1 =time .perf_counter ()
+        players_folder =os .path .join (current_save_path ,'Players')
+        for uid in files_to_delete :
+            f =os .path .join (players_folder ,uid +'.sav')
+            f_dps =os .path .join (players_folder ,f'{uid }_dps.sav')
+            try :
+                os .remove (f )
+            except FileNotFoundError :
+                pass 
+            try :
+                os .remove (f_dps )
+            except FileNotFoundError :
+                pass 
+        files_to_delete .clear ()
+        return t1 -t0 
+    def on_finished (duration ):
+        window .focus_force ()
+        print (f'Time taken to save changes: {duration :.2f} seconds')
+        messagebox .showinfo (t ('Saved'),t ('Changes saved and files deleted!'),parent =window )
+    run_with_loading (on_finished ,task )
 def format_duration (s ):
     d ,h =divmod (int (s ),86400 )
     hr ,m =divmod (h ,3600 )
@@ -1264,14 +1286,19 @@ def refresh_all ():
         globals ()['PLAYER_DETAILS_CACHE']={}
     PLAYER_DETAILS_CACHE ={}
     wsd =loaded_level_json ['properties']['worldSaveData']['value']
+    base_guild_lookup ={}
     for g in wsd ['GroupSaveDataMap']['value']:
         if g ['value']['GroupType']['value']['value']=='EPalGroupType::Guild':
-            name =g ['value']['RawData']['value'].get ('guild_name','Unknown')
-            gid =as_uuid (g ['key'])
+            raw_g =g ['value']['RawData']['value']
+            name =raw_g .get ('guild_name','Unknown')
+            gid =str (as_uuid (g ['key']))
             guild_tree .insert ('','end',values =(name ,gid ))
+            for bid_raw in raw_g .get ('base_ids',[]):
+                bid =str (as_uuid (bid_raw ))
+                base_guild_lookup [bid ]={'GuildName':name ,'GuildID':gid }
     base_list =wsd .get ('BaseCampSaveData',{}).get ('value',[])
     for b in base_list :
-        base_id =as_uuid (b ['key'])
+        base_id =str (as_uuid (b ['key']))
         info =base_guild_lookup .get (base_id ,{'GuildName':'No Guild','GuildID':'N/A'})
         guild_name =info ['GuildName']
         guild_id =info ['GuildID']
@@ -1579,6 +1606,9 @@ def show_base_map ():
         base_map ={str (b ['key']).replace ('-',''):b ['value']for b in wsd_live .get ('BaseCampSaveData',{}).get ('value',[])}
         for entry in group_map :
             gid ,g_val =(str (entry ['key']),entry ['value'])
+            leader_name =get_leader_name (g_val )
+            if leader_name ==t ('map.unknown.leader'):
+                continue 
             base_ids =g_val ['RawData']['value'].get ('base_ids',[])
             valid_bases =[]
             for bid in base_ids :
@@ -1587,9 +1617,8 @@ def show_base_map ():
                     bx ,by =get_base_coords (base_map [bid_str ])
                     if bx is not None :
                         img_x ,img_y =to_image_coordinates (bx ,by ,mw ,mh )
-                        valid_bases .append ({'base_id':bid ,'coords':(bx ,by ),'img_coords':(img_x ,img_y ),'data':{'key':bid ,'value':base_map [bid_str ]},'guild_id':gid ,'guild_name':g_val ['RawData']['value'].get ('guild_name',t ('map.unknown.guild')),'leader_name':get_leader_name (g_val )})
-            if len (valid_bases )>0 :
-                guilds [gid ]={'guild_name':g_val ['RawData']['value'].get ('guild_name',t ('map.unknown.guild')),'leader_name':get_leader_name (g_val ),'last_seen':get_last_seen (g_val ,tick ),'bases':valid_bases }
+                        valid_bases .append ({'base_id':bid ,'coords':(bx ,by ),'img_coords':(img_x ,img_y ),'data':{'key':bid ,'value':base_map [bid_str ]},'guild_id':gid ,'guild_name':g_val ['RawData']['value'].get ('guild_name',t ('map.unknown.guild')),'leader_name':leader_name })
+            guilds [gid ]={'guild_name':g_val ['RawData']['value'].get ('guild_name',t ('map.unknown.guild')),'leader_name':leader_name ,'last_seen':get_last_seen (g_val ,tick ),'bases':valid_bases }
         return guilds 
     def filter_guilds_and_bases (guilds ,search_text ):
         if not search_text :
@@ -1598,8 +1627,9 @@ def show_base_map ():
         filtered ={}
         for gid ,g in guilds .items ():
             gn ,ln ,ls =(g ['guild_name'].lower (),g ['leader_name'].lower (),g ['last_seen'].lower ())
-            bases =[b for b in g ['bases']if all ((any ((term in field for field in [str (b ['base_id']).lower (),f"x:{int (b ['coords'][0 ])}, y:{int (b ['coords'][1 ])}"if b ['coords'][0 ]is not None else '',gn ,ln ,ls ]))for term in terms ))]
-            if bases :
+            guild_matches =all ((any ((term in field for field in [gn ,ln ,ls ]))for term in terms ))
+            bases =[b for b in g ['bases']if all ((any ((term in field for field in [str (b ['base_id']).lower (),f"x:{int (b ['coords'][0 ])}, y:{int (b ['coords'][1 ])}",gn ,ln ,ls ]))for term in terms ))]
+            if guild_matches or bases :
                 filtered [gid ]=dict (g )
                 filtered [gid ]['bases']=bases 
         return filtered 
@@ -3010,6 +3040,28 @@ def rename_guild ():
     refresh_all ()
     refresh_stats ('After')
     messagebox .showinfo (t ('guild.rename.done_title'),t ('guild.rename.done_msg',old =old_name ,new =new_name ))
+def max_guild_level ():
+    sel =guild_tree .selection ()
+    src ='guild'
+    if not sel :
+        sel =player_tree .selection ()
+        src ='player'
+    if not sel :
+        messagebox .showerror (t ('error.title'),t ('guild.rename.select'))
+        return 
+    vals =guild_tree .item (sel [0 ])['values']if src =='guild'else player_tree .item (sel [0 ])['values']
+    gid =vals [1 ]if src =='guild'else vals [6 ]
+    wsd =loaded_level_json ['properties']['worldSaveData']['value']
+    found =False 
+    for g in wsd ['GroupSaveDataMap']['value']:
+        if are_equal_uuids (g ['key'],gid ):
+            g ['value']['RawData']['value']['base_camp_level']=30 
+            found =True 
+            break 
+    if found :
+        refresh_all ()
+        refresh_stats ('After')
+        messagebox .showinfo (t ('success.title'),t ('guild.level.maxed'))
 def rename_player ():
     sel =guild_members_tree .selection ()
     src ='guild'
@@ -3373,6 +3425,31 @@ def clone_base_complete (loaded_level_json ,source_base_id ,target_guild_id ,off
                 pass 
         map_objs .append (no )
     return True 
+def import_base_to_guild ():
+    sel =guild_tree .selection ()
+    src ='guild'
+    if not sel :
+        sel =player_tree .selection ()
+        src ='player'
+    if not sel :
+        return 
+    vals =guild_tree .item (sel [0 ])['values']if src =='guild'else player_tree .item (sel [0 ])['values']
+    target_guild_id =vals [1 ]if src =='guild'else vals [6 ]
+    import tkinter .filedialog as fd 
+    file_path =fd .askopenfilename (filetypes =[("JSON files","*.json")])
+    if not file_path :
+        return 
+    import json 
+    try :
+        with open (file_path ,'r',encoding ='utf-8')as f :
+            exported_data =json .load (f )
+        if import_base_json (loaded_level_json ,exported_data ,target_guild_id ,t =t ):
+            refresh_all ()
+            import tkinter .messagebox as mb 
+            mb .showinfo (t ('success.title'),t ('base.import.success'))
+    except Exception as e :
+        import tkinter .messagebox as mb 
+        mb .showerror (t ('error.title'),f"Import failed: {str (e )}")
 def export_base_json (loaded_level_json ,source_base_id ):
     import copy 
     def _s (x ):
@@ -3401,13 +3478,20 @@ def export_base_json (loaded_level_json ,source_base_id ):
     item_containers =data .get ('ItemContainerSaveData',{}).get ('value',[])
     map_objs =data .get ('MapObjectSaveData',{}).get ('value',{}).get ('values',[])
     char_map =data .get ('CharacterSaveParameterMap',{}).get ('value',[])
+    group_map =data .get ('GroupSaveDataMap',{}).get ('value',[])
     work_root =data .get ('WorkSaveData',{})
     work_entries =_iter_work_savedata_entries (work_root )
     src_id_str =_s (source_base_id )
     src_base_entry =next ((b for b in base_camp_data if _s (b .get ('key'))==src_id_str ),None )
     if not src_base_entry :
         return None 
-    export_data ={'base_camp':copy .deepcopy (src_base_entry ),'map_objects':[],'characters':[],'item_containers':[],'char_containers':[],'works':[],'dynamic_items':[]}
+    base_level =1 
+    group_id_str =_s (src_base_entry ['value']['RawData']['value'].get ('group_id_belong_to',''))
+    for g in group_map :
+        if _s (g ['key'])==group_id_str :
+            base_level =g ['value']['RawData']['value'].get ('base_camp_level',1 )
+            break 
+    export_data ={'base_camp':copy .deepcopy (src_base_entry ),'base_camp_level':base_level ,'map_objects':[],'characters':[],'item_containers':[],'char_containers':[],'works':[],'dynamic_items':[]}
     all_dyn_items =data .get ('DynamicItemSaveData',{}).get ('value',{}).get ('values',[])
     try :
         src_worker_container_id =_s (src_base_entry ['value']['WorkerDirector']['value']['RawData']['value']['container_id'])
@@ -3466,13 +3550,16 @@ def export_base_json (loaded_level_json ,source_base_id ):
         if wr and _s (wr .get ('base_camp_id_belong_to',''))==src_id_str :
             export_data ['works'].append (copy .deepcopy (we ))
     return export_data 
-def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset =(8000 ,0 ,0 ),collision_threshold =5000 ):
-    if 'dynamic_items'not in exported_data :
-        msg ='Warning: Cannot use this outdated export data due to broken data. Please re-export your base again.'
-        print (msg )
+def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset =(8000 ,0 ,0 ),collision_threshold =5000 ,t =None ):
+    success ,msg =validate_blueprint_version (exported_data )
+    if not success :
+        if t :
+            msg =t (msg )
+        print (f"Warning: {msg }")
         try :
             import tkinter .messagebox as mb 
-            mb .showwarning ('Outdated Blueprint',msg )
+            title =t ('guild.menu.outdated_blueprint')if t else 'Outdated Blueprint'
+            mb .showwarning (title ,msg )
         except :
             pass 
         return 
@@ -3515,17 +3602,27 @@ def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset 
             return map_obj ['ConcreteModel']['value']['RawData']['value']
         except :
             return None 
-    def _apply_translation (t ,off_vec ):
+    def _apply_translation (t_vec ,off_vec ):
         try :
-            t ['x']+=off_vec [0 ]
-            t ['y']+=off_vec [1 ]
-            t ['z']+=off_vec [2 ]if len (off_vec )>2 else 0 
+            t_vec ['x']+=off_vec [0 ]
+            t_vec ['y']+=off_vec [1 ]
+            t_vec ['z']+=off_vec [2 ]if len (off_vec )>2 else 0 
         except :
             pass 
     raw_prop =loaded_level_json ['properties']['worldSaveData']['value']
     data =raw_prop if isinstance (raw_prop ,dict )else {}
-    groups =data .get ('GroupSaveDataMap',{}).get ('value',[])
     base_camp_data =data .get ('BaseCampSaveData',{}).get ('value',[])
+    if not base_camp_data or len (base_camp_data )==0 :
+        msg =t ('base.error.no_base_found')if t else 'No base camps found in the target save. Please create at least one base camp (Palbox) in-game before importing.'
+        print (f"Error: {msg }")
+        try :
+            import tkinter .messagebox as mb 
+            title =t ('base.error.title')if t else 'Import Error'
+            mb .showerror (title ,msg )
+        except :
+            pass 
+        return False 
+    groups =data .get ('GroupSaveDataMap',{}).get ('value',[])
     char_containers =data .get ('CharacterContainerSaveData',{}).get ('value',[])
     item_containers =data .get ('ItemContainerSaveData',{}).get ('value',[])
     dynamic_item_data =data .get ('DynamicItemSaveData',{}).get ('value',{}).get ('values',[])
@@ -3535,6 +3632,15 @@ def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset 
     work_entries =_iter_work_savedata_entries (work_root )
     z =_zero ()
     tgt_gid_str =_s (target_guild_id )
+    target_group =next ((g for g in groups if _s (g .get ('key'))==tgt_gid_str ),None )
+    if target_group :
+        try :
+            imported_level =exported_data .get ('base_camp_level',1 )
+            current_level =target_group ['value']['RawData']['value'].get ('base_camp_level',1 )
+            if imported_level >current_level :
+                target_group ['value']['RawData']['value']['base_camp_level']=imported_level 
+        except :
+            pass 
     palbox_model_id =None 
     for obj in exported_data .get ('map_objects',[]):
         if obj .get ('MapObjectId',{}).get ('value','')=='PalBoxV2':
@@ -3648,7 +3754,6 @@ def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset 
     except :
         pass 
     base_camp_data .append (nb )
-    target_group =next ((g for g in groups if _s (g .get ('key'))==tgt_gid_str ),None )
     if target_group :
         try :
             t_raw =target_group ['value']['RawData']['value']
@@ -3783,7 +3888,7 @@ def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset 
                             nic ['value']['Slots']['value']['values']=cleaned_slots 
                             item_containers .append (nic )
                     elif 'CharacterContainer'in str (mod .get ('key','')):
-                        src_cc =next ((c for c in exported_data .get ('char_containers',[])if _s (c .get ('key',{}).get ('ID',{}).get ('value'))==old_cid ),None )
+                        src_cc =next ((c for c in char_containers if _s (c .get ('key',{}).get ('ID',{}).get ('value'))==old_cid ),None )
                         if src_cc :
                             ncc =_deep (src_cc )
                             ncc ['key']['ID']['value']=new_cid 
@@ -3798,37 +3903,40 @@ def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset 
 def is_old_blueprint (exported_data ):
     if not isinstance (exported_data ,dict ):
         return True 
-    return 'dynamic_items'not in exported_data 
-def validate_blueprint_version (exported_data ):
+    return 'dynamic_items'not in exported_data or 'base_camp_level'not in exported_data 
+def validate_blueprint_version (exported_data ,t =None ):
     if is_old_blueprint (exported_data ):
-        return (False ,'This blueprint was created with an older version of the tool. Please re-export the base to ensure all fixes are applied.')
-    return (True ,'Blueprint is up to date.')
+        msg =t ('blueprint.error.outdated')if t else 'This blueprint was created with an older version of the tool. Please re-export the base to ensure all fixes are applied.'
+        return (False ,msg )
+    msg =t ('blueprint.status.up_to_date')if t else 'Blueprint is up to date.'
+    return (True ,msg )
 def all_in_one_tools ():
     global window ,stat_labels ,guild_tree ,base_tree ,player_tree ,guild_members_tree 
     global guild_search_var ,base_search_var ,player_search_var ,guild_members_search_var 
     global guild_result ,base_result ,player_result 
     base_dir =os .path .dirname (os .path .abspath (__file__ ))
+    import tkinter as tk 
+    from tkinter import ttk ,messagebox 
+    import customtkinter as ctk 
     try :
-        import tkinter as tk 
-        if not hasattr (tk ,'_default_root')or tk ._default_root is None or (not tk ._default_root .winfo_exists ()):
+        if not hasattr (tk ,'_default_root')or tk ._default_root is None :
             tk ._default_root =tk .Tk ()
             tk ._default_root .withdraw ()
-    except :
-        pass 
-    try :
         window =ctk .CTkToplevel ()
-    except tk .TclError as e :
-        if 'application has been destroyed'in str (e ):
-            try :
-                tk ._default_root =tk .Tk ()
-                tk ._default_root .withdraw ()
-                window =ctk .CTkToplevel ()
-            except :
-                messagebox .showerror ('Error','Failed to create window: Tkinter root destroyed')
-                return None 
-        else :
-            raise 
+    except :
+        window =ctk .CTk ()
     window .running =True 
+    def handle_focus_safe (event =None ):
+        try :
+            if window .winfo_exists ():
+                window .update_idletasks ()
+        except :
+            pass 
+    window .bind ("<FocusIn>",lambda e :window .after_idle (handle_focus_safe ))
+    window .bind ("<FocusOut>",lambda e :window .after_idle (handle_focus_safe ))
+    MENU_BG =GLASS_BG 
+    MENU_FG =TEXT_COLOR 
+    MENU_ACTIVE_BG =ACCENT_COLOR 
     try :
         window .iconbitmap (ICON_PATH )
         window .tk .call ('wm','iconbitmap','.',ICON_PATH )
@@ -3875,6 +3983,16 @@ def all_in_one_tools ():
                     window .notebook ._segmented_button ._buttons_dict [tab_name ].configure (text =t (key ))
     window .refresh_texts_all_in_one =refresh_texts_all_in_one 
     window .on_language_change_cmd =on_language_change_cmd 
+    def create_and_store_menu (menu_name ):
+        menu =tk .Menu (window ,tearoff =0 ,bg =MENU_BG ,fg =MENU_FG ,activebackground =MENU_ACTIVE_BG ,activeforeground =MENU_FG )
+        items =[]
+        def add_item (label_key ,command ,is_separator =False ):
+            if is_separator :
+                menu .add_separator ()
+            else :
+                menu .add_command (label =t (label_key ),command =command )
+            items .append ({'label_key':label_key ,'command':command ,'is_separator':is_separator })
+        return (menu ,items ,add_item )
     import webbrowser 
     window .title (t ('deletion.title'))
     window .geometry ('1200x800')
@@ -4043,7 +4161,7 @@ def all_in_one_tools ():
         print (f'Error loading logo: {e }')
     info =check_for_update ()
     if info :
-        latest ,local =(info ['latest'],info ['local'])
+        latest ,local =info ['latest'],info ['local']
         update_available =info ['update_available']
         version_frame =ctk .CTkFrame (right_header_frame ,fg_color ='transparent')
         version_frame .pack (side ='top',anchor ='e',pady =0 ,padx =0 )
@@ -4065,15 +4183,17 @@ def all_in_one_tools ():
             window .refresh_elements ['version_labels'].append ((update_label ,'update.latest'))
             update_url ='https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest'
             update_label .bind ('<Button-1>',lambda e :webbrowser .open (update_url ))
-            if window .running :
-                def pulse_label ():
-                    if not window .running :
-                        return 
+            def pulse_label ():
+                if not window .running :
+                    return 
+                try :
                     current_color =update_label .cget ('text_color')
                     new_color ='red'if current_color =='white'else 'white'
                     update_label .configure (text_color =new_color )
                     window .after (800 ,pulse_label )
-                pulse_label ()
+                except :
+                    pass 
+            window .after (800 ,pulse_label )
     result_frame =ctk .CTkFrame (window ,fg_color =GLASS_BG ,corner_radius =CTK_FRAME_CORNER_RADIUS )
     result_frame .grid (row =1 ,column =0 ,padx =10 ,pady =5 ,sticky ='ew')
     result_frame .columnconfigure (0 ,weight =1 )
@@ -4210,6 +4330,8 @@ def all_in_one_tools ():
             menu .add_command (label =t ('deletion.ctx.remove_exclusion'),command =lambda :remove_selected_from_regular (guild_tree ,'guilds'))
             menu .add_command (label =t ('deletion.ctx.delete_guild'),command =delete_selected_guild )
             menu .add_command (label =t ('guild.rename.menu'),command =rename_guild )
+            menu .add_command (label =t ('guild.menu.max_level'),command =max_guild_level )
+            menu .add_command (label =t ('button.import'),command =import_base_to_guild )
             menu .add_command (label =t ('guild.menu.move_selected_player_to_selected_guild'),command =move_selected_player_to_selected_guild )
             menu .tk_popup (event .x_root ,event .y_root )
     def base_tree_menu (event ):
@@ -4289,6 +4411,8 @@ def all_in_one_tools ():
             menu .add_separator ()
             menu .add_command (label =t ('deletion.ctx.delete_guild'),command =delete_selected_guild )
             menu .add_command (label =t ('guild.rename.menu'),command =rename_guild )
+            menu .add_command (label =t ('guild.menu.max_level'),command =max_guild_level )
+            menu .add_command (label =t ('button.import'),command =import_base_to_guild )
             menu .add_separator ()
             menu .add_command (label =t ('guild.menu.move_selected_player_to_selected_guild'),command =move_selected_player_to_selected_guild )
             menu .tk_popup (event .x_root ,event .y_root )

@@ -91,7 +91,7 @@ def unlock_self_folder ():
         cwd =os .path .dirname (folder )
         )
     except Exception :
-        pass
+        pass 
 def is_frozen ()->bool :
     return getattr (sys ,'frozen',False )
 def get_assets_path ()->str :
@@ -862,12 +862,36 @@ def on_exit ():
     else :
         folder =os .path .dirname (os .path .abspath (sys .argv [0 ]))
     folder_escaped =folder .replace ("\\","\\\\").replace ("'","''")
-    nuke_cmd =f"$ErrorActionPreference = 'SilentlyContinue'; Get-Process | Where-Object {{ $_.Path -like '{folder_escaped}*' }} | ForEach-Object {{ try {{ Stop-Process -Id $_.Id -Force -ErrorAction Stop }} catch {{ try {{ taskkill /F /PID $_.Id /NoWindow 2>$null }} catch {{ }} }} }} }}"
+    nuke_cmd =f"$ErrorActionPreference = 'SilentlyContinue'; Get-Process | Where-Object {{ $_.Path -like '{folder_escaped }*' }} | ForEach-Object {{ try {{ Stop-Process -Id $_.Id -Force -ErrorAction Stop }} catch {{ try {{ taskkill /F /PID $_.Id /NoWindow 2>$null }} catch {{ }} }} }} }}"
     try :
         subprocess .run (["powershell","-WindowStyle","Hidden","-Command",nuke_cmd ],creationflags =subprocess .CREATE_NO_WINDOW ,timeout =10 )
     except Exception :
-        pass
+        pass 
     os ._exit (0 )
+if "--spawn-loader"in sys .argv :
+    try :
+        assets_path =get_assets_path ()
+        if assets_path not in sys .path :
+            sys .path .insert (0 ,assets_path )
+        from loading_manager import LoadingOverlay 
+        from PySide6 .QtWidgets import QApplication 
+        from PySide6 .QtCore import Qt 
+        import time 
+        app =QApplication (sys .argv )
+        st =None 
+        try :
+            idx =sys .argv .index ("--spawn-loader")
+            st =float (sys .argv [idx +1 ])
+        except :
+            pass 
+        overlay =LoadingOverlay (start_time =st )
+        overlay .show ()
+        overlay .move (QApplication .primaryScreen ().geometry ().center ()-overlay .rect ().center ())
+        sys .exit (app .exec ())
+    except Exception as e :
+        print (f"Error running loading screen: {e }")
+        traceback .print_exc ()
+        sys .exit (1 )
 if __name__ =="__main__":
     unlock_self_folder ()
     if "--list-assets"in sys .argv :

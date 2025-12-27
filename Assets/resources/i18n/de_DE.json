@@ -464,5 +464,16 @@
 "button.import": "Basis importieren",
 "delete.guild": "Gilde löschen",
 "base.import.success": "Basis erfolgreich importiert",
-"base.export.success": "Basis erfolgreich exportiert"
+"base.export.success": "Basis erfolgreich exportiert",
+"button.export": "Basis exportieren",
+"button.import": "Basis importieren",
+"delete.guild": "Gilde löschen",
+"base.import.success": "Basis erfolgreich importiert",
+"guild.menu.max_level": "Max. Gildenstufe",
+"guild.menu.outdated_blueprint": "Veralteter Bauplan",
+"blueprint.error.outdated": "Dieser Bauplan wurde mit einer älteren Version des Tools erstellt. Bitte exportieren Sie die Basis erneut, um alle Korrekturen anzuwenden.",
+"blueprint.status.up_to_date": "Bauplan ist auf dem neuesten Stand.",
+"guild.level.maxed": "Die Stützpunkt-Stufe der Gilde wurde erfolgreich auf 30 gesetzt.",
+"base.error.no_base_found": "Im Ziel-Spielstand wurden keine Stützpunkte gefunden. Bitte erstelle im Spiel mindestens einen Stützpunkt (Pal-Box), bevor du importierst.",
+"base.error.title": "Importfehler"
 }

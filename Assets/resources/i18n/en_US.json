@@ -460,5 +460,16 @@
 "button.import": "Import Base",
 "delete.guild": "Delete Guild",
 "base.import.success": "Base imported successfully",
-"base.export.success": "Base exported successfully"
+"base.export.success": "Base exported successfully",
+"button.export": "Export Base",
+"button.import": "Import Base",
+"delete.guild": "Delete Guild",
+"base.import.success": "Base imported successfully",
+"guild.menu.max_level": "Max Guild Level",
+"guild.menu.outdated_blueprint": "Outdated Blueprint",
+"blueprint.error.outdated": "This blueprint was created with an older version of the tool. Please re-export the base to ensure all fixes are applied.",
+"blueprint.status.up_to_date": "Blueprint is up to date.",
+"guild.level.maxed": "Guild base camp level has been set to 30 successfully.",
+"base.error.no_base_found": "No base camps found in the target save. Please create at least one base camp (Palbox) in-game before importing.",
+"base.error.title": "Import Error"
 }

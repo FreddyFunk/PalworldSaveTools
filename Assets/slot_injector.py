@@ -89,11 +89,12 @@ class SlotNumUpdaterApp (QDialog ):
         if not fp .endswith ("Level.sav"):
             QMessageBox .critical (self ,t ("error.title"),t ("slot.invalid_file"))
             return 
-        try :
-            self .level_json =sav_to_json (fp )
+        def task ():
+            return sav_to_json (fp )
+        def on_finished (result ):
+            self .level_json =result 
             QMessageBox .information (self ,t ("slot.loaded_title"),t ("slot.loaded_msg"))
-        except Exception :
-            raise 
+        run_with_loading (on_finished ,task )
     def apply_slotnum_update (self ):
         filepath =self .file_entry .text ()
         if not hasattr (self ,"level_json"):
@@ -109,25 +110,27 @@ class SlotNumUpdaterApp (QDialog ):
             return 
         new_value =pages *slots 
         level_json =self .level_json 
-        container =level_json ["properties"]["worldSaveData"]["value"].get ("CharacterContainerSaveData",{}).get ("value",[])
-        if not isinstance (container ,list ):
-            QMessageBox .critical (self ,t ("error.title"),t ("slot.invalid_structure"))
-            return 
-        PLAYER_SLOT_THRESHOLD =960 
-        editable =[entry for entry in container if entry .get ("value",{}).get ("SlotNum",{}).get ("value",0 )>=PLAYER_SLOT_THRESHOLD ]
-        total_players =len (editable )
-        if total_players ==0 :
-            QMessageBox .information (self ,t ("info.title"),t ("slot.no_entries"))
-            return 
-        resp =QMessageBox .question (self ,t ("slot.confirm_title"),t ("slot.confirm_msg",count =total_players ,new =new_value ),
-        QMessageBox .Yes |QMessageBox .No ,QMessageBox .No )
-        if resp !=QMessageBox .Yes :
-            return 
-        for entry in editable :
-            entry ["value"]["SlotNum"]["value"]=new_value 
-        backup_whole_directory (os .path .dirname (filepath ),"Backups/Slot Injector")
-        json_to_sav (level_json ,filepath )
-        QMessageBox .information (self ,t ("success.title"),t ("slot.success_msg",count =total_players ,new =new_value ))
+        def task ():
+            container =level_json ["properties"]["worldSaveData"]["value"].get ("CharacterContainerSaveData",{}).get ("value",[])
+            if not isinstance (container ,list ):
+                raise ValueError (t ("slot.invalid_structure"))
+            PLAYER_SLOT_THRESHOLD =960 
+            editable =[entry for entry in container if entry .get ("value",{}).get ("SlotNum",{}).get ("value",0 )>=PLAYER_SLOT_THRESHOLD ]
+            total_players =len (editable )
+            if total_players ==0 :
+                return "no_entries",total_players 
+            for entry in editable :
+                entry ["value"]["SlotNum"]["value"]=new_value 
+            backup_whole_directory (os .path .dirname (filepath ),"Backups/Slot Injector")
+            json_to_sav (level_json ,filepath )
+            return "success",total_players 
+        def on_finished (result ):
+            status ,count =result 
+            if status =="no_entries":
+                QMessageBox .information (self ,t ("info.title"),t ("slot.no_entries"))
+            elif status =="success":
+                QMessageBox .information (self ,t ("success.title"),t ("slot.success_msg",count =count ,new =new_value ))
+        run_with_loading (on_finished ,task )
     def load_styles (self ):
         user_cfg_path =os .path .join (get_assets_directory (),"data","configs","user.cfg")
         theme ="dark"
@@ -143,8 +146,9 @@ class SlotNumUpdaterApp (QDialog ):
             with open (qss_path ,"r")as f :
                 self .setStyleSheet (f .read ())
 def slot_injector ():
-    app =QApplication .instance ()
-    if app is None :
-        app =QApplication ([])
-    window =SlotNumUpdaterApp ()
-    return window 
+    return SlotNumUpdaterApp ()
+if __name__ =="__main__":
+    app =QApplication ([])
+    w =SlotNumUpdaterApp ()
+    w .show ()
+    sys .exit (app .exec ())
