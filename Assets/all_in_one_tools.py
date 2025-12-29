@@ -41,22 +41,24 @@ files_to_delete =set ()
 PLAYER_PAL_COUNTS ={}
 PLAYER_DETAILS_CACHE ={}
 PLAYER_REMAPS ={}
-def refresh_stats (section ):
-    stats =get_current_stats ()
-    section_keys ={'Before':'deletion.stats.before','After':'deletion.stats.after','Result':'deletion.stats.result','After Reset':'deletion.stats.after'}
-    display_section =t (section_keys .get (section ,section ))
-    if section =='Before':
-        refresh_stats .stats_before =stats 
-    if section =='After Reset':
-        zero_stats ={k :0 for k in stats }
-        update_stats_section (stat_labels ,'After',zero_stats )
-        update_stats_section (stat_labels ,'Result',zero_stats )
-    else :
-        update_stats_section (stat_labels ,section ,stats )
-        if section =='After'and hasattr (refresh_stats ,'stats_before'):
-            before =refresh_stats .stats_before 
-            result ={k :before [k ]-stats .get (k ,0 )for k in before }
-            update_stats_section (stat_labels ,'Result',result )
+def refresh_stats(section):
+    if len(sys.argv) > 1:
+        return
+    stats = get_current_stats()
+    section_keys = {'Before': 'deletion.stats.before', 'After': 'deletion.stats.after', 'Result': 'deletion.stats.result', 'After Reset': 'deletion.stats.after'}
+    display_section = t(section_keys.get(section, section))
+    if section == 'Before':
+        refresh_stats.stats_before = stats 
+    if section == 'After Reset':
+        zero_stats = {k: 0 for k in stats}
+        update_stats_section(stat_labels, 'After', zero_stats)
+        update_stats_section(stat_labels, 'Result', zero_stats)
+    else:
+        update_stats_section(stat_labels, section, stats)
+        if section == 'After' and hasattr(refresh_stats, 'stats_before'):
+            before = refresh_stats.stats_before 
+            result = {k: before[k] - stats.get(k, 0) for k in before}
+            update_stats_section(stat_labels, 'Result', result)
 def as_uuid (val ):
     return str (val ).lower ()if val else ''
 def are_equal_uuids (a ,b ):
@@ -203,165 +205,165 @@ def top_process_player (p ,playerdir ,log_folder ):
 def restart_program ():
     python =sys .executable 
     os .execl (python ,python ,*sys .argv )
-def load_save (path =None ):
-    global current_save_path ,loaded_level_json ,backup_save_path ,srcGuildMapping ,player_levels ,original_loaded_level_json ,base_guild_lookup ,PLAYER_PAL_COUNTS 
-    if loaded_level_json is not None :
-        restart_program ()
-    base_path =os .path .dirname (sys .executable )if getattr (sys ,'frozen',False )else os .path .dirname (os .path .dirname (os .path .abspath (__file__ )))
-    if path is None :
-        p =filedialog .askopenfilename (title ='Select Level.sav',filetypes =[('SAV','*.sav')])
-    else :
-        p =path 
-    if not p :
+def load_save(path=None):
+    global current_save_path, loaded_level_json, backup_save_path, srcGuildMapping, player_levels, original_loaded_level_json, base_guild_lookup, PLAYER_PAL_COUNTS 
+    if loaded_level_json is not None:
+        restart_program()
+    base_path = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if path is None:
+        p = filedialog.askopenfilename(title='Select Level.sav', filetypes=[('SAV', '*.sav')])
+    else:
+        p = path 
+    if not p:
         return 
-    if not p .endswith ('Level.sav'):
-        messagebox .showerror (t ('error.title'),t ('error.not_level_sav'))
+    if not p.endswith('Level.sav'):
+        messagebox.showerror(t('error.title'), t('error.not_level_sav'))
         return 
-    d =os .path .dirname (p )
-    playerdir =os .path .join (d ,'Players')
-    if not os .path .isdir (playerdir ):
-        messagebox .showerror (t ('error.title'),t ('error.players_folder_missing'))
+    d = os.path.dirname(p)
+    playerdir = os.path.join(d, 'Players')
+    if not os.path.isdir(playerdir):
+        messagebox.showerror(t('error.title'), t('error.players_folder_missing'))
         return 
-    def task ():
-        global current_save_path ,loaded_level_json ,backup_save_path ,srcGuildMapping ,player_levels ,original_loaded_level_json ,base_guild_lookup ,PLAYER_PAL_COUNTS 
-        print (t ('loading.save'))
-        current_save_path =d 
-        backup_save_path =current_save_path 
-        t0 =time .perf_counter ()
-        loaded_level_json =sav_to_json (p )
-        t1 =time .perf_counter ()
-        print (t ('loading.converted',seconds =f'{t1 -t0 :.2f}'))
-        build_player_levels ()
-        all_in_one_tools .loaded_json =loaded_level_json 
-        if not loaded_level_json :
+    def task():
+        global current_save_path, loaded_level_json, backup_save_path, srcGuildMapping, player_levels, original_loaded_level_json, base_guild_lookup, PLAYER_PAL_COUNTS 
+        print(t('loading.save'))
+        current_save_path = d 
+        backup_save_path = current_save_path 
+        t0 = time.perf_counter()
+        loaded_level_json = sav_to_json(p)
+        t1 = time.perf_counter()
+        print(t('loading.converted', seconds=f'{t1 - t0 :.2f}'))
+        build_player_levels()
+        all_in_one_tools.loaded_json = loaded_level_json 
+        if not loaded_level_json:
             return False 
-        data_source =loaded_level_json ['properties']['worldSaveData']['value']
-        try :
-            if hasattr (MappingCacheObject ,'clear_cache'):
-                MappingCacheObject .clear_cache ()
-            srcGuildMapping =MappingCacheObject .get (data_source ,use_mp =True )
-            if srcGuildMapping ._worldSaveData .get ('GroupSaveDataMap')is None :
-                srcGuildMapping .GroupSaveDataMap ={}
-        except Exception as e :
-            messagebox .showerror (t ('error.title'),t ('error.guild_mapping_failed',err =e ))
-            srcGuildMapping =None 
-        base_guild_lookup ={}
-        guild_name_map ={}
-        if srcGuildMapping :
-            for gid_uuid ,gdata in srcGuildMapping .GroupSaveDataMap .items ():
-                gid =str (gid_uuid )
-                guild_name =gdata ['value']['RawData']['value'].get ('guild_name','Unnamed Guild')
-                guild_name_map [gid .lower ()]=guild_name 
-                for base_id_uuid in gdata ['value']['RawData']['value'].get ('base_ids',[]):
-                    base_guild_lookup [str (base_id_uuid )]={'GuildName':guild_name ,'GuildID':gid }
-        print (t ('loading.done'))
-        log_folder =os .path .join (base_path ,'Scan Save Logger')
-        if os .path .exists (log_folder ):
-            try :
-                shutil .rmtree (log_folder )
-            except :
+        data_source = loaded_level_json['properties']['worldSaveData']['value']
+        try:
+            if hasattr(MappingCacheObject, 'clear_cache'):
+                MappingCacheObject.clear_cache()
+            srcGuildMapping = MappingCacheObject.get(data_source, use_mp=True)
+            if srcGuildMapping._worldSaveData.get('GroupSaveDataMap') is None:
+                srcGuildMapping.GroupSaveDataMap = {}
+        except Exception as e:
+            if path is None:
+                messagebox.showerror(t('error.title'), t('error.guild_mapping_failed', err=e))
+            else:
+                print(f"Error: {e}")
+            srcGuildMapping = None 
+        base_guild_lookup = {}
+        guild_name_map = {}
+        if srcGuildMapping:
+            for gid_uuid, gdata in srcGuildMapping.GroupSaveDataMap.items():
+                gid = str(gid_uuid)
+                guild_name = gdata['value']['RawData']['value'].get('guild_name', 'Unnamed Guild')
+                guild_name_map[gid.lower()] = guild_name 
+                for base_id_uuid in gdata['value']['RawData']['value'].get('base_ids', []):
+                    base_guild_lookup[str(base_id_uuid)] = {'GuildName': guild_name, 'GuildID': gid}
+        print(t('loading.done'))
+        log_folder = os.path.join(base_path, 'Scan Save Logger')
+        if os.path.exists(log_folder):
+            try:
+                shutil.rmtree(log_folder)
+            except:
                 pass 
-        os .makedirs (log_folder ,exist_ok =True )
-        player_pals_count ={}
-        count_pals_found (data_source ,player_pals_count ,log_folder ,current_save_path ,sav_to_json ,guild_name_map )
-        PLAYER_PAL_COUNTS =player_pals_count 
-        def count_owned_pals (level_json ):
-            owned_count ={}
-            try :
-                char_map =level_json ['properties']['worldSaveData']['value']['CharacterSaveParameterMap']['value']
-                for item in char_map :
-                    try :
-                        owner_uid =item ['value']['RawData']['value']['object']['SaveParameter']['value']['OwnerPlayerUId']['value']
-                        if owner_uid :
-                            owned_count [owner_uid ]=owned_count .get (owner_uid ,0 )+1 
-                    except :
+        os.makedirs(log_folder, exist_ok=True)
+        player_pals_count = {}
+        count_pals_found(data_source, player_pals_count, log_folder, current_save_path, sav_to_json, guild_name_map)
+        PLAYER_PAL_COUNTS = player_pals_count 
+        def count_owned_pals(level_json):
+            owned_count = {}
+            try:
+                char_map = level_json['properties']['worldSaveData']['value']['CharacterSaveParameterMap']['value']
+                for item in char_map:
+                    try:
+                        owner_uid = item['value']['RawData']['value']['object']['SaveParameter']['value']['OwnerPlayerUId']['value']
+                        if owner_uid:
+                            owned_count[owner_uid] = owned_count.get(owner_uid, 0) + 1 
+                    except:
                         continue 
-            except :
+            except:
                 pass 
             return owned_count 
-        owned_counts =count_owned_pals (loaded_level_json )
-        scan_log_path =os .path .join (log_folder ,'scan_save.log')
-        logger =logging .getLogger ('LoadSaveLogger')
-        logger .handlers .clear ()
-        logger .setLevel (logging .DEBUG )
-        logger .propagate =False 
-        formatter =logging .Formatter ('%(message)s')
-        fh =logging .FileHandler (scan_log_path ,encoding ='utf-8')
-        fh .setFormatter (formatter )
-        ch =logging .StreamHandler (sys .stdout )
-        ch .setFormatter (formatter )
-        logger .addHandler (fh )
-        logger .addHandler (ch )
-        def format_duration (seconds ):
-            seconds =int (seconds )
-            if seconds <60 :return f'{seconds }s ago'
-            m ,s =divmod (seconds ,60 )
-            if m <60 :return f'{m }m {s }s ago'
-            h ,m =divmod (m ,60 )
-            if h <24 :return f'{h }h {m }m ago'
-            d ,h =divmod (h ,24 )
-            return f'{d }d {h }h ago'
-        tick =data_source ['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
-        total_players =total_caught =total_owned =total_bases =active_guilds =0 
-        from concurrent .futures import ThreadPoolExecutor 
-        if srcGuildMapping :
-            for gid ,gdata in srcGuildMapping .GroupSaveDataMap .items ():
-                raw_val =gdata ['value']['RawData']['value']
-                players =raw_val .get ('players',[])
-                if not players :continue 
-                active_guilds +=1 
-                base_ids =raw_val .get ('base_ids',[])
-                total_bases +=len (base_ids )
-                guild_name =raw_val .get ('guild_name','Unnamed Guild')
-                guild_leader =players [0 ].get ('player_info',{}).get ('player_name','Unknown')
-                logger .info ('='*60 )
-                logger .info ('')
-                logger .info (f'Guild: {guild_name } | Guild Leader: {guild_leader } | Guild ID: {gid }')
-                logger .info (f'Base Locations: {len (base_ids )}')
-                for i ,base_id in enumerate (base_ids ,1 ):
-                    basecamp =srcGuildMapping .BaseCampMapping .get (toUUID (base_id ))
-                    if basecamp :
-                        translation =basecamp ['value']['RawData']['value']['transform']['translation']
-                        tx ,ty ,tz =(translation ['x'],translation ['y'],translation ['z'])
-                        old_c =palworld_coord .sav_to_map (tx ,ty ,new =False )
-                        new_c =palworld_coord .sav_to_map (tx ,ty ,new =True )
-                        logger .info (f'Base {i }: Base ID: {base_id } | Old: {int (old_c [0 ])}, {int (old_c [1 ])} | New: {int (new_c [0 ])}, {int (new_c [1 ])} | RawData: {tx }, {ty }, {tz }')
-                with ThreadPoolExecutor ()as executor :
-                    results =list (executor .map (lambda p :top_process_player (p ,playerdir ,log_folder ),players ))
-                for uid ,pname ,uniques ,caught ,encounters in results :
-                    level =player_levels .get (str (uid ).replace ('-',''),'?')
-                    owned =owned_counts .get (uid ,0 )
-                    last =next ((p .get ('player_info',{}).get ('last_online_real_time')for p in players if p .get ('player_uid')==uid ),None )
-                    lastseen ='Unknown'if last is None else format_duration ((tick -int (last ))/10000000.0 )
-                    logger .info (f'Player: {pname } | UID: {uid } | Level: {level } | Caught: {caught } | Owned: {owned } | Encounters: {encounters } | Uniques: {uniques } | Last Online: {lastseen }')
-                    total_players +=1 
-                    total_caught +=caught 
-                    total_owned +=owned 
-                logger .info ('')
-                logger .info ('='*60 )
-                logger .info ('')
-        total_worker_dropped =PLAYER_PAL_COUNTS .get ('worker_dropped',0 )
-        logger .info ('='*60 )
-        logger .info ('********** PST_STATS_BEGIN **********')
-        logger .info ('')
-        logger .info (f'Total Players: {total_players }')
-        logger .info (f'Total Caught Pals: {total_caught }')
-        logger .info (f'Total Overall Pals: {total_owned +total_worker_dropped }')
-        logger .info (f'Total Owned Pals: {total_owned }')
-        logger .info (f'Total Worker/Dropped Pals: {total_worker_dropped }')
-        logger .info (f'Total Active Guilds: {active_guilds }')
-        logger .info (f'Total Bases: {total_bases }')
-        logger .info ('')
-        logger .info ('********** PST_STATS_END ************')
-        logger .info ('='*60 )
-        for h in logger .handlers [:]:
-            logger .removeHandler (h )
-            h .close ()
-        refresh_all ()
-        refresh_stats ('Before')
+        owned_counts = count_owned_pals(loaded_level_json)
+        scan_log_path = os.path.join(log_folder, 'scan_save.log')
+        logger = logging.getLogger('LoadSaveLogger')
+        logger.handlers.clear()
+        logger.setLevel(logging.DEBUG)
+        logger.propagate = False 
+        formatter = logging.Formatter('%(message)s')
+        fh = logging.FileHandler(scan_log_path, encoding='utf-8')
+        fh.setFormatter(formatter)
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setFormatter(formatter)
+        logger.addHandler(fh)
+        logger.addHandler(ch)
+        def format_duration(seconds):
+            seconds = int(seconds)
+            if seconds < 60: return f'{seconds}s ago'
+            m, s = divmod(seconds, 60)
+            if m < 60: return f'{m}m {s}s ago'
+            h, m = divmod(m, 60)
+            if h < 24: return f'{h}h {m}m ago'
+            d, h = divmod(h, 24)
+            return f'{d}h {h}h ago'
+        tick = data_source['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
+        total_players = total_caught = total_owned = total_bases = active_guilds = 0 
+        from concurrent.futures import ThreadPoolExecutor 
+        if srcGuildMapping:
+            for gid, gdata in srcGuildMapping.GroupSaveDataMap.items():
+                raw_val = gdata['value']['RawData']['value']
+                players = raw_val.get('players', [])
+                if not players: continue 
+                active_guilds += 1 
+                base_ids = raw_val.get('base_ids', [])
+                total_bases += len(base_ids)
+                guild_name = raw_val.get('guild_name', 'Unnamed Guild')
+                guild_leader = players[0].get('player_info', {}).get('player_name', 'Unknown')
+                logger.info('=' * 60)
+                logger.info(f'Guild: {guild_name} | Guild Leader: {guild_leader} | Guild ID: {gid}')
+                logger.info(f'Base Locations: {len(base_ids)}')
+                for i, base_id in enumerate(base_ids, 1):
+                    basecamp = srcGuildMapping.BaseCampMapping.get(toUUID(base_id))
+                    if basecamp:
+                        translation = basecamp['value']['RawData']['value']['transform']['translation']
+                        tx, ty, tz = (translation['x'], translation['y'], translation['z'])
+                        old_c = palworld_coord.sav_to_map(tx, ty, new=False)
+                        new_c = palworld_coord.sav_to_map(tx, ty, new=True)
+                        logger.info(f'Base {i}: Base ID: {base_id} | Old: {int(old_c[0])}, {int(old_c[1])} | New: {int(new_c[0])}, {int(new_c[1])} | RawData: {tx}, {ty}, {tz}')
+                with ThreadPoolExecutor() as executor:
+                    results = list(executor.map(lambda p: top_process_player(p, playerdir, log_folder), players))
+                for uid, pname, uniques, caught, encounters in results:
+                    level = player_levels.get(str(uid).replace('-', ''), '?')
+                    owned = owned_counts.get(uid, 0)
+                    last = next((p.get('player_info', {}).get('last_online_real_time') for p in players if p.get('player_uid') == uid), None)
+                    lastseen = 'Unknown' if last is None else format_duration((tick - int(last)) / 10000000.0)
+                    logger.info(f'Player: {pname} | UID: {uid} | Level: {level} | Caught: {caught} | Owned: {owned} | Encounters: {encounters} | Uniques: {uniques} | Last Online: {lastseen}')
+                    total_players += 1 
+                    total_caught += caught 
+                    total_owned += owned 
+                logger.info('')
+                logger.info('=' * 60)
+        total_worker_dropped = PLAYER_PAL_COUNTS.get('worker_dropped', 0)
+        logger.info('********** PST_STATS_BEGIN **********')
+        logger.info(f'Total Players: {total_players}')
+        logger.info(f'Total Caught Pals: {total_caught}')
+        logger.info(f'Total Overall Pals: {total_owned + total_worker_dropped}')
+        logger.info(f'Total Owned Pals: {total_owned}')
+        logger.info(f'Total Worker/Dropped Pals: {total_worker_dropped}')
+        logger.info(f'Total Active Guilds: {active_guilds}')
+        logger.info(f'Total Bases: {total_bases}')
+        logger.info('********** PST_STATS_END ************')
+        for h in logger.handlers[:]:
+            logger.removeHandler(h)
+            h.close()
+        if path is None:
+            refresh_all()
+            refresh_stats('Before')
         return True 
-    def on_finished (success ):pass 
-    run_with_loading (on_finished ,task )
+    if path is not None:
+        task()
+    else:
+        run_with_loading(lambda s: None, task)
 def extract_value (data ,key ,default_value =''):
     value =data .get (key ,default_value )
     if isinstance (value ,dict ):
@@ -590,39 +592,48 @@ def process_dps_save (player_uid ,nickname ,dps_file_path ,log_folder ):
         logger .removeHandler (handler )
     except Exception as e :
         print (t ('dps.parse_failed',path =dps_file_path ,name =nickname ,uid =player_uid ,err =e ))
-def save_changes ():
+def save_changes():
     global files_to_delete 
-    folder =current_save_path 
-    if not folder :
-        messagebox .showerror (t ('Error'),t ('guild.rebuild.no_save'))
+    folder = current_save_path 
+    if not folder:
+        if len(sys.argv) == 1:
+            messagebox.showerror(t('Error'), t('guild.rebuild.no_save'))
+        else:
+            print("Error: No save path loaded.")
         return 
-    if not current_save_path or not loaded_level_json :
+    if not current_save_path or not loaded_level_json:
         return 
-    def task ():
-        backup_whole_directory (backup_save_path ,'Backups/AllinOneTools')
-        level_sav_path =os .path .join (current_save_path ,'Level.sav')
-        t0 =time .perf_counter ()
-        json_to_sav (loaded_level_json ,level_sav_path )
-        t1 =time .perf_counter ()
-        players_folder =os .path .join (current_save_path ,'Players')
-        for uid in files_to_delete :
-            f =os .path .join (players_folder ,uid +'.sav')
-            f_dps =os .path .join (players_folder ,f'{uid }_dps.sav')
-            try :
-                os .remove (f )
-            except FileNotFoundError :
+    def task():
+        backup_whole_directory(backup_save_path, 'Backups/AllinOneTools')
+        level_sav_path = os.path.join(current_save_path, 'Level.sav')
+        t0 = time.perf_counter()
+        json_to_sav(loaded_level_json, level_sav_path)
+        t1 = time.perf_counter()
+        players_folder = os.path.join(current_save_path, 'Players')
+        for uid in files_to_delete:
+            f = os.path.join(players_folder, uid + '.sav')
+            f_dps = os.path.join(players_folder, f'{uid}_dps.sav')
+            try:
+                os.remove(f)
+            except FileNotFoundError:
                 pass 
-            try :
-                os .remove (f_dps )
-            except FileNotFoundError :
+            try:
+                os.remove(f_dps)
+            except FileNotFoundError:
                 pass 
-        files_to_delete .clear ()
-        return t1 -t0 
-    def on_finished (duration ):
-        window .focus_force ()
-        print (f'Time taken to save changes: {duration :.2f} seconds')
-        messagebox .showinfo (t ('Saved'),t ('Changes saved and files deleted!'),parent =window )
-    run_with_loading (on_finished ,task )
+        files_to_delete.clear()
+        return t1 - t0 
+    if len(sys.argv) > 1:
+        duration = task()
+        print(f'Time taken to save changes: {duration :.2f} seconds')
+        print('Changes saved and files deleted!')
+    else:
+        def on_finished(duration):
+            window.focus_force()
+            print(f'Time taken to save changes: {duration :.2f} seconds')
+            messagebox.showinfo(t('Saved'), t('Changes saved and files deleted!'), parent=window)
+            restart_program()
+        run_with_loading(on_finished, task)
 def format_duration (s ):
     d ,h =divmod (int (s ),86400 )
     hr ,m =divmod (h ,3600 )
@@ -1274,48 +1285,50 @@ def delete_duplicated_players ():
         print (t ('players.duplicate.kept',uid =d ['kept_uid'],name =d ['kept_name'],gid =d ['kept_gid'],last_online =format_duration (tick_now -d ['kept_last_online'])))
         print (t ('players.duplicate.deleted',uid =d ['deleted_uid'],name =d ['deleted_name'],gid =d ['deleted_gid'],last_online =format_duration (tick_now -d ['deleted_last_online']))+'\n')
     print (t ('players.duplicate.marked',count =len (deleted_players )))
-def refresh_all ():
-    global guild_tree ,base_tree ,player_tree ,loaded_level_json ,PLAYER_PAL_COUNTS ,PLAYER_DETAILS_CACHE ,guild_result ,base_result ,player_result ,base_guild_lookup 
-    guild_tree .delete (*guild_tree .get_children ())
-    base_tree .delete (*base_tree .get_children ())
-    player_tree .delete (*player_tree .get_children ())
-    guild_result .configure (text =t ('deletion.selected_guild',name ='N/A'))
-    base_result .configure (text =t ('deletion.selected_base',id ='N/A'))
-    player_result .configure (text =t ('deletion.selected_player',name ='N/A'))
-    if 'PLAYER_DETAILS_CACHE'not in globals ():
-        globals ()['PLAYER_DETAILS_CACHE']={}
-    PLAYER_DETAILS_CACHE ={}
-    wsd =loaded_level_json ['properties']['worldSaveData']['value']
-    base_guild_lookup ={}
-    for g in wsd ['GroupSaveDataMap']['value']:
-        if g ['value']['GroupType']['value']['value']=='EPalGroupType::Guild':
-            raw_g =g ['value']['RawData']['value']
-            name =raw_g .get ('guild_name','Unknown')
-            gid =str (as_uuid (g ['key']))
-            guild_tree .insert ('','end',values =(name ,gid ))
-            for bid_raw in raw_g .get ('base_ids',[]):
-                bid =str (as_uuid (bid_raw ))
-                base_guild_lookup [bid ]={'GuildName':name ,'GuildID':gid }
-    base_list =wsd .get ('BaseCampSaveData',{}).get ('value',[])
-    for b in base_list :
-        base_id =str (as_uuid (b ['key']))
-        info =base_guild_lookup .get (base_id ,{'GuildName':'No Guild','GuildID':'N/A'})
-        guild_name =info ['GuildName']
-        guild_id =info ['GuildID']
-        base_tree .insert ('','end',values =(base_id ,guild_id ,guild_name ))
-    used =set ()
-    for uid ,name ,gid ,seen ,level in get_players ():
-        stripped_uid =uid .replace ('-','').lower ()
-        PLAYER_DETAILS_CACHE [stripped_uid ]={'level':level ,'seen':seen ,'name':name ,'uid_full':uid ,'gid':gid }
-        iid =uid 
-        c =1 
-        while iid in used :
-            iid =f'{uid }_{c }'
-            c +=1 
-        used .add (iid )
-        pal_count =PLAYER_PAL_COUNTS .get (uid ,0 )
-        guild_name =get_guild_name_by_id (gid )
-        player_tree .insert ('','end',iid =iid ,values =(name ,seen ,level ,pal_count ,uid ,guild_name ,gid ))
+def refresh_all():
+    if len(sys.argv) > 1:
+        return
+    global guild_tree, base_tree, player_tree, loaded_level_json, PLAYER_PAL_COUNTS, PLAYER_DETAILS_CACHE, guild_result, base_result, player_result, base_guild_lookup 
+    guild_tree.delete(*guild_tree.get_children())
+    base_tree.delete(*base_tree.get_children())
+    player_tree.delete(*player_tree.get_children())
+    guild_result.configure(text=t('deletion.selected_guild', name='N/A'))
+    base_result.configure(text=t('deletion.selected_base', id='N/A'))
+    player_result.configure(text=t('deletion.selected_player', name='N/A'))
+    if 'PLAYER_DETAILS_CACHE' not in globals():
+        globals()['PLAYER_DETAILS_CACHE'] = {}
+    PLAYER_DETAILS_CACHE = {}
+    wsd = loaded_level_json['properties']['worldSaveData']['value']
+    base_guild_lookup = {}
+    for g in wsd['GroupSaveDataMap']['value']:
+        if g['value']['GroupType']['value']['value'] == 'EPalGroupType::Guild':
+            raw_g = g['value']['RawData']['value']
+            name = raw_g.get('guild_name', 'Unknown')
+            gid = str(as_uuid(g['key']))
+            guild_tree.insert('', 'end', values=(name, gid))
+            for bid_raw in raw_g.get('base_ids', []):
+                bid = str(as_uuid(bid_raw))
+                base_guild_lookup[bid] = {'GuildName': name, 'GuildID': gid}
+    base_list = wsd.get('BaseCampSaveData', {}).get('value', [])
+    for b in base_list:
+        base_id = str(as_uuid(b['key']))
+        info = base_guild_lookup.get(base_id, {'GuildName': 'No Guild', 'GuildID': 'N/A'})
+        guild_name = info['GuildName']
+        guild_id = info['GuildID']
+        base_tree.insert('', 'end', values=(base_id, guild_id, guild_name))
+    used = set()
+    for uid, name, gid, seen, level in get_players():
+        stripped_uid = uid.replace('-', '').lower()
+        PLAYER_DETAILS_CACHE[stripped_uid] = {'level': level, 'seen': seen, 'name': name, 'uid_full': uid, 'gid': gid}
+        iid = uid 
+        c = 1 
+        while iid in used:
+            iid = f'{uid}_{c}'
+            c += 1 
+        used.add(iid)
+        pal_count = PLAYER_PAL_COUNTS.get(uid, 0)
+        guild_name = get_guild_name_by_id(gid)
+        player_tree.insert('', 'end', iid=iid, values=(name, seen, level, pal_count, uid, guild_name, gid))
 def treeview_sort_column (treeview ,col ,reverse ):
     l =[(treeview .set (k ,col ),k )for k in treeview .get_children ('')]
     try :
@@ -3157,307 +3170,334 @@ def rename_world ():
     refresh_all ()
     refresh_stats ('After')
     return None 
-def clone_base_complete (loaded_level_json ,source_base_id ,target_guild_id ,offset =(8000 ,0 ,0 )):
-    import uuid ,copy 
-    from palworld_save_tools .archive import UUID as PalUUID 
-    try :
-        _deep =fast_deepcopy 
-    except :
-        _deep =copy .deepcopy 
-    def _s (x ):
-        return str (x ).lower ()
-    def _new_uuid ():
-        return PalUUID (uuid .uuid4 ().bytes )
-    def _zero ():
-        return PalUUID (uuid .UUID ('00000000-0000-0000-0000-000000000000').bytes )
-    def _clear_char_container_slots (container_obj ):
-        try :
-            container_obj ['value']['Slots']['value']['values']=[]
-        except :
-            pass 
-    def _iter_work_savedata_entries (work_root ):
-        if not isinstance (work_root ,dict ):
+def clone_base_complete(loaded_level_json, source_base_id, target_guild_id, offset=(8000, 0, 0)):
+    import uuid, copy, math, random
+    from palworld_save_tools.archive import UUID as PalUUID
+    try:
+        _deep = fast_deepcopy
+    except:
+        _deep = copy.deepcopy
+    def _s(x):
+        return str(x).lower()
+    def _new_uuid():
+        return PalUUID(uuid.uuid4().bytes)
+    def _zero():
+        return PalUUID(uuid.UUID('00000000-0000-0000-0000-000000000000').bytes)
+    def _clear_char_container_slots(container_obj):
+        try:
+            container_obj['value']['Slots']['value']['values'] = []
+        except:
+            pass
+    def _iter_work_savedata_entries(work_root):
+        if not isinstance(work_root, dict):
             return []
-        v =work_root .get ('value',{})
-        if isinstance (v ,dict ):
-            return v .get ('values',[])if isinstance (v .get ('values',[]),list )else []
+        v = work_root.get('value', {})
+        if isinstance(v, dict):
+            return v.get('values', []) if isinstance(v.get('values', []), list) else []
         return []
-    def _get_work_raw (work_entry ):
-        try :
-            return work_entry ['RawData']['value']
-        except :
-            return None 
-    def _get_model_raw (map_obj ):
-        try :
-            return map_obj ['Model']['value']['RawData']['value']
-        except :
-            return None 
-    def _get_concrete_raw (map_obj ):
-        try :
-            return map_obj ['ConcreteModel']['value']['RawData']['value']
-        except :
-            return None 
-    def _offset_translation (t ):
-        try :
-            t ['x']+=offset [0 ]
-            t ['y']+=offset [1 ]
-            t ['z']+=offset [2 ]if len (offset )>2 else 0 
-        except :
-            pass 
-    raw_prop =loaded_level_json ['properties']['worldSaveData']['value']
-    data =raw_prop if isinstance (raw_prop ,dict )else {}
-    groups =data .get ('GroupSaveDataMap',{}).get ('value',[])
-    base_camp_data =data .get ('BaseCampSaveData',{}).get ('value',[])
-    char_containers =data .get ('CharacterContainerSaveData',{}).get ('value',[])
-    item_containers =data .get ('ItemContainerSaveData',{}).get ('value',[])
-    dynamic_item_data =data .get ('DynamicItemSaveData',{}).get ('value',{}).get ('values',[])
-    map_objs =data .get ('MapObjectSaveData',{}).get ('value',{}).get ('values',[])
-    char_map =data .get ('CharacterSaveParameterMap',{}).get ('value',[])
-    work_root =data .get ('WorkSaveData',{})
-    z =_zero ()
-    src_id_str =_s (source_base_id )
-    tgt_gid_str =_s (target_guild_id )
-    src_base_entry =next ((b for b in base_camp_data if _s (b .get ('key'))==src_id_str ),None )
-    if not src_base_entry :
-        return False 
-    try :
-        src_worker_container_id =_s (src_base_entry ['value']['WorkerDirector']['value']['RawData']['value']['container_id'])
-    except :
-        return False 
-    palbox_model_id =None 
-    for obj in map_objs :
-        if obj .get ('MapObjectId',{}).get ('value','')=='PalBoxV2':
-            mr =_get_model_raw (obj )
-            if mr and _s (mr .get ('base_camp_id_belong_to',''))==src_id_str :
-                palbox_model_id =_s (mr .get ('instance_id',''))
-                break 
-    instance_id_map ={}
-    concrete_id_map ={}
-    for obj in map_objs :
-        mr =_get_model_raw (obj )
-        if not isinstance (mr ,dict )or _s (mr .get ('base_camp_id_belong_to',''))!=src_id_str :
-            continue 
-        oid =str (obj .get ('MapObjectId',{}).get ('value',''))
-        if oid .startswith ('PalEgg')and 'Hatching'not in oid and ('Incubator'not in oid ):
-            continue 
-        old_inst =_s (mr .get ('instance_id',''))
-        if not old_inst or old_inst ==_s (z ):
-            continue 
-        instance_id_map [old_inst ]=_new_uuid ()
-        old_conc =_s (mr .get ('concrete_model_instance_id',''))
-        if old_conc and old_conc !=_s (z ):
-            concrete_id_map [old_conc ]=_new_uuid ()
-    if palbox_model_id and palbox_model_id not in instance_id_map :
-        instance_id_map [palbox_model_id ]=_new_uuid ()
-    new_base_id =_new_uuid ()
-    new_worker_container_id =_new_uuid ()
-    new_palbox_inst_id =instance_id_map .get (palbox_model_id )
-    work_entries =_iter_work_savedata_entries (work_root )
-    cloned_works =[]
-    new_work_ids_for_collection =[]
-    work_id_map ={}
-    source_work_entries =[we for we in work_entries if (wr :=_get_work_raw (we ))and _s (wr .get ('base_camp_id_belong_to',''))==src_id_str ]
-    for we in source_work_entries :
-        nwe =_deep (we )
-        nwr =_get_work_raw (nwe )
-        old_w_id =_s (nwr ['id'])
-        nw_id =_new_uuid ()
-        work_id_map [old_w_id ]=nw_id 
-        nwr ['id']=nw_id 
-        nwr ['base_camp_id_belong_to']=new_base_id 
-        if 'WorkAssignMap'in nwe :
-            nwe ['WorkAssignMap']['value']=[]
-        old_om =_s (nwr .get ('owner_map_object_model_id',''))
-        if old_om in instance_id_map :
-            nwr ['owner_map_object_model_id']=instance_id_map [old_om ]
-        old_oc =_s (nwr .get ('owner_map_object_concrete_model_id',''))
-        if old_oc in concrete_id_map :
-            nwr ['owner_map_object_concrete_model_id']=concrete_id_map [old_oc ]
-        for key in ['cached_base_camp_id','cached_base_camp_ptr','cached_base_index']:
-            nwr .pop (key ,None )
-        try :
-            tr =nwr .get ('transform',{})
-            mid =_s (tr .get ('map_object_instance_id',''))
-            if mid in instance_id_map :
-                tr ['map_object_instance_id']=instance_id_map [mid ]
-            if 'translation'in tr :
-                _offset_translation (tr ['translation'])
-        except :
-            pass 
-        cloned_works .append (nwe )
-        new_work_ids_for_collection .append (nw_id )
-    nb =_deep (src_base_entry )
-    nb ['key']=new_base_id 
-    try :
-        nb_raw =nb ['value']['RawData']['value']
-        nb_raw ['id']=new_base_id 
-        nb_raw ['group_id_belong_to']=target_guild_id 
-    except :
-        pass 
-    try :
-        nb ['value']['WorkerDirector']['value']['RawData']['value']['id']=new_base_id 
-        nb ['value']['WorkerDirector']['value']['RawData']['value']['container_id']=new_worker_container_id 
-        _offset_translation (nb ['value']['WorkerDirector']['value']['RawData']['value']['spawn_transform']['translation'])
-    except :
-        pass 
-    try :
-        nb ['value']['WorkCollection']['value']['RawData']['value']['id']=new_base_id 
-        nb ['value']['WorkCollection']['value']['RawData']['value']['work_ids']=new_work_ids_for_collection 
-    except :
-        pass 
-    if new_palbox_inst_id :
-        try :
-            nb ['value']['RawData']['value']['owner_map_object_instance_id']=new_palbox_inst_id 
-        except :
-            pass 
-    try :
-        _offset_translation (nb ['value']['RawData']['value']['transform']['translation'])
-    except :
-        pass 
-    base_camp_data .append (nb )
-    target_group =next ((g for g in groups if _s (g .get ('key'))==tgt_gid_str ),None )
-    if target_group :
-        try :
-            t_raw =target_group ['value']['RawData']['value']
-            if new_base_id not in t_raw .get ('base_ids',[]):
-                t_raw .setdefault ('base_ids',[]).append (new_base_id )
-            if new_palbox_inst_id :
-                t_raw .setdefault ('map_object_instance_ids_base_camp_points',[]).append (new_palbox_inst_id )
-        except :
-            pass 
-    src_worker_container =next ((c for c in char_containers if _s (c .get ('key',{}).get ('ID',{}).get ('value'))==src_worker_container_id ),None )
-    worker_id_map ={}
-    if src_worker_container :
-        ncnt =_deep (src_worker_container )
-        ncnt ['key']['ID']['value']=new_worker_container_id 
-        if 'instance_id'in ncnt .get ('value',{}):
-            ncnt ['value']['instance_id']=new_worker_container_id 
-        old_slots =ncnt ['value']['Slots']['value'].get ('values',[])
-        new_slots =[]
-        for slot in old_slots :
-            s_raw =slot .get ('RawData',{}).get ('value',{})
-            old_inst =_s (s_raw .get ('instance_id',z ))
-            if old_inst !=_s (z ):
-                new_inst =_new_uuid ()
-                worker_id_map [old_inst ]=new_inst 
-                s_raw ['instance_id']=new_inst 
-                new_slots .append (slot )
-        ncnt ['value']['Slots']['value']['values']=new_slots 
-        char_containers .append (ncnt )
-    for old_iid ,new_iid in worker_id_map .items ():
-        char_entry =next ((c for c in char_map if _s (c ['key']['InstanceId']['value'])==old_iid ),None )
-        if char_entry :
-            n_char =_deep (char_entry )
-            n_char ['key']['InstanceId']['value']=new_iid 
-            try :
-                c_raw =n_char ['value']['RawData']['value']
-                c_raw ['group_id']=target_guild_id 
-                spv =c_raw ['object']['SaveParameter']['value']
-                spv ['SlotId']['value']['ContainerId']['value']['ID']['value']=new_worker_container_id 
-                if 'WorkRegion'in spv :
-                    spv ['WorkRegion']['value']['group_id']['value']=z 
-                if 'WorkerID'in spv :
-                    spv ['WorkerID']['value']=z 
-                if 'TaskData'in spv :
-                    spv ['TaskData']['value']={}
-                if 'MapObjectConcreteInstanceIdAssignedToExpedition'in spv :
-                    spv ['MapObjectConcreteInstanceIdAssignedToExpedition']['value']=z 
-            except :
-                pass 
-            char_map .append (n_char )
-            if target_group :
-                try :
-                    target_group ['value']['RawData']['value'].setdefault ('individual_character_handle_ids',[]).append ({'guid':z ,'instance_id':new_iid })
-                except :
-                    pass 
-    for nwe in cloned_works :
-        work_entries .append (nwe )
-    for obj in list (map_objs ):
-        mr =_get_model_raw (obj )
-        if not isinstance (mr ,dict )or _s (mr .get ('base_camp_id_belong_to',''))!=src_id_str :
-            continue 
-        old_inst =_s (mr .get ('instance_id',''))
-        if old_inst not in instance_id_map :
-            continue 
-        oid =str (obj .get ('MapObjectId',{}).get ('value',''))
-        if oid .startswith ('PalEgg')and 'Hatching'not in oid and ('Incubator'not in oid ):
-            continue 
-        no =_deep (obj )
-        nmr =_get_model_raw (no )
-        new_inst =instance_id_map [old_inst ]
-        old_conc =_s (nmr .get ('concrete_model_instance_id',''))
-        new_conc =concrete_id_map .get (old_conc ,_new_uuid ())
-        nmr ['instance_id']=new_inst 
-        nmr ['concrete_model_instance_id']=new_conc 
-        nmr ['base_camp_id_belong_to']=new_base_id 
-        nmr ['group_id_belong_to']=target_guild_id 
-        try :
-            _offset_translation (nmr ['initital_transform_cache']['translation'])
-        except :
-            pass 
-        cr =_get_concrete_raw (no )
-        if isinstance (cr ,dict ):
-            cr ['instance_id']=new_conc 
-            cr ['model_instance_id']=new_inst 
-            cr ['base_camp_id']=new_base_id 
-            if cr .get ('concrete_model_type')=='PalMapObjectBreedFarmModel':
-                cr ['spawned_egg_instance_ids']=[]
-            try :
-                mm =no ['ConcreteModel']['value']['ModuleMap']['value']
-                for mod in mm :
-                    raw_mod =mod .get ('value',{}).get ('RawData',{}).get ('value',{})
-                    if 'target_work_id'in raw_mod :
-                        old_twid =_s (raw_mod ['target_work_id'])
-                        if old_twid in work_id_map :
-                            raw_mod ['target_work_id']=work_id_map [old_twid ]
-                    if 'work_ids'in raw_mod and isinstance (raw_mod ['work_ids'],list ):
-                        raw_mod ['work_ids']=[work_id_map .get (_s (wid ),wid )for wid in raw_mod ['work_ids']]
-                    if 'target_container_id'not in raw_mod :
-                        continue 
-                    old_cid =_s (raw_mod .get ('target_container_id',''))
-                    new_cid =_new_uuid ()
-                    raw_mod ['target_container_id']=new_cid 
-                    if 'ItemContainer'in str (mod .get ('key','')):
-                        src_ic =next ((c for c in item_containers if _s (c .get ('key',{}).get ('ID',{}).get ('value'))==old_cid ),None )
-                        if src_ic :
-                            nic =_deep (src_ic )
-                            nic ['key']['ID']['value']=new_cid 
-                            if 'instance_id'in nic .get ('value',{}):
-                                nic ['value']['instance_id']=new_cid 
-                            item_slots =nic ['value']['Slots']['value'].get ('values',[])
-                            cleaned_slots =[]
-                            for slot in item_slots :
-                                slot_raw =slot .get ('RawData',{}).get ('value',{})
-                                item_meta =slot_raw .get ('item',{})
-                                s_id =str (item_meta .get ('static_id',''))
-                                if s_id .startswith ('PalEgg_'):
-                                    continue 
-                                dyn_id =item_meta .get ('dynamic_id',{})
-                                old_local_id =_s (dyn_id .get ('local_id_in_created_world',z ))
-                                if old_local_id !=_s (z ):
-                                    new_local_id =_new_uuid ()
-                                    dyn_id ['local_id_in_created_world']=new_local_id 
-                                    source_dyn =next ((d for d in dynamic_item_data if _s (d ['RawData']['value']['id']['local_id_in_created_world'])==old_local_id ),None )
-                                    if source_dyn :
-                                        new_dyn =_deep (source_dyn )
-                                        new_dyn ['RawData']['value']['id']['local_id_in_created_world']=new_local_id 
-                                        dynamic_item_data .append (new_dyn )
-                                cleaned_slots .append (slot )
-                            nic ['value']['Slots']['value']['values']=cleaned_slots 
-                            item_containers .append (nic )
-                    elif 'CharacterContainer'in str (mod .get ('key','')):
-                        src_cc =next ((c for c in char_containers if _s (c .get ('key',{}).get ('ID',{}).get ('value'))==old_cid ),None )
-                        if src_cc :
-                            ncc =_deep (src_cc )
-                            ncc ['key']['ID']['value']=new_cid 
-                            if 'instance_id'in ncc .get ('value',{}):
-                                ncc ['value']['instance_id']=new_cid 
-                            _clear_char_container_slots (ncc )
-                            char_containers .append (ncc )
-            except :
-                pass 
-        map_objs .append (no )
-    return True 
+    def _get_work_raw(work_entry):
+        try:
+            return work_entry['RawData']['value']
+        except:
+            return None
+    def _get_model_raw(map_obj):
+        try:
+            return map_obj['Model']['value']['RawData']['value']
+        except:
+            return None
+    def _get_concrete_raw(map_obj):
+        try:
+            return map_obj['ConcreteModel']['value']['RawData']['value']
+        except:
+            return None
+    def _offset_translation(t, final_offset):
+        try:
+            t['x'] += final_offset[0]
+            t['y'] += final_offset[1]
+            t['z'] += final_offset[2]
+        except:
+            pass
+    raw_prop = loaded_level_json['properties']['worldSaveData']['value']
+    data = raw_prop if isinstance(raw_prop, dict) else {}
+    groups = data.get('GroupSaveDataMap', {}).get('value', [])
+    base_camp_data = data.get('BaseCampSaveData', {}).get('value', [])
+    char_containers = data.get('CharacterContainerSaveData', {}).get('value', [])
+    item_containers = data.get('ItemContainerSaveData', {}).get('value', [])
+    dynamic_item_data = data.get('DynamicItemSaveData', {}).get('value', {}).get('values', [])
+    map_objs = data.get('MapObjectSaveData', {}).get('value', {}).get('values', [])
+    char_map = data.get('CharacterSaveParameterMap', {}).get('value', [])
+    work_root = data.get('WorkSaveData', {})
+    z = _zero()
+    src_id_str = _s(source_base_id)
+    tgt_gid_str = _s(target_guild_id)
+    src_base_entry = next((b for b in base_camp_data if _s(b.get('key')) == src_id_str), None)
+    if not src_base_entry:
+        return False
+    try:
+        cur_pos = _deep(src_base_entry['value']['RawData']['value']['transform']['translation'])
+        cur_pos['x'] += offset[0]
+        cur_pos['y'] += offset[1]
+        cur_pos['z'] += offset[2] if len(offset) > 2 else 0
+        collision_threshold = 5000
+        total_applied_offset = [offset[0], offset[1], offset[2] if len(offset) > 2 else 0]
+        collision = True
+        while collision:
+            collision = False
+            for existing_base in base_camp_data:
+                try:
+                    ex_pos = existing_base['value']['RawData']['value']['transform']['translation']
+                    dist = math.sqrt((cur_pos['x'] - ex_pos['x'])**2 + (cur_pos['y'] - ex_pos['y'])**2 + (cur_pos['z'] - ex_pos['z'])**2)
+                    if dist < collision_threshold:
+                        off_x = random.uniform(collision_threshold * 3, collision_threshold * 6) * random.choice([-1, 1])
+                        off_y = random.uniform(collision_threshold * 3, collision_threshold * 6) * random.choice([-1, 1])
+                        cur_pos['x'] += off_x
+                        cur_pos['y'] += off_y
+                        total_applied_offset[0] += off_x
+                        total_applied_offset[1] += off_y
+                        collision = True
+                        break
+                except:
+                    continue
+    except:
+        total_applied_offset = [offset[0], offset[1], offset[2] if len(offset) > 2 else 0]
+    try:
+        src_worker_container_id = _s(src_base_entry['value']['WorkerDirector']['value']['RawData']['value']['container_id'])
+    except:
+        return False
+    palbox_model_id = None
+    for obj in map_objs:
+        if obj.get('MapObjectId', {}).get('value', '') == 'PalBoxV2':
+            mr = _get_model_raw(obj)
+            if mr and _s(mr.get('base_camp_id_belong_to', '')) == src_id_str:
+                palbox_model_id = _s(mr.get('instance_id', ''))
+                break
+    instance_id_map = {}
+    concrete_id_map = {}
+    for obj in map_objs:
+        mr = _get_model_raw(obj)
+        if not isinstance(mr, dict) or _s(mr.get('base_camp_id_belong_to', '')) != src_id_str:
+            continue
+        oid = str(obj.get('MapObjectId', {}).get('value', ''))
+        if oid.startswith('PalEgg') and 'Hatching' not in oid and ('Incubator' not in oid):
+            continue
+        old_inst = _s(mr.get('instance_id', ''))
+        if not old_inst or old_inst == _s(z):
+            continue
+        instance_id_map[old_inst] = _new_uuid()
+        old_conc = _s(mr.get('concrete_model_instance_id', ''))
+        if old_conc and old_conc != _s(z):
+            concrete_id_map[old_conc] = _new_uuid()
+    if palbox_model_id and palbox_model_id not in instance_id_map:
+        instance_id_map[palbox_model_id] = _new_uuid()
+    new_base_id = _new_uuid()
+    new_worker_container_id = _new_uuid()
+    new_palbox_inst_id = instance_id_map.get(palbox_model_id)
+    work_entries = _iter_work_savedata_entries(work_root)
+    cloned_works = []
+    new_work_ids_for_collection = []
+    work_id_map = {}
+    source_work_entries = [we for we in work_entries if (wr := _get_work_raw(we)) and _s(wr.get('base_camp_id_belong_to', '')) == src_id_str]
+    for we in source_work_entries:
+        nwe = _deep(we)
+        nwr = _get_work_raw(nwe)
+        old_w_id = _s(nwr['id'])
+        nw_id = _new_uuid()
+        work_id_map[old_w_id] = nw_id
+        nwr['id'] = nw_id
+        nwr['base_camp_id_belong_to'] = new_base_id
+        if 'WorkAssignMap' in nwe:
+            nwe['WorkAssignMap']['value'] = []
+        old_om = _s(nwr.get('owner_map_object_model_id', ''))
+        if old_om in instance_id_map:
+            nwr['owner_map_object_model_id'] = instance_id_map[old_om]
+        old_oc = _s(nwr.get('owner_map_object_concrete_model_id', ''))
+        if old_oc in concrete_id_map:
+            nwr['owner_map_object_concrete_model_id'] = concrete_id_map[old_oc]
+        for key in ['cached_base_camp_id', 'cached_base_camp_ptr', 'cached_base_index']:
+            nwr.pop(key, None)
+        try:
+            tr = nwr.get('transform', {})
+            mid = _s(tr.get('map_object_instance_id', ''))
+            if mid in instance_id_map:
+                tr['map_object_instance_id'] = instance_id_map[mid]
+            if 'translation' in tr:
+                _offset_translation(tr['translation'], total_applied_offset)
+        except:
+            pass
+        cloned_works.append(nwe)
+        new_work_ids_for_collection.append(nw_id)
+    nb = _deep(src_base_entry)
+    nb['key'] = new_base_id
+    try:
+        nb_raw = nb['value']['RawData']['value']
+        nb_raw['id'] = new_base_id
+        nb_raw['group_id_belong_to'] = target_guild_id
+    except:
+        pass
+    try:
+        nb['value']['WorkerDirector']['value']['RawData']['value']['id'] = new_base_id
+        nb['value']['WorkerDirector']['value']['RawData']['value']['container_id'] = new_worker_container_id
+        _offset_translation(nb['value']['WorkerDirector']['value']['RawData']['value']['spawn_transform']['translation'], total_applied_offset)
+    except:
+        pass
+    try:
+        nb['value']['WorkCollection']['value']['RawData']['value']['id'] = new_base_id
+        nb['value']['WorkCollection']['value']['RawData']['value']['work_ids'] = new_work_ids_for_collection
+    except:
+        pass
+    if new_palbox_inst_id:
+        try:
+            nb['value']['RawData']['value']['owner_map_object_instance_id'] = new_palbox_inst_id
+        except:
+            pass
+    try:
+        _offset_translation(nb['value']['RawData']['value']['transform']['translation'], total_applied_offset)
+    except:
+        pass
+    base_camp_data.append(nb)
+    target_group = next((g for g in groups if _s(g.get('key')) == tgt_gid_str), None)
+    if target_group:
+        try:
+            t_raw = target_group['value']['RawData']['value']
+            if new_base_id not in t_raw.get('base_ids', []):
+                t_raw.setdefault('base_ids', []).append(new_base_id)
+            if new_palbox_inst_id:
+                t_raw.setdefault('map_object_instance_ids_base_camp_points', []).append(new_palbox_inst_id)
+        except:
+            pass
+    src_worker_container = next((c for c in char_containers if _s(c.get('key', {}).get('ID', {}).get('value')) == src_worker_container_id), None)
+    worker_id_map = {}
+    if src_worker_container:
+        ncnt = _deep(src_worker_container)
+        ncnt['key']['ID']['value'] = new_worker_container_id
+        if 'instance_id' in ncnt.get('value', {}):
+            ncnt['value']['instance_id'] = new_worker_container_id
+        old_slots = ncnt['value']['Slots']['value'].get('values', [])
+        new_slots = []
+        for slot in old_slots:
+            s_raw = slot.get('RawData', {}).get('value', {})
+            old_inst = _s(s_raw.get('instance_id', z))
+            if old_inst != _s(z):
+                new_inst = _new_uuid()
+                worker_id_map[old_inst] = new_inst
+                s_raw['instance_id'] = new_inst
+                new_slots.append(slot)
+        ncnt['value']['Slots']['value']['values'] = new_slots
+        char_containers.append(ncnt)
+    for old_iid, new_iid in worker_id_map.items():
+        char_entry = next((c for c in char_map if _s(c['key']['InstanceId']['value']) == old_iid), None)
+        if char_entry:
+            n_char = _deep(char_entry)
+            n_char['key']['InstanceId']['value'] = new_iid
+            try:
+                c_raw = n_char['value']['RawData']['value']
+                c_raw['group_id'] = target_guild_id
+                spv = c_raw['object']['SaveParameter']['value']
+                spv['SlotId']['value']['ContainerId']['value']['ID']['value'] = new_worker_container_id
+                if 'WorkRegion' in spv:
+                    spv['WorkRegion']['value']['group_id']['value'] = z
+                if 'WorkerID' in spv:
+                    spv['WorkerID']['value'] = z
+                if 'TaskData' in spv:
+                    spv['TaskData']['value'] = {}
+                if 'MapObjectConcreteInstanceIdAssignedToExpedition' in spv:
+                    spv['MapObjectConcreteInstanceIdAssignedToExpedition']['value'] = z
+            except:
+                pass
+            char_map.append(n_char)
+            if target_group:
+                try:
+                    target_group['value']['RawData']['value'].setdefault('individual_character_handle_ids', []).append({'guid':z ,'instance_id':new_iid })
+                except:
+                    pass
+    for nwe in cloned_works:
+        work_entries.append(nwe)
+    for obj in list(map_objs):
+        mr = _get_model_raw(obj)
+        if not isinstance(mr ,dict )or _s (mr .get ('base_camp_id_belong_to',''))!=src_id_str :
+            continue
+        old_inst = _s(mr.get('instance_id', ''))
+        if old_inst not in instance_id_map:
+            continue
+        oid = str(obj.get('MapObjectId', {}).get('value', ''))
+        if oid.startswith('PalEgg') and 'Hatching' not in oid and ('Incubator' not in oid):
+            continue
+        no = _deep(obj)
+        nmr = _get_model_raw(no)
+        new_inst = instance_id_map[old_inst]
+        old_conc = _s(nmr.get('concrete_model_instance_id', ''))
+        new_conc = concrete_id_map.get(old_conc, _new_uuid())
+        nmr['instance_id'] = new_inst
+        nmr['concrete_model_instance_id'] = new_conc
+        nmr['base_camp_id_belong_to'] = new_base_id
+        nmr['group_id_belong_to'] = target_guild_id
+        try:
+            _offset_translation(nmr['initital_transform_cache']['translation'], total_applied_offset)
+        except:
+            pass
+        cr = _get_concrete_raw(no)
+        if isinstance(cr, dict):
+            cr['instance_id'] = new_conc
+            cr['model_instance_id'] = new_inst
+            cr['base_camp_id'] = new_base_id
+            if cr.get('concrete_model_type') == 'PalMapObjectBreedFarmModel':
+                cr['spawned_egg_instance_ids'] = []
+            try:
+                mm = no['ConcreteModel']['value']['ModuleMap']['value']
+                for mod in mm:
+                    raw_mod = mod.get('value', {}).get('RawData', {}).get('value', {})
+                    if 'target_work_id' in raw_mod:
+                        old_twid = _s(raw_mod['target_work_id'])
+                        if old_twid in work_id_map:
+                            raw_mod['target_work_id'] = work_id_map[old_twid]
+                    if 'work_ids' in raw_mod and isinstance(raw_mod['work_ids'], list):
+                        raw_mod['work_ids'] = [work_id_map.get(_s(wid), wid) for wid in raw_mod['work_ids']]
+                    if 'target_container_id' not in raw_mod:
+                        continue
+                    old_cid = _s(raw_mod.get('target_container_id', ''))
+                    new_cid = _new_uuid()
+                    raw_mod['target_container_id'] = new_cid
+                    if 'ItemContainer' in str(mod.get('key', '')):
+                        src_ic = next((c for c in item_containers if _s(c.get('key', {}).get('ID', {}).get('value')) == old_cid), None)
+                        if src_ic:
+                            nic = _deep(src_ic)
+                            nic['key']['ID']['value'] = new_cid
+                            if 'instance_id' in nic.get('value', {}):
+                                nic['value']['instance_id'] = new_cid
+                            item_slots = nic['value']['Slots']['value'].get('values', [])
+                            cleaned_slots = []
+                            for slot in item_slots:
+                                slot_raw = slot.get('RawData', {}).get('value', {})
+                                item_meta = slot_raw.get('item', {})
+                                s_id = str(item_meta.get('static_id', ''))
+                                if s_id.startswith('PalEgg_'):
+                                    continue
+                                dyn_id = item_meta.get('dynamic_id', {})
+                                old_local_id = _s(dyn_id.get('local_id_in_created_world', z))
+                                if old_local_id != _s(z):
+                                    new_local_id = _new_uuid()
+                                    dyn_id['local_id_in_created_world'] = new_local_id
+                                    source_dyn = next((d for d in dynamic_item_data if _s(d['RawData']['value']['id']['local_id_in_created_world']) == old_local_id), None)
+                                    if source_dyn:
+                                        new_dyn = _deep(source_dyn)
+                                        new_dyn['RawData']['value']['id']['local_id_in_created_world'] = new_local_id
+                                        dynamic_item_data.append(new_dyn)
+                                cleaned_slots.append(slot)
+                            nic['value']['Slots']['value']['values'] = cleaned_slots
+                            item_containers.append(nic)
+                    elif 'CharacterContainer' in str(mod.get('key', '')):
+                        src_cc = next((c for c in char_containers if _s(c.get('key', {}).get('ID', {}).get('value')) == old_cid), None)
+                        if src_cc:
+                            ncc = _deep(src_cc)
+                            ncc['key']['ID']['value'] = new_cid
+                            if 'instance_id' in ncc.get('value', {}):
+                                ncc['value']['instance_id'] = new_cid
+                            _clear_char_container_slots(ncc)
+                            char_containers.append(ncc)
+            except:
+                pass
+        map_objs.append(no)
+    return True
 def import_base_to_guild ():
     sel =guild_tree .selection ()
     src ='guild'
@@ -3583,356 +3623,356 @@ def export_base_json (loaded_level_json ,source_base_id ):
         if wr and _s (wr .get ('base_camp_id_belong_to',''))==src_id_str :
             export_data ['works'].append (copy .deepcopy (we ))
     return export_data 
-def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset =(8000 ,0 ,0 ),collision_threshold =5000 ,t =None ):
-    success ,msg =validate_blueprint_version (exported_data )
-    if not success :
-        if t :
-            msg =t (msg )
-        print (f"Warning: {msg }")
-        try :
-            import tkinter .messagebox as mb 
-            title =t ('guild.menu.outdated_blueprint')if t else 'Outdated Blueprint'
-            mb .showwarning (title ,msg )
-        except :
-            pass 
-        return 
-    import uuid ,copy ,math 
-    from palworld_save_tools .archive import UUID as PalUUID 
-    try :
-        _deep =fast_deepcopy 
-    except :
-        _deep =copy .deepcopy 
-    def _s (x ):
-        return str (x ).lower ()
-    def _new_uuid ():
-        return PalUUID (uuid .uuid4 ().bytes )
-    def _zero ():
-        return PalUUID (uuid .UUID ('00000000-0000-0000-0000-000000000000').bytes )
-    def _clear_char_container_slots (container_obj ):
-        try :
-            container_obj ['value']['Slots']['value']['values']=[]
-        except :
-            pass 
-    def _iter_work_savedata_entries (work_root ):
-        if not isinstance (work_root ,dict ):
+def import_base_json(loaded_level_json, exported_data, target_guild_id, offset=(8000, 0, 0), collision_threshold=5000, t=None):
+    success, msg = validate_blueprint_version(exported_data)
+    if not success:
+        if t:
+            msg = t(msg)
+        print(f"Warning: {msg}")
+        try:
+            import tkinter.messagebox as mb
+            title = t('guild.menu.outdated_blueprint') if t else 'Outdated Blueprint'
+            mb.showwarning(title, msg)
+        except:
+            pass
+        return
+    import uuid, copy, math, random
+    from palworld_save_tools.archive import UUID as PalUUID
+    try:
+        _deep = fast_deepcopy
+    except:
+        _deep = copy.deepcopy
+    def _s(x):
+        return str(x).lower()
+    def _new_uuid():
+        return PalUUID(uuid.uuid4().bytes)
+    def _zero():
+        return PalUUID(uuid.UUID('00000000-0000-0000-0000-000000000000').bytes)
+    def _clear_char_container_slots(container_obj):
+        try:
+            container_obj['value']['Slots']['value']['values'] = []
+        except:
+            pass
+    def _iter_work_savedata_entries(work_root):
+        if not isinstance(work_root, dict):
             return []
-        v =work_root .get ('value',{})
-        if isinstance (v ,dict ):
-            return v .get ('values',[])if isinstance (v .get ('values',[]),list )else []
+        v = work_root.get('value', {})
+        if isinstance(v, dict):
+            return v.get('values', []) if isinstance(v.get('values', []), list) else []
         return []
-    def _get_work_raw (work_entry ):
-        try :
-            return work_entry ['RawData']['value']
-        except :
-            return None 
-    def _get_model_raw (map_obj ):
-        try :
-            return map_obj ['Model']['value']['RawData']['value']
-        except :
-            return None 
-    def _get_concrete_raw (map_obj ):
-        try :
-            return map_obj ['ConcreteModel']['value']['RawData']['value']
-        except :
-            return None 
-    def _apply_translation (t_vec ,off_vec ):
-        try :
-            t_vec ['x']+=off_vec [0 ]
-            t_vec ['y']+=off_vec [1 ]
-            t_vec ['z']+=off_vec [2 ]if len (off_vec )>2 else 0 
-        except :
-            pass 
-    raw_prop =loaded_level_json ['properties']['worldSaveData']['value']
-    data =raw_prop if isinstance (raw_prop ,dict )else {}
-    base_camp_data =data .get ('BaseCampSaveData',{}).get ('value',[])
-    if not base_camp_data or len (base_camp_data )==0 :
-        msg =t ('base.error.no_base_found')if t else 'No base camps found in the target save. Please create at least one base camp (Palbox) in-game before importing.'
-        print (f"Error: {msg }")
-        try :
-            import tkinter .messagebox as mb 
-            title =t ('base.error.title')if t else 'Import Error'
-            mb .showerror (title ,msg )
-        except :
-            pass 
-        return False 
-    groups =data .get ('GroupSaveDataMap',{}).get ('value',[])
-    char_containers =data .get ('CharacterContainerSaveData',{}).get ('value',[])
-    item_containers =data .get ('ItemContainerSaveData',{}).get ('value',[])
-    dynamic_item_data =data .get ('DynamicItemSaveData',{}).get ('value',{}).get ('values',[])
-    map_objs =data .get ('MapObjectSaveData',{}).get ('value',{}).get ('values',[])
-    char_map =data .get ('CharacterSaveParameterMap',{}).get ('value',[])
-    work_root =data .get ('WorkSaveData',{})
-    work_entries =_iter_work_savedata_entries (work_root )
-    z =_zero ()
-    tgt_gid_str =_s (target_guild_id )
-    target_group =next ((g for g in groups if _s (g .get ('key'))==tgt_gid_str ),None )
-    if target_group :
-        try :
-            imported_level =exported_data .get ('base_camp_level',1 )
-            current_level =target_group ['value']['RawData']['value'].get ('base_camp_level',1 )
-            if imported_level >current_level :
-                target_group ['value']['RawData']['value']['base_camp_level']=imported_level 
-        except :
-            pass 
-    palbox_model_id =None 
-    for obj in exported_data .get ('map_objects',[]):
-        if obj .get ('MapObjectId',{}).get ('value','')=='PalBoxV2':
-            mr =_get_model_raw (obj )
-            if mr :
-                palbox_model_id =_s (mr .get ('instance_id',''))
-                break 
-    instance_id_map ={}
-    concrete_id_map ={}
-    for obj in exported_data .get ('map_objects',[]):
-        mr =_get_model_raw (obj )
-        if not isinstance (mr ,dict ):
-            continue 
-        oid =str (obj .get ('MapObjectId',{}).get ('value',''))
-        if oid .startswith ('PalEgg')and 'Hatching'not in oid and ('Incubator'not in oid ):
-            continue 
-        old_inst =_s (mr .get ('instance_id',''))
-        if not old_inst or old_inst ==_s (z ):
-            continue 
-        instance_id_map [old_inst ]=_new_uuid ()
-        old_conc =_s (mr .get ('concrete_model_instance_id',''))
-        if old_conc and old_conc !=_s (z ):
-            concrete_id_map [old_conc ]=_new_uuid ()
-    if palbox_model_id and palbox_model_id not in instance_id_map :
-        instance_id_map [palbox_model_id ]=_new_uuid ()
-    new_base_id =_new_uuid ()
-    new_worker_container_id =_new_uuid ()
-    new_palbox_inst_id =instance_id_map .get (palbox_model_id )
-    src_base_raw =exported_data ['base_camp']['value']['RawData']['value']
-    cur_pos =_deep (src_base_raw ['transform']['translation'])
-    total_offset =[0 ,0 ,0 ]
-    collision =True 
-    while collision :
-        collision =False 
-        for existing_base in base_camp_data :
-            try :
-                ex_pos =existing_base ['value']['RawData']['value']['transform']['translation']
-                dist =math .sqrt ((cur_pos ['x']-ex_pos ['x'])**2 +(cur_pos ['y']-ex_pos ['y'])**2 +(cur_pos ['z']-ex_pos ['z'])**2 )
-                if dist <collision_threshold :
-                    cur_pos ['x']+=offset [0 ]
-                    cur_pos ['y']+=offset [1 ]
-                    cur_pos ['z']+=offset [2 ]if len (offset )>2 else 0 
-                    total_offset [0 ]+=offset [0 ]
-                    total_offset [1 ]+=offset [1 ]
-                    total_offset [2 ]+=offset [2 ]if len (offset )>2 else 0 
-                    collision =True 
-                    break 
-            except :
-                continue 
-    cloned_works =[]
-    new_work_ids_for_collection =[]
-    work_id_map ={}
-    for we in exported_data .get ('works',[]):
-        nwe =_deep (we )
-        nwr =_get_work_raw (nwe )
-        if not isinstance (nwr ,dict )or 'id'not in nwr :
-            continue 
-        old_w_id =_s (nwr ['id'])
-        nw_id =_new_uuid ()
-        work_id_map [old_w_id ]=nw_id 
-        nwr ['id']=nw_id 
-        nwr ['base_camp_id_belong_to']=new_base_id 
-        if 'WorkAssignMap'in nwe :
-            nwe ['WorkAssignMap']['value']=[]
-        old_om =_s (nwr .get ('owner_map_object_model_id',''))
-        if old_om in instance_id_map :
-            nwr ['owner_map_object_model_id']=instance_id_map [old_om ]
-        old_oc =_s (nwr .get ('owner_map_object_concrete_model_id',''))
-        if old_oc in concrete_id_map :
-            nwr ['owner_map_object_concrete_model_id']=concrete_id_map [old_oc ]
-        for key in ['cached_base_camp_id','cached_base_camp_ptr','cached_base_index']:
-            nwr .pop (key ,None )
-        try :
-            tr =nwr .get ('transform',{})
-            mid =_s (tr .get ('map_object_instance_id',''))
-            if mid in instance_id_map :
-                tr ['map_object_instance_id']=instance_id_map [mid ]
-            if 'translation'in tr :
-                _apply_translation (tr ['translation'],total_offset )
-        except :
-            pass 
-        cloned_works .append (nwe )
-        new_work_ids_for_collection .append (nw_id )
-    nb =_deep (exported_data ['base_camp'])
-    nb ['key']=new_base_id 
-    try :
-        nb_raw =nb ['value']['RawData']['value']
-        nb_raw ['id']=new_base_id 
-        nb_raw ['group_id_belong_to']=target_guild_id 
-    except :
-        pass 
-    try :
-        wd_raw =nb ['value']['WorkerDirector']['value']['RawData']['value']
-        wd_raw ['id']=new_base_id 
-        wd_raw ['container_id']=new_worker_container_id 
-        _apply_translation (wd_raw ['spawn_transform']['translation'],total_offset )
-    except :
-        pass 
-    try :
-        nb ['value']['WorkCollection']['value']['RawData']['value']['id']=new_base_id 
-        nb ['value']['WorkCollection']['value']['RawData']['value']['work_ids']=new_work_ids_for_collection 
-    except :
-        pass 
-    if new_palbox_inst_id :
-        try :
-            nb ['value']['RawData']['value']['owner_map_object_instance_id']=new_palbox_inst_id 
-        except :
-            pass 
-    try :
-        _apply_translation (nb ['value']['RawData']['value']['transform']['translation'],total_offset )
-    except :
-        pass 
-    base_camp_data .append (nb )
-    if target_group :
-        try :
-            t_raw =target_group ['value']['RawData']['value']
-            if new_base_id not in t_raw .get ('base_ids',[]):
-                t_raw .setdefault ('base_ids',[]).append (new_base_id )
-            if new_palbox_inst_id :
-                t_raw .setdefault ('map_object_instance_ids_base_camp_points',[]).append (new_palbox_inst_id )
-        except :
-            pass 
-    worker_id_map ={}
-    try :
-        src_worker_container_id =_s (exported_data ['base_camp']['value']['WorkerDirector']['value']['RawData']['value']['container_id'])
-    except :
-        src_worker_container_id =''
-    src_worker_container =next ((c for c in exported_data .get ('char_containers',[])if _s (c .get ('key',{}).get ('ID',{}).get ('value'))==src_worker_container_id ),None )
-    if src_worker_container :
-        ncnt =_deep (src_worker_container )
-        ncnt ['key']['ID']['value']=new_worker_container_id 
-        if 'instance_id'in ncnt .get ('value',{}):
-            ncnt ['value']['instance_id']=new_worker_container_id 
-        old_slots =ncnt ['value']['Slots']['value'].get ('values',[])
-        new_slots =[]
-        for slot in old_slots :
-            s_raw =slot .get ('RawData',{}).get ('value',{})
-            old_inst =_s (s_raw .get ('instance_id',z ))
-            if old_inst !=_s (z ):
-                new_inst =_new_uuid ()
-                worker_id_map [old_inst ]=new_inst 
-                s_raw ['instance_id']=new_inst 
-                new_slots .append (slot )
-        ncnt ['value']['Slots']['value']['values']=new_slots 
-        char_containers .append (ncnt )
-    for old_iid ,new_iid in worker_id_map .items ():
-        char_entry =next ((c for c in exported_data .get ('characters',[])if _s (c ['key']['InstanceId']['value'])==old_iid ),None )
-        if char_entry :
-            n_char =_deep (char_entry )
-            n_char ['key']['InstanceId']['value']=new_iid 
-            try :
-                c_raw =n_char ['value']['RawData']['value']
-                c_raw ['group_id']=target_guild_id 
-                spv =c_raw ['object']['SaveParameter']['value']
-                spv ['SlotId']['value']['ContainerId']['value']['ID']['value']=new_worker_container_id 
-                if 'WorkRegion'in spv :
-                    spv ['WorkRegion']['value']['group_id']['value']=z 
-                if 'WorkerID'in spv :
-                    spv ['WorkerID']['value']=z 
-                if 'TaskData'in spv :
-                    spv ['TaskData']['value']={}
-                if 'MapObjectConcreteInstanceIdAssignedToExpedition'in spv :
-                    spv ['MapObjectConcreteInstanceIdAssignedToExpedition']['value']=z 
-            except :
-                pass 
-            char_map .append (n_char )
-            if target_group :
-                try :
-                    target_group ['value']['RawData']['value'].setdefault ('individual_character_handle_ids',[]).append ({'guid':z ,'instance_id':new_iid })
-                except :
-                    pass 
-    for nwe in cloned_works :
-        work_entries .append (nwe )
-    for obj in exported_data .get ('map_objects',[]):
-        mr =_get_model_raw (obj )
-        if not isinstance (mr ,dict ):
-            continue 
-        old_inst =_s (mr .get ('instance_id',''))
-        if old_inst not in instance_id_map :
-            continue 
-        oid =str (obj .get ('MapObjectId',{}).get ('value',''))
-        if oid .startswith ('PalEgg')and 'Hatching'not in oid and ('Incubator'not in oid ):
-            continue 
-        no =_deep (obj )
-        nmr =_get_model_raw (no )
-        new_inst =instance_id_map [old_inst ]
-        old_conc =_s (nmr .get ('concrete_model_instance_id',''))
-        new_conc =concrete_id_map .get (old_conc ,_new_uuid ())
-        nmr ['instance_id']=new_inst 
-        nmr ['concrete_model_instance_id']=new_conc 
-        nmr ['base_camp_id_belong_to']=new_base_id 
-        nmr ['group_id_belong_to']=target_guild_id 
-        try :
-            _apply_translation (nmr ['initital_transform_cache']['translation'],total_offset )
-        except :
-            pass 
-        cr =_get_concrete_raw (no )
-        if isinstance (cr ,dict ):
-            cr ['instance_id']=new_conc 
-            cr ['model_instance_id']=new_inst 
-            cr ['base_camp_id']=new_base_id 
-            if cr .get ('concrete_model_type')=='PalMapObjectBreedFarmModel':
-                cr ['spawned_egg_instance_ids']=[]
-            try :
-                mm =no ['ConcreteModel']['value']['ModuleMap']['value']
-                for mod in mm :
-                    raw_mod =mod .get ('value',{}).get ('RawData',{}).get ('value',{})
-                    if 'target_work_id'in raw_mod :
-                        old_twid =_s (raw_mod ['target_work_id'])
-                        if old_twid in work_id_map :
-                            raw_mod ['target_work_id']=work_id_map [old_twid ]
-                    if 'work_ids'in raw_mod and isinstance (raw_mod ['work_ids'],list ):
-                        raw_mod ['work_ids']=[work_id_map .get (_s (wid ),wid )for wid in raw_mod ['work_ids']]
-                    if 'target_container_id'not in raw_mod :
-                        continue 
-                    old_cid =_s (raw_mod .get ('target_container_id',''))
-                    new_cid =_new_uuid ()
-                    raw_mod ['target_container_id']=new_cid 
-                    if 'ItemContainer'in str (mod .get ('key','')):
-                        src_ic =next ((c for c in exported_data .get ('item_containers',[])if _s (c .get ('key',{}).get ('ID',{}).get ('value'))==old_cid ),None )
-                        if src_ic :
-                            nic =_deep (src_ic )
-                            nic ['key']['ID']['value']=new_cid 
-                            if 'instance_id'in nic .get ('value',{}):
-                                nic ['value']['instance_id']=new_cid 
-                            item_slots =nic ['value']['Slots']['value'].get ('values',[])
-                            cleaned_slots =[]
-                            for slot in item_slots :
-                                slot_raw =slot .get ('RawData',{}).get ('value',{})
-                                item_meta =slot_raw .get ('item',{})
-                                s_id =str (item_meta .get ('static_id',''))
-                                if s_id .startswith ('PalEgg_'):
-                                    continue 
-                                dyn_id =item_meta .get ('dynamic_id',{})
-                                old_local_id =_s (dyn_id .get ('local_id_in_created_world',z ))
-                                if old_local_id !=_s (z ):
-                                    new_local_id =_new_uuid ()
-                                    dyn_id ['local_id_in_created_world']=new_local_id 
-                                    source_dyn =next ((d for d in exported_data .get ('dynamic_items',[])if _s (d ['RawData']['value']['id']['local_id_in_created_world'])==old_local_id ),None )
-                                    if source_dyn :
-                                        new_dyn =_deep (source_dyn )
-                                        new_dyn ['RawData']['value']['id']['local_id_in_created_world']=new_local_id 
-                                        dynamic_item_data .append (new_dyn )
-                                cleaned_slots .append (slot )
-                            nic ['value']['Slots']['value']['values']=cleaned_slots 
-                            item_containers .append (nic )
-                    elif 'CharacterContainer'in str (mod .get ('key','')):
-                        src_cc =next ((c for c in char_containers if _s (c .get ('key',{}).get ('ID',{}).get ('value'))==old_cid ),None )
-                        if src_cc :
-                            ncc =_deep (src_cc )
-                            ncc ['key']['ID']['value']=new_cid 
-                            if 'instance_id'in ncc .get ('value',{}):
-                                ncc ['value']['instance_id']=new_cid 
-                            _clear_char_container_slots (ncc )
-                            char_containers .append (ncc )
-            except :
-                pass 
-        map_objs .append (no )
-    return True 
+    def _get_work_raw(work_entry):
+        try:
+            return work_entry['RawData']['value']
+        except:
+            return None
+    def _get_model_raw(map_obj):
+        try:
+            return map_obj['Model']['value']['RawData']['value']
+        except:
+            return None
+    def _get_concrete_raw(map_obj):
+        try:
+            return map_obj['ConcreteModel']['value']['RawData']['value']
+        except:
+            return None
+    def _apply_translation(t_vec, off_vec):
+        try:
+            t_vec['x'] += off_vec[0]
+            t_vec['y'] += off_vec[1]
+            t_vec['z'] += off_vec[2] if len(off_vec) > 2 else 0
+        except:
+            pass
+    raw_prop = loaded_level_json['properties']['worldSaveData']['value']
+    data = raw_prop if isinstance(raw_prop, dict) else {}
+    base_camp_data = data.get('BaseCampSaveData', {}).get('value', [])
+    if not base_camp_data or len(base_camp_data) == 0:
+        msg = t('base.error.no_base_found') if t else 'No base camps found in the target save. Please create at least one base camp (Palbox) in-game before importing.'
+        print(f"Error: {msg}")
+        try:
+            import tkinter.messagebox as mb
+            title = t('base.error.title') if t else 'Import Error'
+            mb.showerror(title, msg)
+        except:
+            pass
+        return False
+    groups = data.get('GroupSaveDataMap', {}).get('value', [])
+    char_containers = data.get('CharacterContainerSaveData', {}).get('value', [])
+    item_containers = data.get('ItemContainerSaveData', {}).get('value', [])
+    dynamic_item_data = data.get('DynamicItemSaveData', {}).get('value', {}).get('values', [])
+    map_objs = data.get('MapObjectSaveData', {}).get('value', {}).get('values', [])
+    char_map = data.get('CharacterSaveParameterMap', {}).get('value', [])
+    work_root = data.get('WorkSaveData', {})
+    work_entries = _iter_work_savedata_entries(work_root)
+    z = _zero()
+    tgt_gid_str = _s(target_guild_id)
+    target_group = next((g for g in groups if _s(g.get('key')) == tgt_gid_str), None)
+    if target_group:
+        try:
+            imported_level = exported_data.get('base_camp_level', 1)
+            current_level = target_group['value']['RawData']['value'].get('base_camp_level', 1)
+            if imported_level > current_level:
+                target_group['value']['RawData']['value']['base_camp_level'] = imported_level
+        except:
+            pass
+    palbox_model_id = None
+    for obj in exported_data.get('map_objects', []):
+        if obj.get('MapObjectId', {}).get('value', '') == 'PalBoxV2':
+            mr = _get_model_raw(obj)
+            if mr:
+                palbox_model_id = _s(mr.get('instance_id', ''))
+                break
+    instance_id_map = {}
+    concrete_id_map = {}
+    for obj in exported_data.get('map_objects', []):
+        mr = _get_model_raw(obj)
+        if not isinstance(mr, dict):
+            continue
+        oid = str(obj.get('MapObjectId', {}).get('value', ''))
+        if oid.startswith('PalEgg') and 'Hatching' not in oid and ('Incubator' not in oid):
+            continue
+        old_inst = _s(mr.get('instance_id', ''))
+        if not old_inst or old_inst == _s(z):
+            continue
+        instance_id_map[old_inst] = _new_uuid()
+        old_conc = _s(mr.get('concrete_model_instance_id', ''))
+        if old_conc and old_conc != _s(z):
+            concrete_id_map[old_conc] = _new_uuid()
+    if palbox_model_id and palbox_model_id not in instance_id_map:
+        instance_id_map[palbox_model_id] = _new_uuid()
+    new_base_id = _new_uuid()
+    new_worker_container_id = _new_uuid()
+    new_palbox_inst_id = instance_id_map.get(palbox_model_id)
+    src_base_raw = exported_data['base_camp']['value']['RawData']['value']
+    cur_pos = _deep(src_base_raw['transform']['translation'])
+    total_offset = [0, 0, 0]
+    collision = True
+    while collision:
+        collision = False
+        for existing_base in base_camp_data:
+            try:
+                ex_pos = existing_base['value']['RawData']['value']['transform']['translation']
+                dist = math.sqrt((cur_pos['x'] - ex_pos['x'])**2 + (cur_pos['y'] - ex_pos['y'])**2 + (cur_pos['z'] - ex_pos['z'])**2)
+                if dist < collision_threshold:
+                    off_x = random.uniform(collision_threshold, collision_threshold * 1.5) * random.choice([-1, 1])
+                    off_y = random.uniform(collision_threshold, collision_threshold * 1.5) * random.choice([-1, 1])
+                    cur_pos['x'] += off_x
+                    cur_pos['y'] += off_y
+                    total_offset[0] += off_x
+                    total_offset[1] += off_y
+                    collision = True
+                    break
+            except:
+                continue
+    cloned_works = []
+    new_work_ids_for_collection = []
+    work_id_map = {}
+    for we in exported_data.get('works', []):
+        nwe = _deep(we)
+        nwr = _get_work_raw(nwe)
+        if not isinstance(nwr, dict) or 'id' not in nwr:
+            continue
+        old_w_id = _s(nwr['id'])
+        nw_id = _new_uuid()
+        work_id_map[old_w_id] = nw_id
+        nwr['id'] = nw_id
+        nwr['base_camp_id_belong_to'] = new_base_id
+        if 'WorkAssignMap' in nwe:
+            nwe['WorkAssignMap']['value'] = []
+        old_om = _s(nwr.get('owner_map_object_model_id', ''))
+        if old_om in instance_id_map:
+            nwr['owner_map_object_model_id'] = instance_id_map[old_om]
+        old_oc = _s(nwr.get('owner_map_object_concrete_model_id', ''))
+        if old_oc in concrete_id_map:
+            nwr['owner_map_object_concrete_model_id'] = concrete_id_map[old_oc]
+        for key in ['cached_base_camp_id', 'cached_base_camp_ptr', 'cached_base_index']:
+            nwr.pop(key, None)
+        try:
+            tr = nwr.get('transform', {})
+            mid = _s(tr.get('map_object_instance_id', ''))
+            if mid in instance_id_map:
+                tr['map_object_instance_id'] = instance_id_map[mid]
+            if 'translation' in tr:
+                _apply_translation(tr['translation'], total_offset)
+        except:
+            pass
+        cloned_works.append(nwe)
+        new_work_ids_for_collection.append(nw_id)
+    nb = _deep(exported_data['base_camp'])
+    nb['key'] = new_base_id
+    try:
+        nb_raw = nb['value']['RawData']['value']
+        nb_raw['id'] = new_base_id
+        nb_raw['group_id_belong_to'] = target_guild_id
+    except:
+        pass
+    try:
+        wd_raw = nb['value']['WorkerDirector']['value']['RawData']['value']
+        wd_raw['id'] = new_base_id
+        wd_raw['container_id'] = new_worker_container_id
+        _apply_translation(wd_raw['spawn_transform']['translation'], total_offset)
+    except:
+        pass
+    try:
+        nb['value']['WorkCollection']['value']['RawData']['value']['id'] = new_base_id
+        nb['value']['WorkCollection']['value']['RawData']['value']['work_ids'] = new_work_ids_for_collection
+    except:
+        pass
+    if new_palbox_inst_id:
+        try:
+            nb['value']['RawData']['value']['owner_map_object_instance_id'] = new_palbox_inst_id
+        except:
+            pass
+    try:
+        _apply_translation(nb['value']['RawData']['value']['transform']['translation'], total_offset)
+    except:
+        pass
+    base_camp_data.append(nb)
+    if target_group:
+        try:
+            t_raw = target_group['value']['RawData']['value']
+            if new_base_id not in t_raw.get('base_ids', []):
+                t_raw.setdefault('base_ids', []).append(new_base_id)
+            if new_palbox_inst_id:
+                t_raw.setdefault('map_object_instance_ids_base_camp_points', []).append(new_palbox_inst_id)
+        except:
+            pass
+    worker_id_map = {}
+    try:
+        src_worker_container_id = _s(exported_data['base_camp']['value']['WorkerDirector']['value']['RawData']['value']['container_id'])
+    except:
+        src_worker_container_id = ''
+    src_worker_container = next((c for c in exported_data.get('char_containers', []) if _s(c.get('key', {}).get('ID', {}).get('value')) == src_worker_container_id), None)
+    if src_worker_container:
+        ncnt = _deep(src_worker_container)
+        ncnt['key']['ID']['value'] = new_worker_container_id
+        if 'instance_id' in ncnt.get('value', {}):
+            ncnt['value']['instance_id'] = new_worker_container_id
+        old_slots = ncnt['value']['Slots']['value'].get('values', [])
+        new_slots = []
+        for slot in old_slots:
+            s_raw = slot.get('RawData', {}).get('value', {})
+            old_inst = _s(s_raw.get('instance_id', z))
+            if old_inst != _s(z):
+                new_inst = _new_uuid()
+                worker_id_map[old_inst] = new_inst
+                s_raw['instance_id'] = new_inst
+                new_slots.append(slot)
+        ncnt['value']['Slots']['value']['values'] = new_slots
+        char_containers.append(ncnt)
+    for old_iid, new_iid in worker_id_map.items():
+        char_entry = next((c for c in exported_data.get('characters', []) if _s(c['key']['InstanceId']['value']) == old_iid), None)
+        if char_entry:
+            n_char = _deep(char_entry)
+            n_char['key']['InstanceId']['value'] = new_iid
+            try:
+                c_raw = n_char['value']['RawData']['value']
+                c_raw['group_id'] = target_guild_id
+                spv = c_raw['object']['SaveParameter']['value']
+                spv['SlotId']['value']['ContainerId']['value']['ID']['value'] = new_worker_container_id
+                if 'WorkRegion' in spv:
+                    spv['WorkRegion']['value']['group_id']['value'] = z
+                if 'WorkerID' in spv:
+                    spv['WorkerID']['value'] = z
+                if 'TaskData' in spv:
+                    spv['TaskData']['value'] = {}
+                if 'MapObjectConcreteInstanceIdAssignedToExpedition' in spv:
+                    spv['MapObjectConcreteInstanceIdAssignedToExpedition']['value'] = z
+            except:
+                pass
+            char_map.append(n_char)
+            if target_group:
+                try:
+                    target_group['value']['RawData']['value'].setdefault('individual_character_handle_ids', []).append({'guid':z ,'instance_id':new_iid })
+                except:
+                    pass
+    for nwe in cloned_works:
+        work_entries.append(nwe)
+    for obj in exported_data.get('map_objects', []):
+        mr = _get_model_raw(obj)
+        if not isinstance(mr, dict):
+            continue
+        old_inst = _s(mr.get('instance_id', ''))
+        if old_inst not in instance_id_map:
+            continue
+        oid = str(obj.get('MapObjectId', {}).get('value', ''))
+        if oid.startswith('PalEgg') and 'Hatching' not in oid and ('Incubator' not in oid):
+            continue
+        no = _deep(obj)
+        nmr = _get_model_raw(no)
+        new_inst = instance_id_map[old_inst]
+        old_conc = _s(nmr.get('concrete_model_instance_id', ''))
+        new_conc = concrete_id_map.get(old_conc, _new_uuid())
+        nmr['instance_id'] = new_inst
+        nmr['concrete_model_instance_id'] = new_conc
+        nmr['base_camp_id_belong_to'] = new_base_id
+        nmr['group_id_belong_to'] = target_guild_id
+        try:
+            _apply_translation(nmr['initital_transform_cache']['translation'], total_offset)
+        except:
+            pass
+        cr = _get_concrete_raw(no)
+        if isinstance(cr, dict):
+            cr['instance_id'] = new_conc
+            cr['model_instance_id'] = new_inst
+            cr['base_camp_id'] = new_base_id
+            if cr.get('concrete_model_type') == 'PalMapObjectBreedFarmModel':
+                cr['spawned_egg_instance_ids'] = []
+            try:
+                mm = no['ConcreteModel']['value']['ModuleMap']['value']
+                for mod in mm:
+                    raw_mod = mod.get('value', {}).get('RawData', {}).get('value', {})
+                    if 'target_work_id' in raw_mod:
+                        old_twid = _s(raw_mod['target_work_id'])
+                        if old_twid in work_id_map:
+                            raw_mod['target_work_id'] = work_id_map[old_twid]
+                    if 'work_ids' in raw_mod and isinstance(raw_mod['work_ids'], list):
+                        raw_mod['work_ids'] = [work_id_map.get(_s(wid), wid) for wid in raw_mod['work_ids']]
+                    if 'target_container_id' not in raw_mod:
+                        continue
+                    old_cid = _s(raw_mod.get('target_container_id', ''))
+                    new_cid = _new_uuid()
+                    raw_mod['target_container_id'] = new_cid
+                    if 'ItemContainer' in str(mod.get('key', '')):
+                        src_ic = next((c for c in exported_data.get('item_containers', []) if _s(c.get('key', {}).get('ID', {}).get('value')) == old_cid), None)
+                        if src_ic:
+                            nic = _deep(src_ic)
+                            nic['key']['ID']['value'] = new_cid
+                            if 'instance_id' in nic.get('value', {}):
+                                nic['value']['instance_id'] = new_cid
+                            item_slots = nic['value']['Slots']['value'].get('values', [])
+                            cleaned_slots = []
+                            for slot in item_slots:
+                                slot_raw = slot.get('RawData', {}).get('value', {})
+                                item_meta = slot_raw.get('item', {})
+                                s_id = str(item_meta.get('static_id', ''))
+                                if s_id.startswith('PalEgg_'):
+                                    continue
+                                dyn_id = item_meta.get('dynamic_id', {})
+                                old_local_id = _s(dyn_id.get('local_id_in_created_world', z))
+                                if old_local_id != _s(z):
+                                    new_local_id = _new_uuid()
+                                    dyn_id['local_id_in_created_world'] = new_local_id
+                                    source_dyn = next((d for d in exported_data.get('dynamic_items', []) if _s(d['RawData']['value']['id']['local_id_in_created_world']) == old_local_id), None)
+                                    if source_dyn:
+                                        new_dyn = _deep(source_dyn)
+                                        new_dyn['RawData']['value']['id']['local_id_in_created_world'] = new_local_id
+                                        dynamic_item_data.append(new_dyn)
+                                cleaned_slots.append(slot)
+                            nic['value']['Slots']['value']['values'] = cleaned_slots
+                            item_containers.append(nic)
+                    elif 'CharacterContainer' in str(mod.get('key', '')):
+                        src_cc = next((c for c in char_containers if _s(c.get('key', {}).get('ID', {}).get('value')) == old_cid), None)
+                        if src_cc:
+                            ncc = _deep(src_cc)
+                            ncc['key']['ID']['value'] = new_cid
+                            if 'instance_id' in ncc.get('value', {}):
+                                ncc['value']['instance_id'] = new_cid
+                            _clear_char_container_slots(ncc)
+                            char_containers.append(ncc)
+            except:
+                pass
+        map_objs.append(no)
+    return True
 def is_old_blueprint (exported_data ):
     if not isinstance (exported_data ,dict ):
         return True 
@@ -4512,13 +4552,21 @@ def all_in_one_tools ():
             pass 
     window .protocol ('WM_DELETE_WINDOW',on_exit )
     return window 
-if __name__ =='__main__':
-    all_in_one_tools ()
-    if len (sys .argv )>1 :
-        if tk ._default_root :
-            for w in [tk ._default_root ]+tk ._default_root .winfo_children ():
-                if isinstance (w ,(tk .Tk ,tk .Toplevel )):
-                    w .withdraw ()
-        load_save (' '.join (sys .argv [1 :]))
-        if tk ._default_root :
-            tk ._default_root .destroy ()
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        from unittest.mock import MagicMock
+        messagebox.showinfo = MagicMock()
+        messagebox.showwarning = MagicMock()
+        messagebox.showerror = MagicMock()
+        messagebox.askyesno = MagicMock(return_value=True)
+        messagebox.askokcancel = MagicMock(return_value=True)
+        path_arg = ' '.join(sys.argv[1:]).strip().strip('"')
+        load_save(path_arg)
+        remove_invalid_items_from_save()
+        remove_invalid_pals_from_save()
+        delete_invalid_structure_map_objects()
+        delete_unreferenced_data()
+        delete_non_base_map_objects()
+        save_changes()
+    else:
+        all_in_one_tools()
