@@ -8,7 +8,7 @@ from PySide6 .QtWidgets import (
 QMainWindow ,QWidget ,QVBoxLayout ,QHBoxLayout ,QLabel ,
 QPushButton ,QFrame ,QMenuBar ,QMenu ,QStatusBar ,
 QSplitter ,QMessageBox ,QFileDialog ,QInputDialog ,QDialog ,QCheckBox ,QComboBox ,QApplication ,
-QStackedWidget
+QStackedWidget 
 )
 from PySide6 .QtCore import Qt ,QTimer ,Signal 
 from PySide6 .QtGui import QIcon ,QFont ,QAction ,QPixmap ,QCloseEvent 
@@ -102,11 +102,11 @@ class MainWindow (QMainWindow ):
         self .header_widget .warn_btn .clicked .connect (self ._show_warnings )
         self .header_widget .show_warning (True )
         main_layout .addWidget (self .header_widget )
-        self ._dashboard_collapsed =False
+        self ._dashboard_collapsed =False 
         self ._dashboard_sizes =[1000 ,400 ]
-        from .custom_tab_bar import TabBarContainer
+        from .custom_tab_bar import TabBarContainer 
         self .tab_bar_container =TabBarContainer ()
-        self .tab_bar =self .tab_bar_container .tab_bar
+        self .tab_bar =self .tab_bar_container .tab_bar 
         self .tab_bar .currentChanged .connect (self ._on_tab_changed )
         self .tab_bar_container .sidebar_toggle_clicked .connect (self ._toggle_dashboard )
         main_layout .addWidget (self .tab_bar_container )
@@ -383,7 +383,7 @@ class MainWindow (QMainWindow ):
             }}
         """)
     def _toggle_theme (self ):
-        self .is_dark_mode =not self .is_dark_mode
+        self .is_dark_mode =not self .is_dark_mode 
         self .user_settings ['theme']='dark'if self .is_dark_mode else 'light'
         self ._save_user_settings ()
         self ._load_theme ()
@@ -395,11 +395,11 @@ class MainWindow (QMainWindow ):
         if self ._dashboard_collapsed :
             self .results_widget .show ()
             self .splitter .setSizes (self ._dashboard_sizes )
-            self ._dashboard_collapsed =False
+            self ._dashboard_collapsed =False 
         else :
             self ._dashboard_sizes =self .splitter .sizes ()
             self .results_widget .hide ()
-            self ._dashboard_collapsed =True
+            self ._dashboard_collapsed =True 
         self .tab_bar_container .set_sidebar_collapsed (self ._dashboard_collapsed )
     def _toggle_maximize (self ):
         if self .isMaximized ():

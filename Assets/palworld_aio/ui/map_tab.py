@@ -669,7 +669,12 @@ class MapTab (QWidget ):
                 else :
                     last_seen =t ('map.unknown.lastseen')if t else 'Unknown'
                 base_ids =g_val ['RawData']['value'].get ('base_ids',[])
+                players =g_val ['RawData']['value'].get ('players',[])
+                guild_level =g_val ['RawData']['value'].get ('base_camp_level',1 )
+                member_count =len (players )
+                total_bases =len (base_ids )
                 valid_bases =[]
+                base_position =1 
                 for bid in base_ids :
                     bid_str =str (bid ).replace ('-','')
                     if bid_str in base_map :
@@ -688,8 +693,13 @@ class MapTab (QWidget ):
                                 'data':{'key':bid ,'value':base_val },
                                 'guild_id':gid ,
                                 'guild_name':g_val ['RawData']['value'].get ('guild_name',t ('map.unknown.guild')if t else 'Unknown'),
-                                'leader_name':leader_name 
+                                'leader_name':leader_name ,
+                                'guild_level':guild_level ,
+                                'member_count':member_count ,
+                                'total_bases':total_bases ,
+                                'base_position':base_position 
                                 })
+                                base_position +=1 
                         except :
                             pass 
                 guilds [gid ]={
@@ -823,11 +833,22 @@ class MapTab (QWidget ):
         anim .start ()
         effect ._animation =anim 
     def _update_info (self ,base_data ):
+        guild_name =base_data .get ('guild_name','Unknown')
+        guild_level =base_data .get ('guild_level',1 )
+        leader_name =base_data .get ('leader_name','Unknown')
+        member_count =base_data .get ('member_count',0 )
+        total_bases =base_data .get ('total_bases',0 )
+        base_position =base_data .get ('base_position',1 )
+        base_id =str (base_data .get ('base_id',''))[:16 ]+'...'
+        coords =base_data .get ('coords',(0 ,0 ))
         info =f"""
-        <b>Guild:</b> {base_data ['guild_name']}<br>
-        <b>Leader:</b> {base_data ['leader_name']}<br>
-        <b>Base ID:</b> {str (base_data ['base_id'])[:16 ]}...<br>
-        <b>Coordinates:</b> X:{int (base_data ['coords'][0 ])}, Y:{int (base_data ['coords'][1 ])}
+        <b>{guild_name }</b><br>
+        Level: {guild_level }<br>
+        Admin: {leader_name }<br>
+        Members: {member_count }<br>
+        Base Camps: {base_position }/{total_bases }<br>
+        Base ID: {base_id }<br>
+        Location: X:{int (coords [0 ])}, Y:{int (coords [1 ])}
         """
         self .info_label .setText (info .strip ())
     def _on_marker_clicked (self ,base_data ):

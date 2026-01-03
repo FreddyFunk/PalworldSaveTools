@@ -390,7 +390,7 @@ class SaveManager (QObject ):
         players_logger .info (' '*60 +'PLAYERS LOG')
         players_logger .info ('='*150 )
         players_logger .info ('')
-        players_logger .info (f"{'Player Name':<30} | {'Last Seen':<15} | {'Level':<5} | {'Pals':<5} | {'UID':<36} | {'Guild Name':<20} | {'Guild ID':<36}")
+        players_logger .info (f"{'Player Name':<30} | {'Last Seen':<15} | {'Level':<5} | {'Pals':<5} | {'UID':<36} | {'Guild ID':<36} | {'Guild Name':<30}")
         players_logger .info ('-'*150 )
         tick =data_source ['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
         total_players =total_caught =total_owned =total_bases =active_guilds =0 
@@ -425,7 +425,7 @@ class SaveManager (QObject ):
                     lastseen ='Unknown'if last is None else format_duration_short ((tick -int (last ))/10000000.0 )
                     logger .info (f'Player: {pname } | UID: {uid } | Level: {level } | Caught: {caught } | Owned: {owned } | Encounters: {encounters } | Uniques: {uniques } | Last Online: {lastseen }')
                     sanitized_pname =self ._sanitize_for_alignment (pname )
-                    players_logger .info (f'{sanitized_pname :<30} | {lastseen :<15} | {level :<5} | {owned :<5} | {str (uid ):<36} | {guild_name :<20} | {str (gid ):<36}')
+                    players_logger .info (f'{sanitized_pname :<30} | {lastseen :<15} | {level :<5} | {owned :<5} | {str (uid ):<36} | {str (gid ):<36} | {guild_name :<30}')
                     total_players +=1 
                     total_caught +=caught 
                     total_owned +=owned 
