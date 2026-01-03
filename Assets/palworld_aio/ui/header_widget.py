@@ -18,7 +18,8 @@ except :
         'nf-md-information':'\U000f02fd',
         'nf-md-circle_medium':'\U000f09df',
         'nf-fa-window_maximize':'\uf2d0',
-        'nf-fa-close':'\uf00d'
+        'nf-fa-close':'\uf00d',
+        'nf-md-discord':'\uf392'
         }
 from i18n import t 
 from common import get_versions 
@@ -104,20 +105,30 @@ class HeaderWidget (QWidget ):
         self .warn_btn .setVisible (False )
         layout .addWidget (self .warn_btn )
         layout .addItem (QSpacerItem (20 ,10 ,QSizePolicy .Expanding ,QSizePolicy .Minimum ))
-        self .sidebar_btn =QPushButton ("\u25C0")
+        self .sidebar_btn =QPushButton ("\u25B6")
         self .sidebar_btn .setObjectName ("controlChip")
         self .sidebar_btn .setFlat (True )
         self .sidebar_btn .setToolTip (t ("Collapse Sidebar")if t else "Collapse Sidebar")
-        self .sidebar_btn .setFont (QFont ("Consolas",14 ))
+        self .sidebar_btn .setFont (QFont ("Consolas",11 ))
+        self .sidebar_btn .setStyleSheet ("QPushButton { background-color: rgba(242, 229, 88, 0.8); color: #333; border: 1px solid rgba(212, 200, 74, 0.8); border-radius: 4px; } QPushButton:hover { background-color: rgba(232, 218, 74, 0.9); }")
         self .sidebar_btn .clicked .connect (self .sidebar_toggle_clicked .emit )
         layout .addWidget (self .sidebar_btn )
         theme_btn =QPushButton (nf .icons ['nf-md-theme_light_dark'])
         theme_btn .setObjectName ("controlChip")
         theme_btn .setFlat (True )
         theme_btn .setToolTip (t ("toggle_theme")if t else "Toggle Theme")
-        theme_btn .setFont (QFont ("Hack Nerd Font",14 ))
+        theme_btn .setFont (QFont ("Hack Nerd Font",11 ))
+        theme_btn .setStyleSheet ("QPushButton { background-color: rgba(242, 229, 88, 0.8); color: #333; border: 1px solid rgba(212, 200, 74, 0.8); border-radius: 4px; } QPushButton:hover { background-color: rgba(232, 218, 74, 0.9); }")
         theme_btn .clicked .connect (self .theme_toggle_clicked .emit )
         layout .addWidget (theme_btn )
+        discord_btn =QPushButton (nf .icons ['nf-md-discord'])
+        discord_btn .setObjectName ("controlChip")
+        discord_btn .setFlat (True )
+        discord_btn .setToolTip ("Join Discord")
+        discord_btn .setFont (QFont ("Hack Nerd Font",11 ))
+        discord_btn .setStyleSheet ("QPushButton { background-color: rgba(88, 101, 242, 0.8); color: white; border: 1px solid rgba(64, 84, 214, 0.8); border-radius: 4px; } QPushButton:hover { background-color: rgba(71, 82, 196, 0.9); }")
+        discord_btn .clicked .connect (self ._open_discord )
+        layout .addWidget (discord_btn )
         minimize_btn =QPushButton (nf .icons ['nf-md-circle_medium'])
         minimize_btn .setObjectName ("controlChip")
         minimize_btn .setFlat (True )
@@ -140,8 +151,11 @@ class HeaderWidget (QWidget ):
         close_btn .clicked .connect (self .close_clicked .emit )
         layout .addWidget (close_btn )
     def _open_github (self ,event ):
-        import webbrowser 
+        import webbrowser
         webbrowser .open ("https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest")
+    def _open_discord (self ):
+        import webbrowser
+        webbrowser .open ("https://discord.gg/YWZFPy9G8J")
     def update_logo (self ):
         base_path =constants .get_assets_path ()
         logo_name ='PalworldSaveTools_Blue.png'if self .is_dark_mode else 'PalworldSaveTools_Black.png'
@@ -219,4 +233,4 @@ class HeaderWidget (QWidget ):
         from ..widgets import MenuPopup 
         if self ._menu_popup is None :
             self ._menu_popup =MenuPopup (self )
-        return self ._menu_popup 
+        return self ._menu_popup

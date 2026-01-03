@@ -348,4 +348,4 @@ class ToolsTab (QWidget ):
             btn .text_label .setText (t (key )if t else key )
             btn .text_label .setToolTip (t (key )if t else key )
     def refresh (self ):
-        pass 
+        pass

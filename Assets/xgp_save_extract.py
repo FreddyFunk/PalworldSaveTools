@@ -90,6 +90,40 @@ def find_user_containers (pkg_name :str )->List [Tuple [int |str ,Path ]]:
         user_name =get_xbox_user_name (user_id )
         user_dirs .append ((user_name or user_id ,valid_user_dir ))
     return user_dirs 
+def find_user_containers_from_path (wgs_dir :Path )->List [Tuple [int |str ,Path ]]:
+    if not wgs_dir .is_dir ():
+        return []
+    # Check if this directory itself is a user container directory
+    if (wgs_dir / "containers.index").exists():
+        # Treat this as a single user directory
+        user_id = 0  # dummy
+        user_name = get_xbox_user_name(user_id) or "User"
+        return [(user_name, wgs_dir)]
+    # Otherwise, scan for user subdirectories
+    has_backups =False
+    valid_user_dirs =[]
+    for entry in wgs_dir .iterdir ():
+        if not entry .is_dir ():
+            continue
+        if entry .name =="t":
+            continue
+        if "backup"in entry .name :
+            has_backups =True
+            continue
+        if len (entry .name .split ("_"))==2 :
+            valid_user_dirs .append (entry )
+    if has_backups :
+        print ("!! The save directory contains backups !!")
+        print ("This script will currently skip backups made by the Xbox app.")
+    if len (valid_user_dirs )==0 :
+        return []
+    user_dirs =[]
+    for valid_user_dir in valid_user_dirs :
+        user_id_hex ,title_id_hex =valid_user_dir .name .split ("_",1 )
+        user_id =int (user_id_hex ,16 )
+        user_name =get_xbox_user_name (user_id )
+        user_dirs .append ((user_name or user_id ,valid_user_dir ))
+    return user_dirs
 def read_user_containers (user_wgs_dir :Path )->Tuple [str ,List [Dict [str ,Any ]]]:
     containers_dir =user_wgs_dir 
     containers_idx_path =containers_dir /"containers.index"
@@ -176,11 +210,62 @@ temp_dir :tempfile .TemporaryDirectory ,
         fpath =container ["files"][0 ]["path"]
         save_meta .append ((fname ,fpath ))
     return save_meta 
-def main ():
+def main (wgs_path =None ):
     print ("Xbox Game Pass for PC savefile extractor")
     print ("========================================")
-    games =read_game_list ()
     zip_full_path =None 
+    if wgs_path :
+        wgs_dir =Path (wgs_path )
+        if not wgs_dir .is_dir ():
+            print (f"Provided WGS path {wgs_path } is not a directory.")
+            sys .exit (1 )
+        try :
+            user_containers =find_user_containers_from_path (wgs_dir )
+            if len (user_containers )==0 :
+                print ("No containers found in the provided WGS directory.")
+                print ()
+                return None 
+            games =read_game_list ()
+            if games is None :
+                print ("Failed to read game list. Check that games.json exists and is valid.")
+                sys .exit (1 )
+            store_pkg_name ="PocketpairInc.Palworld_ad4psfrxyesvt"
+            name :str =games .get (store_pkg_name ,{}).get ("name","Palworld")
+            for xbox_username_or_id ,container_dir in user_containers :
+                read_result =read_user_containers (container_dir )
+                pkg_name ,containers =read_result 
+                temp_dir =tempfile .TemporaryDirectory (ignore_cleanup_errors =True )
+                save_paths =get_save_paths (games ,store_pkg_name ,containers ,temp_dir )
+                if len (save_paths )==0 :
+                    continue 
+                print (f"Save files for user {xbox_username_or_id }:")
+                for file_name ,_ in save_paths :
+                    print (f"  - {file_name }")
+                formatted_game_name =(
+                name .replace (" ","_")
+                .replace (":","_")
+                .replace ("'","")
+                .replace ("!","")
+                .lower ()
+                )
+                timestamp =datetime .now ().strftime ("%Y-%m-%d_%H_%M_%S")
+                zip_name ="{}_{}_{}.zip".format (
+                formatted_game_name ,xbox_username_or_id ,timestamp 
+                )
+                with zipfile .ZipFile (zip_name ,"x",zipfile .ZIP_DEFLATED )as save_zip :
+                    for file_name ,file_path in save_paths :
+                        save_zip .write (file_path ,arcname =file_name )
+                        zip_full_path =os .path .abspath (zip_name )
+                temp_dir .cleanup ()
+                print ()
+                print (' Save files written to "%s"'%zip_name )
+                print ()
+        except Exception :
+            print (f"Failed to extract saves:")
+            traceback .print_exc ()
+            print ()
+        return zip_full_path 
+    games =read_game_list ()
     if games is None :
         print ("Failed to read game list. Check that games.json exists and is valid.")
         sys .exit (1 )
@@ -233,5 +318,5 @@ def main ():
             print (f"Failed to extract saves:")
             traceback .print_exc ()
             print ()
-    return zip_full_path 
+    return zip_full_path
 if __name__ =="__main__":main ()

@@ -1,5 +1,6 @@
-import sys 
-import os 
+import sys
+import os
+import traceback
 os .environ ['QT_LOGGING_RULES']='*=false'
 os .environ ['QT_DEBUG_PLUGINS']='0'
 if getattr (sys ,'frozen',False ):
@@ -32,24 +33,26 @@ try :
         remove_invalid_pals_from_save ,
         delete_invalid_structure_map_objects ,
         delete_unreferenced_data ,
-        delete_non_base_map_objects 
+        delete_non_base_map_objects
         )
+        from loading_manager import show_error_screen
 except Exception :
-    from PySide6 .QtWidgets import QApplication 
-    from PySide6 .QtGui import QIcon 
-    from PySide6 .QtCore import Qt ,qInstallMessageHandler ,QtMsgType 
-    from i18n import init_language 
-    from import_libs import center_window 
-    from palworld_aio import constants 
-    from palworld_aio .ui import MainWindow 
-    from palworld_aio .save_manager import save_manager 
+    from PySide6 .QtWidgets import QApplication
+    from PySide6 .QtGui import QIcon
+    from PySide6 .QtCore import Qt ,qInstallMessageHandler ,QtMsgType
+    from i18n import init_language
+    from import_libs import center_window
+    from palworld_aio import constants
+    from palworld_aio .ui import MainWindow
+    from palworld_aio .save_manager import save_manager
     from palworld_aio .func_manager import (
     remove_invalid_items_from_save ,
     remove_invalid_pals_from_save ,
     delete_invalid_structure_map_objects ,
     delete_unreferenced_data ,
-    delete_non_base_map_objects 
+    delete_non_base_map_objects
     )
+    from loading_manager import show_error_screen
 def qt_message_handler (mode ,context ,message ):
     if "QThreadStorage"in str (message )and "destroyed before end of thread"in str (message ):
         return 
@@ -173,6 +176,7 @@ def run_aio ():
     app =QApplication .instance ()
     if app is None :
         app =QApplication (sys .argv )
+    sys .excepthook =lambda exc_type ,exc_value ,exc_traceback :show_error_screen (''.join (traceback .format_exception (exc_type ,exc_value ,exc_traceback )))
     app .setStyle ('Fusion')
     if os .path .exists (constants .ICON_PATH ):
         app .setWindowIcon (QIcon (constants .ICON_PATH ))
