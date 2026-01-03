@@ -453,8 +453,8 @@ class MapTab (QWidget ):
         "dynamic_sizing":False ,"dynamic_sizing_formula":"sqrt"
         },
         "icon":{
-        "path":"resources/baseicon.png","size_min":32 ,"size_max":32 ,
-        "base_size":32 ,"dynamic_sizing":False ,"dynamic_sizing_formula":"sqrt"
+        "path":"resources/baseicon.png","size_min":28 ,"size_max":28 ,
+        "base_size":28 ,"dynamic_sizing":False ,"dynamic_sizing_formula":"sqrt"
         }
         },
         "glow":{
@@ -903,12 +903,16 @@ class MapTab (QWidget ):
         elif item_type =='guild':
             rename_action =menu .addAction (t ('guild.rename.title')if t else 'Rename Guild')
             delete_action =menu .addAction (t ('delete.guild')if t else 'Delete Guild')
-            import_action =menu .addAction (t ('button.import')if t else 'Import Base')
+            menu .addSeparator ()
+            export_action =menu .addAction (t ('base.export_guild')if t else 'Export Bases for Guild')
+            import_action =menu .addAction (t ('base.import_multi')if t else 'Import Bases (Multi-File)')
             action =menu .exec (self .guild_tree .viewport ().mapToGlobal (pos ))
             if action ==rename_action :
                 self ._rename_guild (item_data )
             elif action ==delete_action :
                 self ._delete_guild (item_data )
+            elif action ==export_action :
+                self ._export_bases_for_guild (item_data )
             elif action ==import_action :
                 self ._import_base_to_guild (item_data )
     def _delete_base (self ,base_data ):
@@ -1078,47 +1082,107 @@ class MapTab (QWidget ):
                 f'Failed to delete guild: {str (e )}'
                 )
     def _import_base_to_guild (self ,guild_id ):
-        file_path ,_ =QFileDialog .getOpenFileName (
+        file_paths ,_ =QFileDialog .getOpenFileNames (
         self ,
-        t ('button.import')if t else 'Import Base',
+        t ('base.import_multi')if t else 'Import Bases (Multi-File)',
         '',
         'JSON Files (*.json)'
         )
-        if not file_path :
-            return 
-        try :
-            with open (file_path ,'r',encoding ='utf-8')as f :
-                exported_data =json .load (f )
-            if import_base_json (constants .loaded_level_json ,exported_data ,guild_id ):
-                imported_coords =None 
-                try :
-                    raw_t =exported_data ['base_camp']['value']['RawData']['value']['transform']['translation']
-                    bx ,by =palworld_coord .sav_to_map (raw_t ['x'],raw_t ['y'],new =True )
-                    img_x ,img_y =self ._to_image_coordinates (bx ,by ,self .map_width ,self .map_height )
-                    imported_coords =(bx ,by ,img_x ,img_y )
-                    self ._play_effect (ImportEffect ,img_x ,img_y )
-                except :
-                    pass 
-                self .refresh ()
-                if self .parent_window :
-                    self .parent_window .refresh_all ()
-                if imported_coords :
-                    world_x ,world_y ,img_x ,img_y =imported_coords 
-                    self .view .animate_to_coords (img_x ,img_y ,zoom_level =self .config ['zoom']['double_click_target'])
-                QMessageBox .information (
-                self ,
-                t ('success.title')if t else 'Success',
-                t ('base.import.success')if t else 'Base imported successfully'
-                )
-            else :
-                QMessageBox .warning (
-                self ,
-                t ('error.title')if t else 'Error',
-                'Import failed'
-                )
-        except Exception as e :
-            QMessageBox .critical (
+        if not file_paths :
+            return
+        successful_imports =0
+        failed_imports =0
+        failed_files =[]
+        imported_coords_list =[]
+        for file_path in file_paths :
+            try :
+                with open (file_path ,'r',encoding ='utf-8')as f :
+                    exported_data =json .load (f )
+                if import_base_json (constants .loaded_level_json ,exported_data ,guild_id ):
+                    successful_imports +=1
+                    # Try to get coordinates for animation
+                    try :
+                        raw_t =exported_data ['base_camp']['value']['RawData']['value']['transform']['translation']
+                        bx ,by =palworld_coord .sav_to_map (raw_t ['x'],raw_t ['y'],new =True )
+                        img_x ,img_y =self ._to_image_coordinates (bx ,by ,self .map_width ,self .map_height )
+                        imported_coords_list .append ((bx ,by ,img_x ,img_y ))
+                        self ._play_effect (ImportEffect ,img_x ,img_y )
+                    except :
+                        pass
+                else :
+                    failed_imports +=1
+                    failed_files .append (os .path .basename (file_path )+' (import failed)')
+            except Exception as e :
+                failed_imports +=1
+                failed_files .append (os .path .basename (file_path )+f' (error: {str (e )})')
+        self .refresh ()
+        if self .parent_window :
+            self .parent_window .refresh_all ()
+        # Animate to the first imported base if any were successful
+        if imported_coords_list :
+            world_x ,world_y ,img_x ,img_y =imported_coords_list [0 ]
+            self .view .animate_to_coords (img_x ,img_y ,zoom_level =self .config ['zoom']['double_click_target'])
+        if successful_imports >0 :
+            msg =f'Successfully imported {successful_imports } base(s).'
+            if failed_imports >0 :
+                msg +=f'\nFailed to import {failed_imports } file(s):\n' +'\n'.join (failed_files )
+            QMessageBox .information (
+            self ,
+            t ('success.title')if t else 'Success',
+            msg
+            )
+        else :
+            QMessageBox .warning (
             self ,
             t ('error.title')if t else 'Error',
-            f'Failed to import base: {str (e )}'
+            f'Failed to import any bases.\n' +'\n'.join (failed_files )
             )
+    def _export_bases_for_guild (self ,guild_id ):
+        guild_name =self .guilds_data .get (guild_id ,{}).get ('guild_name','')
+        if not guild_name :
+            QMessageBox .warning (self ,t ('error.title'),f'Guild not found: {guild_id }')
+            return
+        guild_bases =self .guilds_data .get (guild_id ,{}).get ('bases',[])
+        if not guild_bases :
+            QMessageBox .information (self ,t ('Info')if t else 'Info',f'No bases found for guild "{guild_name }".')
+            return
+        # Select directory to export to
+        export_dir =QFileDialog .getExistingDirectory (self ,f'Select Export Directory for "{guild_name }"')
+        if not export_dir :
+            return
+        successful_exports =0
+        failed_exports =0
+        failed_bases =[]
+        class CustomEncoder (json .JSONEncoder ):
+            def default (self ,obj ):
+                if hasattr (obj ,'bytes')or obj .__class__ .__name__ =='UUID':
+                    return str (obj )
+                return super ().default (obj )
+        for base_data in guild_bases :
+            bid =str (base_data ['base_id'])
+            try :
+                data =export_base_json (constants .loaded_level_json ,bid )
+                if not data :
+                    failed_exports +=1
+                    failed_bases .append (f'Base {bid } (no data)')
+                    continue
+                # Create filename with guild info for organization
+                safe_gname =''.join (c for c in guild_name if c .isalnum ()or c in (' ','-','_')).rstrip ()
+                filename =f'base_{bid }_{safe_gname }.json'
+                file_path =os .path .join (export_dir ,filename )
+                with open (file_path ,'w',encoding ='utf-8')as f :
+                    json .dump (data ,f ,cls =CustomEncoder ,indent =2 )
+                successful_exports +=1
+                # Play export effect on the map
+                img_x ,img_y =base_data ['img_coords']
+                self ._play_effect (ExportEffect ,img_x ,img_y )
+            except Exception as e :
+                failed_exports +=1
+                failed_bases .append (f'Base {bid } (error: {str (e )})')
+        if successful_exports >0 :
+            msg =f'Successfully exported {successful_exports } base(s) for guild "{guild_name }" to {export_dir }.'
+            if failed_exports >0 :
+                msg +=f'\nFailed to export {failed_exports } base(s):\n' +'\n'.join (failed_bases )
+            QMessageBox .information (self ,t ('success.title'),msg )
+        else :
+            QMessageBox .warning (self ,t ('error.title'),f'Failed to export any bases for guild "{guild_name }".\n' +'\n'.join (failed_bases ))

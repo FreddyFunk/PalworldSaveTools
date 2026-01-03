@@ -29,7 +29,7 @@ class HoverMenuButton (QPushButton ):
             icon =''
         chevron ='\u25B6'
         super ().__init__ (f"  {icon }  {label }  {chevron }",parent )
-        self .category =category
+        self .category =category 
         self .setObjectName ("menuPopupButton")
         self .setFlat (True )
         self .setCursor (QCursor (Qt .PointingHandCursor ))
@@ -37,7 +37,6 @@ class HoverMenuButton (QPushButton ):
         self .setMinimumWidth (180 )
         self .setMinimumHeight (36 )
         self .clicked .connect (self ._on_clicked )
-        self .setProperty ("hovered",False )
         self .setStyleSheet ("""
             QPushButton#menuPopupButton {
                 background: transparent;
@@ -105,10 +104,6 @@ class MenuPopup (QWidget ):
             self ._show_submenu (over_button ,self .menu_buttons [over_button ])
         elif not over_button and not over_popup and not over_submenu :
             self ._close_current_menu ()
-            self ._clear_all_highlights ()
-        elif not over_button and self ._current_category :
-            self ._clear_all_highlights ()
-            self ._current_category =None
     def _close_current_menu (self ):
         if self ._current_menu :
             self ._current_menu .hide ()
@@ -230,20 +225,3 @@ class MenuPopup (QWidget ):
         self .show ()
         self .raise_ ()
         self ._cursor_timer .start (10 )
-    def refresh_labels (self ):
-        categories =[
-        ('file','nf-md-file',t ('deletion.menu.file')if t else 'File'),
-        ('functions','nf-md-function',t ('deletion.menu.delete')if t else 'Functions'),
-        ('maps','nf-md-map',t ('deletion.menu.view')if t else 'Maps'),
-        ('exclusions','nf-md-playlist_remove',t ('deletion.menu.exclusions')if t else 'Exclusions'),
-        ('languages','nf-md-translate',t ('lang.label')if t else 'Languages'),
-        ]
-        for key ,icon_key ,label in categories :
-            if key in self .menu_buttons :
-                btn =self .menu_buttons [key ]
-                try :
-                    icon =nf .icons .get (icon_key ,'')
-                except :
-                    icon =''
-                chevron ='\u25B6'
-                btn .setText (f"  {icon }  {label }  {chevron }")

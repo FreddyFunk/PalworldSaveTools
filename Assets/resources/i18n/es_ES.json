@@ -592,14 +592,7 @@
 "deletion.warning.protected_base": "La base {bid} está en la lista de exclusión y no se puede eliminar.",
 "warning.title": "Advertencia",
 "zoom": "Zoom",
-"export.all_bases": "Exportar todas las bases",
-"export.selected_bases": "Exportar bases seleccionadas",
-"import.bases": "Importar bases",
-"base.export.folder_title": "Seleccionar carpeta de exportación",
-"base.export.all_success": "{count} bases exportadas con éxito.",
-"base.export.selected_success": "{count} bases exportadas con éxito.",
-"base.export.no_bases": "No se encontraron bases para exportar.",
-"base.import.multi_title": "Seleccionar archivos JSON de base",
-"base.import.multi_success": "{success} de {total} bases importadas con éxito.",
-"lang.set_applied": "Idioma establecido a {lang_name}. Interfaz actualizada."
+"base.export_all": "Exportar todas las bases",
+"base.export_guild": "Exportar bases del gremio",
+"base.import_multi": "Importar bases (múltiples archivos)"
 }

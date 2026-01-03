@@ -598,14 +598,7 @@
 "deletion.warning.protected_base": "拠点 {bid} は除外リストに含まれているため、削除できません。",
 "warning.title": "警告",
 "zoom": "ズーム",
-"export.all_bases": "すべての拠点をエクスポート",
-"export.selected_bases": "選択した拠点をエクスポート",
-"import.bases": "複数の拠点をインポート",
-"base.export.folder_title": "エクスポート先フォルダを選択",
-"base.export.all_success": "{count}件の拠点をエクスポートしました。",
-"base.export.selected_success": "{count}件の拠点をエクスポートしました。",
-"base.export.no_bases": "エクスポートする拠点がありません。",
-"base.import.multi_title": "拠点JSONファイルを選択",
-"base.import.multi_success": "{total}件中{success}件の拠点をインポートしました。",
-"lang.set_applied": "言語を{lang_name}に設定しました。画面を更新しました。"
+"base.export_all": "全てのベースをエクスポート",
+"base.export_guild": "ギルドのベースをエクスポート",
+"base.import_multi": "ベースをインポート (複数ファイル)"
 }

@@ -598,14 +598,7 @@
 "deletion.warning.protected_base": "据点 {bid} 在排除列表中，无法删除。",
 "warning.title": "警告",
 "zoom": "缩放",
-"export.all_bases": "导出所有据点",
-"export.selected_bases": "导出选中据点",
-"import.bases": "导入多个据点",
-"base.export.folder_title": "选择导出文件夹",
-"base.export.all_success": "成功导出 {count} 个据点。",
-"base.export.selected_success": "成功导出 {count} 个据点。",
-"base.export.no_bases": "没有可导出的据点。",
-"base.import.multi_title": "选择据点JSON文件",
-"base.import.multi_success": "成功导入 {success}/{total} 个据点。",
-"lang.set_applied": "语言已设置为 {lang_name}。界面已刷新。"
+"base.export_all": "导出所有基地",
+"base.export_guild": "导出公会的基地",
+"base.import_multi": "导入基地（多个文件）"
 }

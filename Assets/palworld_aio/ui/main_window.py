@@ -179,8 +179,7 @@ class MainWindow (QMainWindow ):
         self .bases_panel =SearchPanel (
         'deletion.search_bases',
         ['deletion.col.base_id','deletion.col.guild_id','deletion.col.guild_name'],
-        [200 ,250 ,250 ],
-        multi_select =True
+        [200 ,250 ,250 ]
         )
         self .bases_panel .item_selected .connect (self ._on_base_selected )
         self .bases_panel .tree .customContextMenuRequested .connect (self ._show_base_context_menu )
@@ -252,6 +251,7 @@ class MainWindow (QMainWindow ):
         (t ('deletion.menu.reset_dungeons')if t else 'Reset Dungeons',self ._reset_dungeons ),
         (t ('deletion.menu.paldefender')if t else 'PalDefender Commands',self ._open_paldefender ,'separator_after'),
         (t ('deletion.menu.fix_timestamps')if t else 'Fix All Negative Timestamps',self ._fix_all_timestamps ,'separator_after'),
+        (t ('base.export_all')if t else 'Export All Bases',self ._export_all_bases ),
         (t ('guild.menu.rebuild_all_guilds')if t else 'Rebuild All Guilds',self ._rebuild_all_guilds ),
         (t ('guild.menu.move_selected_player_to_selected_guild')if t else 'Move Player to Guild',self ._move_player_to_guild ),
         ],
@@ -594,14 +594,16 @@ class MainWindow (QMainWindow ):
     def _show_guild_context_menu (self ,pos ):
         item =self .guilds_panel .tree .itemAt (pos )
         if not item :
-            return 
+            return
         menu =QMenu (self )
         menu .addAction (self ._create_action (t ('deletion.ctx.add_exclusion'),lambda :self ._add_exclusion ('guilds',item .text (1 ))))
         menu .addAction (self ._create_action (t ('deletion.ctx.remove_exclusion'),lambda :self ._remove_exclusion ('guilds',item .text (1 ))))
         menu .addAction (self ._create_action (t ('deletion.ctx.delete_guild'),lambda :self ._delete_guild (item .text (1 ))))
         menu .addAction (self ._create_action (t ('guild.rename.menu'),lambda :self ._rename_guild_action (item .text (1 ),item .text (0 ))))
         menu .addAction (self ._create_action (t ('guild.menu.max_level'),lambda :self ._max_guild_level (item .text (1 ))))
-        menu .addAction (self ._create_action (t ('button.import'),lambda :self ._import_base_to_guild (item .text (1 ))))
+        menu .addSeparator ()
+        menu .addAction (self ._create_action (t ('base.export_guild'),lambda :self ._export_bases_for_guild (item .text (1 ))))
+        menu .addAction (self ._create_action (t ('base.import_multi'),lambda :self ._import_base_to_guild (item .text (1 ))))
         menu .addAction (self ._create_action (t ('guild.menu.move_selected_player_to_selected_guild'),self ._move_player_to_guild ))
         menu .exec (self .guilds_panel .tree .viewport ().mapToGlobal (pos ))
     def _show_guild_member_context_menu (self ,pos ):
@@ -622,21 +624,13 @@ class MainWindow (QMainWindow ):
     def _show_base_context_menu (self ,pos ):
         item =self .bases_panel .tree .itemAt (pos )
         if not item :
-            return
-        selected_items =self .bases_panel .tree .selectedItems ()
+            return 
         menu =QMenu (self )
         menu .addAction (self ._create_action (t ('deletion.ctx.add_exclusion'),lambda :self ._add_exclusion ('bases',item .text (0 ))))
         menu .addAction (self ._create_action (t ('deletion.ctx.remove_exclusion'),lambda :self ._remove_exclusion ('bases',item .text (0 ))))
         menu .addAction (self ._create_action (t ('deletion.ctx.delete_base'),lambda :self ._delete_base (item .text (0 ),item .text (1 ))))
-        menu .addSeparator ()
-        menu .addAction (self ._create_action (t ('export.base')if t else 'Export Base',lambda :self ._export_base (item .text (0 ))))
-        menu .addAction (self ._create_action (t ('export.all_bases')if t else 'Export All Bases',lambda :self ._export_all_bases ()))
-        if len (selected_items )>1 :
-            menu .addAction (self ._create_action (t ('export.selected_bases')if t else 'Export Selected Bases',lambda :self ._export_selected_bases ()))
-        menu .addSeparator ()
-        menu .addAction (self ._create_action (t ('import.base')if t else 'Import Base',lambda :self ._import_base (item .text (1 ))))
-        menu .addAction (self ._create_action (t ('import.bases')if t else 'Import Bases',lambda :self ._import_bases_multi (item .text (1 ))))
-        menu .addSeparator ()
+        menu .addAction (self ._create_action (t ('export.base'),lambda :self ._export_base (item .text (0 ))))
+        menu .addAction (self ._create_action (t ('import.base'),lambda :self ._import_base (item .text (1 ))))
         menu .addAction (self ._create_action (t ('clone.base'),lambda :self ._clone_base (item .text (0 ),item .text (1 ))))
         menu .exec (self .bases_panel .tree .viewport ().mapToGlobal (pos ))
     def _show_exclusion_context_menu (self ,pos ,excl_type ):
@@ -879,13 +873,25 @@ class MainWindow (QMainWindow ):
             self .user_settings ["language"]=code
             self ._save_user_settings ()
             set_language (code )
-        lang_name =t (f'lang.{code }')if t else code 
-        QMessageBox .information (
-        self ,
-        t ("lang.selected")if t else "Language Selected",
-        t ("lang.set_restart",lang_name =lang_name )if t else f"Language set to {lang_name }. Restarting application..."
-        )
-        self ._restart_program ()
+            # Refresh all UI texts without restarting
+            self .setWindowTitle (t ('deletion.title')if t else 'All-in-One Tools')
+            self ._update_tab_texts ()
+            self ._setup_menus ()
+            self ._refresh_texts ()
+            self .tools_tab .refresh_labels ()
+            self .results_widget .refresh_labels ()
+            self .header_widget .refresh_labels ()
+            if hasattr (self .header_widget ,'_menu_popup')and self .header_widget ._menu_popup :
+                self .header_widget ._menu_popup .refresh_labels ()
+            if hasattr (self ,'map_tab')and self .map_tab :
+                self .map_tab .refresh_labels ()
+    def _update_tab_texts (self ):
+        self .tab_bar .setTabText (0 ,t ('tools_tab')if t else 'Tools')
+        self .tab_bar .setTabText (1 ,t ('deletion.search_players')if t else 'Players')
+        self .tab_bar .setTabText (2 ,t ('deletion.search_guilds')if t else 'Guilds')
+        self .tab_bar .setTabText (3 ,t ('deletion.search_bases')if t else 'Bases')
+        self .tab_bar .setTabText (4 ,t ('map.viewer')if t else 'Map')
+        self .tab_bar .setTabText (5 ,t ('deletion.menu.exclusions')if t else 'Exclusions')
     def _refresh_texts (self ):
         tools_version ,_ =get_versions ()
         self .setWindowTitle (t ('app.title',version =tools_version )+' - '+t ('tool.deletion'))
@@ -900,6 +906,12 @@ class MainWindow (QMainWindow ):
             self .guild_members_panel .refresh_labels ()
         if hasattr (self ,'bases_panel'):
             self .bases_panel .refresh_labels ()
+        if hasattr (self ,'excl_players_panel'):
+            self .excl_players_panel .refresh_labels ()
+        if hasattr (self ,'excl_guilds_panel'):
+            self .excl_guilds_panel .refresh_labels ()
+        if hasattr (self ,'excl_bases_panel'):
+            self .excl_bases_panel .refresh_labels ()
         if hasattr (self ,'menu_bar'):
             self ._setup_menus ()
     def _add_exclusion (self ,excl_type ,value ):
@@ -961,19 +973,133 @@ class MainWindow (QMainWindow ):
         make_member_leader (gid ,uid )
         self .refresh_all ()
     def _import_base_to_guild (self ,gid ):
-        file_path ,_ =QFileDialog .getOpenFileName (self ,'Select Base JSON','','JSON Files (*.json)')
-        if not file_path :
-            return 
-        try :
-            with open (file_path ,'r',encoding ='utf-8')as f :
-                exported_data =json .load (f )
-            if import_base_json (constants .loaded_level_json ,exported_data ,gid ):
-                self .refresh_all ()
-                QMessageBox .information (self ,t ('success.title'),t ('base.import.success')if t else 'Base imported successfully! Remember to save Level.sav.')
-            else :
-                QMessageBox .warning (self ,t ('error.title'),'Import failed')
-        except Exception as e :
-            QMessageBox .critical (self ,t ('error.title'),f'Import failed: {str (e )}')
+        file_paths ,_ =QFileDialog .getOpenFileNames (self ,'Select Base JSON Files','','JSON Files (*.json)')
+        if not file_paths :
+            return
+        successful_imports =0
+        failed_imports =0
+        failed_files =[]
+        for file_path in file_paths :
+            try :
+                with open (file_path ,'r',encoding ='utf-8')as f :
+                    exported_data =json .load (f )
+                if import_base_json (constants .loaded_level_json ,exported_data ,gid ):
+                    successful_imports +=1
+                else :
+                    failed_imports +=1
+                    failed_files .append (os .path .basename (file_path )+' (import failed)')
+            except Exception as e :
+                failed_imports +=1
+                failed_files .append (os .path .basename (file_path )+f' (error: {str (e )})')
+        self .refresh_all ()
+        if successful_imports >0 :
+            msg =f'Successfully imported {successful_imports } base(s).'
+            if failed_imports >0 :
+                msg +=f'\nFailed to import {failed_imports } file(s):\n' +'\n'.join (failed_files )
+            QMessageBox .information (self ,t ('success.title'),msg )
+        else :
+            QMessageBox .warning (self ,t ('error.title'),f'Failed to import any bases.\n' +'\n'.join (failed_files ))
+    def _export_all_bases (self ):
+        if not constants .loaded_level_json :
+            QMessageBox .warning (self ,t ('Error')if t else 'Error',t ('error.no_save_loaded')if t else 'No save file loaded.')
+            return
+        # Get all bases from the save
+        bases =get_bases ()
+        if not bases :
+            QMessageBox .information (self ,t ('Info')if t else 'Info','No bases found in the save.')
+            return
+        # Select directory to export to
+        export_dir =QFileDialog .getExistingDirectory (self ,'Select Export Directory')
+        if not export_dir :
+            return
+        successful_exports =0
+        failed_exports =0
+        failed_bases =[]
+        class CustomEncoder (json .JSONEncoder ):
+            def default (self ,obj ):
+                if hasattr (obj ,'bytes')or obj .__class__ .__name__ =='UUID':
+                    return str (obj )
+                return super ().default (obj )
+        for base in bases :
+            bid =base ['id']
+            gid =base ['guild_id']
+            gname =base ['guild_name']
+            try :
+                data =export_base_json (constants .loaded_level_json ,bid )
+                if not data :
+                    failed_exports +=1
+                    failed_bases .append (f'Base {bid } (no data)')
+                    continue
+                # Create filename with guild info for organization
+                safe_gname =''.join (c for c in gname if c .isalnum ()or c in (' ','-','_')).rstrip ()
+                filename =f'base_{bid }_{safe_gname }.json'
+                file_path =os .path .join (export_dir ,filename )
+                with open (file_path ,'w',encoding ='utf-8')as f :
+                    json .dump (data ,f ,cls =CustomEncoder ,indent =2 )
+                successful_exports +=1
+            except Exception as e :
+                failed_exports +=1
+                failed_bases .append (f'Base {bid } (error: {str (e )})')
+        if successful_exports >0 :
+            msg =f'Successfully exported {successful_exports } base(s) to {export_dir }.'
+            if failed_exports >0 :
+                msg +=f'\nFailed to export {failed_exports } base(s):\n' +'\n'.join (failed_bases )
+            QMessageBox .information (self ,t ('success.title'),msg )
+        else :
+            QMessageBox .warning (self ,t ('error.title'),f'Failed to export any bases.\n' +'\n'.join (failed_bases ))
+    def _export_bases_for_guild (self ,gid ):
+        if not constants .loaded_level_json :
+            QMessageBox .warning (self ,t ('Error')if t else 'Error',t ('error.no_save_loaded')if t else 'No save file loaded.')
+            return
+        # Get guild info
+        guild_name =save_manager .get_guild_name_by_id (gid )
+        if not guild_name :
+            QMessageBox .warning (self ,t ('error.title'),f'Guild not found: {gid }')
+            return
+        # Get bases for this guild
+        bases =get_bases ()
+        guild_bases =[b for b in bases if str (b ['guild_id'])==str (gid )]
+        if not guild_bases :
+            QMessageBox .information (self ,t ('Info')if t else 'Info',f'No bases found for guild "{guild_name }".')
+            return
+        # Select directory to export to
+        export_dir =QFileDialog .getExistingDirectory (self ,f'Select Export Directory for "{guild_name }"')
+        if not export_dir :
+            return
+        successful_exports =0
+        failed_exports =0
+        failed_bases =[]
+        class CustomEncoder (json .JSONEncoder ):
+            def default (self ,obj ):
+                if hasattr (obj ,'bytes')or obj .__class__ .__name__ =='UUID':
+                    return str (obj )
+                return super ().default (obj )
+        for base in guild_bases :
+            bid =base ['id']
+            gname =base ['guild_name']
+            try :
+                data =export_base_json (constants .loaded_level_json ,bid )
+                if not data :
+                    failed_exports +=1
+                    failed_bases .append (f'Base {bid } (no data)')
+                    continue
+                # Create filename with guild info for organization
+                safe_gname =''.join (c for c in gname if c .isalnum ()or c in (' ','-','_')).rstrip ()
+                filename =f'base_{bid }_{safe_gname }.json'
+                file_path =os .path .join (export_dir ,filename )
+                with open (file_path ,'w',encoding ='utf-8')as f :
+                    json .dump (data ,f ,cls =CustomEncoder ,indent =2 )
+                successful_exports +=1
+            except Exception as e :
+                failed_exports +=1
+                failed_bases .append (f'Base {bid } (error: {str (e )})')
+        if successful_exports >0 :
+            msg =f'Successfully exported {successful_exports } base(s) for guild "{guild_name }" to {export_dir }.'
+            if failed_exports >0 :
+                msg +=f'\nFailed to export {failed_exports } base(s):\n' +'\n'.join (failed_bases )
+            QMessageBox .information (self ,t ('success.title'),msg )
+        else :
+            QMessageBox .warning (self ,t ('error.title'),f'Failed to export any bases for guild "{guild_name }".\n' +'\n'.join (failed_bases ))
     def _export_base (self ,bid ):
         if not constants .loaded_level_json :
             QMessageBox .warning (self ,t ('Error')if t else 'Error',t ('error.no_save_loaded')if t else 'No save file loaded.')
@@ -1022,100 +1148,6 @@ class MainWindow (QMainWindow ):
             QMessageBox .information (self ,t ('success.title'),'Base cloned successfully')
         else :
             QMessageBox .warning (self ,t ('error.title'),'Failed to clone base')
-    def _export_all_bases (self ):
-        if not constants .loaded_level_json :
-            QMessageBox .warning (self ,t ('error.title')if t else 'Error',t ('error.no_save_loaded')if t else 'No save file loaded.')
-            return
-        bases =get_bases ()
-        if not bases :
-            QMessageBox .warning (self ,t ('error.title')if t else 'Error',t ('base.export.no_bases')if t else 'No bases found to export.')
-            return
-        folder_path =QFileDialog .getExistingDirectory (self ,t ('base.export.folder_title')if t else 'Select Export Folder')
-        if not folder_path :
-            return
-        success_count =0
-        fail_count =0
-        class CustomEncoder (json .JSONEncoder ):
-            def default (self ,obj ):
-                if hasattr (obj ,'bytes')or obj .__class__ .__name__ =='UUID':
-                    return str (obj )
-                return super ().default (obj )
-        for base in bases :
-            bid =base ['id']
-            data =export_base_json (constants .loaded_level_json ,bid )
-            if data :
-                try :
-                    file_path =os .path .join (folder_path ,f'base_{bid }.json')
-                    with open (file_path ,'w',encoding ='utf-8')as f :
-                        json .dump (data ,f ,cls =CustomEncoder ,indent =2 )
-                    success_count +=1
-                except Exception :
-                    fail_count +=1
-            else :
-                fail_count +=1
-        QMessageBox .information (
-        self ,
-        t ('success.title')if t else 'Success',
-        t ('base.export.all_success',count =success_count )if t else f'Exported {success_count } bases successfully.'+(f' ({fail_count } failed)'if fail_count else '')
-        )
-    def _export_selected_bases (self ):
-        if not constants .loaded_level_json :
-            QMessageBox .warning (self ,t ('error.title')if t else 'Error',t ('error.no_save_loaded')if t else 'No save file loaded.')
-            return
-        selected_items =self .bases_panel .tree .selectedItems ()
-        if not selected_items :
-            QMessageBox .warning (self ,t ('error.title')if t else 'Error',t ('base.export.no_selection')if t else 'No bases selected.')
-            return
-        folder_path =QFileDialog .getExistingDirectory (self ,t ('base.export.folder_title')if t else 'Select Export Folder')
-        if not folder_path :
-            return
-        success_count =0
-        fail_count =0
-        class CustomEncoder (json .JSONEncoder ):
-            def default (self ,obj ):
-                if hasattr (obj ,'bytes')or obj .__class__ .__name__ =='UUID':
-                    return str (obj )
-                return super ().default (obj )
-        for item in selected_items :
-            bid =item .text (0 )
-            data =export_base_json (constants .loaded_level_json ,bid )
-            if data :
-                try :
-                    file_path =os .path .join (folder_path ,f'base_{bid }.json')
-                    with open (file_path ,'w',encoding ='utf-8')as f :
-                        json .dump (data ,f ,cls =CustomEncoder ,indent =2 )
-                    success_count +=1
-                except Exception :
-                    fail_count +=1
-            else :
-                fail_count +=1
-        QMessageBox .information (
-        self ,
-        t ('success.title')if t else 'Success',
-        t ('base.export.selected_success',count =success_count )if t else f'Exported {success_count } bases successfully.'+(f' ({fail_count } failed)'if fail_count else '')
-        )
-    def _import_bases_multi (self ,gid ):
-        file_paths ,_ =QFileDialog .getOpenFileNames (self ,t ('base.import.multi_title')if t else 'Select Base JSON Files','','JSON Files (*.json)')
-        if not file_paths :
-            return
-        success_count =0
-        fail_count =0
-        for file_path in file_paths :
-            try :
-                with open (file_path ,'r',encoding ='utf-8')as f :
-                    exported_data =json .load (f )
-                if import_base_json (constants .loaded_level_json ,exported_data ,gid ):
-                    success_count +=1
-                else :
-                    fail_count +=1
-            except Exception :
-                fail_count +=1
-        self .refresh_all ()
-        QMessageBox .information (
-        self ,
-        t ('success.title')if t else 'Success',
-        t ('base.import.multi_success',success =success_count ,total =len (file_paths ))if t else f'Imported {success_count } of {len (file_paths )} bases successfully.'
-        )
     def keyPressEvent (self ,event ):
         if event .key ()==Qt .Key_F5 :
             if constants .current_save_path :

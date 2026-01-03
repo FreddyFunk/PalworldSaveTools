@@ -598,14 +598,7 @@
 "deletion.warning.protected_base": "Basis {bid} steht auf der Ausschlussliste und kann nicht gelöscht werden.",
 "warning.title": "Warnung",
 "zoom": "Zoom",
-"export.all_bases": "Alle Basen exportieren",
-"export.selected_bases": "Ausgewählte Basen exportieren",
-"import.bases": "Basen importieren",
-"base.export.folder_title": "Exportordner auswählen",
-"base.export.all_success": "{count} Basen erfolgreich exportiert.",
-"base.export.selected_success": "{count} Basen erfolgreich exportiert.",
-"base.export.no_bases": "Keine Basen zum Exportieren gefunden.",
-"base.import.multi_title": "Basis-JSON-Dateien auswählen",
-"base.import.multi_success": "{success} von {total} Basen erfolgreich importiert.",
-"lang.set_applied": "Sprache auf {lang_name} gesetzt. Benutzeroberfläche aktualisiert."
+"base.export_all": "Alle Basen exportieren",
+"base.export_guild": "Basen für Gilde exportieren",
+"base.import_multi": "Basen importieren (Mehrfachdatei)"
 }

@@ -12,12 +12,11 @@ except ImportError :
 class SearchPanel (QWidget ):
     item_selected =Signal (object )
     item_double_clicked =Signal (object )
-    def __init__ (self ,label_key ,column_keys ,column_widths =None ,parent =None ,multi_select =False ):
+    def __init__ (self ,label_key ,column_keys ,column_widths =None ,parent =None ):
         super ().__init__ (parent )
-        self .label_key =label_key
-        self .column_keys =column_keys
+        self .label_key =label_key 
+        self .column_keys =column_keys 
         self .column_widths =column_widths or []
-        self .multi_select =multi_select
         self ._setup_ui ()
     def _setup_ui (self ):
         layout =QVBoxLayout (self )
@@ -39,7 +38,7 @@ class SearchPanel (QWidget ):
         self .tree .setHeaderLabels (self .columns )
         self .tree .setAlternatingRowColors (True )
         self .tree .setRootIsDecorated (False )
-        self .tree .setSelectionMode (QAbstractItemView .ExtendedSelection if self .multi_select else QAbstractItemView .SingleSelection )
+        self .tree .setSelectionMode (QAbstractItemView .SingleSelection )
         self .tree .setSortingEnabled (True )
         self .tree .setContextMenuPolicy (Qt .CustomContextMenu )
         header =self .tree .header ()
