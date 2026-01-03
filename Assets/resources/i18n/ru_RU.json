@@ -594,5 +594,15 @@
 "deletion.warning.protected_guild": "Гильдия {gid} находится в списке исключений и не может быть удалена.",
 "deletion.warning.protected_base": "База {bid} находится в списке исключений и не может быть удалена.",
 "warning.title": "Предупреждение",
-"zoom": "Масштаб"
+"zoom": "Масштаб",
+"export.all_bases": "Экспортировать все базы",
+"export.selected_bases": "Экспортировать выбранные базы",
+"import.bases": "Импортировать базы",
+"base.export.folder_title": "Выберите папку для экспорта",
+"base.export.all_success": "Экспортировано {count} баз.",
+"base.export.selected_success": "Экспортировано {count} баз.",
+"base.export.no_bases": "Нет баз для экспорта.",
+"base.import.multi_title": "Выберите JSON-файлы баз",
+"base.import.multi_success": "Импортировано {success} из {total} баз.",
+"lang.set_applied": "Язык установлен на {lang_name}. Интерфейс обновлён."
 }

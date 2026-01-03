@@ -436,8 +436,8 @@ class MapTab (QWidget ):
         "dynamic_sizing":False ,"dynamic_sizing_formula":"sqrt"
         },
         "icon":{
-        "path":"resources/baseicon.png","size_min":28 ,"size_max":28 ,
-        "base_size":28 ,"dynamic_sizing":False ,"dynamic_sizing_formula":"sqrt"
+        "path":"resources/baseicon.png","size_min":32 ,"size_max":32 ,
+        "base_size":32 ,"dynamic_sizing":False ,"dynamic_sizing_formula":"sqrt"
         }
         },
         "glow":{

@@ -597,5 +597,15 @@
 "deletion.warning.protected_guild": "길드 {gid}는 제외 목록에 포함되어 있어 삭제할 수 없습니다.",
 "deletion.warning.protected_base": "거점 {bid}는 제외 목록에 포함되어 있어 삭제할 수 없습니다.",
 "warning.title": "경고",
-"zoom": "확대"
+"zoom": "확대",
+"export.all_bases": "모든 거점 내보내기",
+"export.selected_bases": "선택한 거점 내보내기",
+"import.bases": "여러 거점 가져오기",
+"base.export.folder_title": "내보내기 폴더 선택",
+"base.export.all_success": "{count}개의 거점을 내보냈습니다.",
+"base.export.selected_success": "{count}개의 거점을 내보냈습니다.",
+"base.export.no_bases": "내보낼 거점이 없습니다.",
+"base.import.multi_title": "거점 JSON 파일 선택",
+"base.import.multi_success": "{total}개 중 {success}개의 거점을 가져왔습니다.",
+"lang.set_applied": "언어가 {lang_name}(으)로 설정되었습니다. UI가 새로고침되었습니다."
 }

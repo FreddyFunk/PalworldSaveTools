@@ -193,10 +193,21 @@ class HeaderWidget (QWidget ):
         btn_pos =self .menu_chip_btn .mapToGlobal (QPoint (0 ,self .menu_chip_btn .height ()))
         self ._menu_popup .show_at (btn_pos )
     def set_menu_actions (self ,actions_dict ):
-        from ..widgets import MenuPopup 
+        from ..widgets import MenuPopup
         if self ._menu_popup is None :
             self ._menu_popup =MenuPopup (self )
         self ._menu_popup .set_menu_actions (actions_dict )
+    def refresh_labels (self ):
+        self .menu_chip_btn .setText (f"{nf .icons ['nf-md-menu']} {t ('menu_button')if t else 'Menu'}")
+        self .menu_chip_btn .setToolTip (t ("Open Menu")if t else "Open Menu")
+        if hasattr (self ,'sidebar_btn'):
+            collapsed =self .sidebar_btn .text ()=="\u25B6"
+            if collapsed :
+                self .sidebar_btn .setToolTip (t ("Expand Sidebar")if t else "Expand Sidebar")
+            else :
+                self .sidebar_btn .setToolTip (t ("Collapse Sidebar")if t else "Collapse Sidebar")
+        if self ._menu_popup :
+            self ._menu_popup .refresh_labels ()
     def get_menu_popup (self ):
         from ..widgets import MenuPopup 
         if self ._menu_popup is None :

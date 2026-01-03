@@ -669,5 +669,15 @@
 "deletion.warning.protected_base": "Base {bid} is in exclusion list and cannot be deleted.",
 "warning.title": "Warning",
 "cursor_coords": "Cursor Coords",
-"zoom": "Zoom"
+"zoom": "Zoom",
+"export.all_bases": "Export All Bases",
+"export.selected_bases": "Export Selected Bases",
+"import.bases": "Import Bases",
+"base.export.folder_title": "Select Export Folder",
+"base.export.all_success": "Exported {count} bases successfully.",
+"base.export.selected_success": "Exported {count} bases successfully.",
+"base.export.no_bases": "No bases found to export.",
+"base.import.multi_title": "Select Base JSON Files",
+"base.import.multi_success": "Imported {success} of {total} bases successfully.",
+"lang.set_applied": "Language set to {lang_name}. GUI refreshed."
 }

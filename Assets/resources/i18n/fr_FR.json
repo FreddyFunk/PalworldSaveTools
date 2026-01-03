@@ -577,5 +577,15 @@
 "deletion.warning.protected_guild": "La guilde {gid} est dans la liste d'exclusion et ne peut pas être supprimée.",
 "deletion.warning.protected_base": "La base {bid} est dans la liste d'exclusion et ne peut pas être supprimée.",
 "warning.title": "Avertissement",
-"zoom": "Zoom"
+"zoom": "Zoom",
+"export.all_bases": "Exporter toutes les bases",
+"export.selected_bases": "Exporter les bases sélectionnées",
+"import.bases": "Importer des bases",
+"base.export.folder_title": "Sélectionner le dossier d'exportation",
+"base.export.all_success": "{count} bases exportées avec succès.",
+"base.export.selected_success": "{count} bases exportées avec succès.",
+"base.export.no_bases": "Aucune base à exporter.",
+"base.import.multi_title": "Sélectionner les fichiers JSON de base",
+"base.import.multi_success": "{success} sur {total} bases importées avec succès.",
+"lang.set_applied": "Langue définie sur {lang_name}. Interface actualisée."
 }
