@@ -258,46 +258,46 @@ class MapGraphicsView (QGraphicsView ):
         self .max_zoom =zoom_config ['max']
         self .zoom_timer =QTimer ()
         self .zoom_timer .timeout .connect (self ._smooth_zoom_step )
-        self .target_zoom =1.0
-        self .target_center =None
-        self .is_animating =False
+        self .target_zoom =1.0 
+        self .target_center =None 
+        self .is_animating =False 
         self .coords_label =QLabel (f"{t ('cursor_coords')if t else 'Cursor'}: 0, 0",self )
         self .coords_label .setStyleSheet ("background-color: rgba(0, 0, 0, 150); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; min-width: 120px;")
         self .coords_label .move (10 ,self .height ()-30 )
         self .coords_label .setVisible (False )
-        self .zoom_label =QLabel ((t ("zoom")if t else "Zoom")+ ": 100%",self )
+        self .zoom_label =QLabel ((t ("zoom")if t else "Zoom")+": 100%",self )
         self .zoom_label .setStyleSheet ("background-color: rgba(0, 0, 0, 150); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; min-width: 80px;")
         self .zoom_label .move (self .width ()-90 ,self .height ()-30 )
         self .zoom_label .setAlignment (Qt .AlignCenter )
     def animate_to_coords (self ,x ,y ,zoom_level =None ):
         if zoom_level is None :
             zoom_level =self .config ['zoom']['double_click_target']
-        self .target_zoom =zoom_level
+        self .target_zoom =zoom_level 
         self .target_center =QPointF (x ,y )
         self .resetTransform ()
-        self .current_zoom =1.0
+        self .current_zoom =1.0 
         self .centerOn (self .target_center )
-        self .is_animating =True
+        self .is_animating =True 
         fps =self .config ['zoom']['animation_fps']
         interval =int (1000 /fps )
         if not self .zoom_timer .isActive ():
             self .zoom_timer .start (interval )
     def wheelEvent (self ,event ):
-        zoom_in =event .angleDelta ().y ()>0
+        zoom_in =event .angleDelta ().y ()>0 
         if zoom_in :
-            factor =self .zoom_factor
-            self .current_zoom *=factor
+            factor =self .zoom_factor 
+            self .current_zoom *=factor 
         else :
-            factor =1 /self .zoom_factor
-            self .current_zoom *=factor
+            factor =1 /self .zoom_factor 
+            self .current_zoom *=factor 
         if self .current_zoom <self .min_zoom :
             factor =self .min_zoom /(self .current_zoom /factor )
-            self .current_zoom =self .min_zoom
+            self .current_zoom =self .min_zoom 
         elif self .current_zoom >self .max_zoom :
             factor =self .max_zoom /(self .current_zoom /factor )
-            self .current_zoom =self .max_zoom
+            self .current_zoom =self .max_zoom 
         self .scale (factor ,factor )
-        self .zoom_label .setText ((t ("zoom")if t else "Zoom")+ f": {int (self .current_zoom *100 )}%")
+        self .zoom_label .setText ((t ("zoom")if t else "Zoom")+f": {int (self .current_zoom *100 )}%")
         self .zoom_changed .emit (self .current_zoom )
     def mousePressEvent (self ,event ):
         item =self .itemAt (event .pos ())
@@ -343,7 +343,6 @@ class MapGraphicsView (QGraphicsView ):
             img_x ,img_y =scene_pos .x (),scene_pos .y ()
             x_world =(img_x /width )*2000 -1000 
             y_world =1000 -(img_y /height )*2000 
-            # Convert to Old coordinates for display
             save_x ,save_y =palworld_coord .map_to_sav (x_world ,y_world ,new =True )
             old_x ,old_y =palworld_coord .sav_to_map (save_x ,save_y ,new =False )
             self .coords_label .setText (f"{t ('cursor_coords')if t else 'Cursor'}: {int (old_x )}, {int (old_y )}")
@@ -373,26 +372,26 @@ class MapGraphicsView (QGraphicsView ):
     def _smooth_zoom_step (self ):
         if not self .is_animating :
             self .zoom_timer .stop ()
-            return
+            return 
         if self .target_center :
             self .centerOn (self .target_center )
-        zoom_diff =self .target_zoom -self .current_zoom
+        zoom_diff =self .target_zoom -self .current_zoom 
         if abs (zoom_diff )<0.05 :
-            factor =self .target_zoom /self .current_zoom
+            factor =self .target_zoom /self .current_zoom 
             self .scale (factor ,factor )
-            self .current_zoom =self .target_zoom
+            self .current_zoom =self .target_zoom 
             self .centerOn (self .target_center )
-            self .is_animating =False
+            self .is_animating =False 
             self .zoom_timer .stop ()
-            self .zoom_label .setText ((t ("zoom")if t else "Zoom")+ f": {int (self .current_zoom *100 )}%")
+            self .zoom_label .setText ((t ("zoom")if t else "Zoom")+f": {int (self .current_zoom *100 )}%")
             self .zoom_changed .emit (self .current_zoom )
-            return
+            return 
         easing_factor =self .config ['zoom']['animation_speed']
-        zoom_step =zoom_diff *easing_factor
-        factor =(self .current_zoom +zoom_step )/self .current_zoom
-        self .current_zoom +=zoom_step
+        zoom_step =zoom_diff *easing_factor 
+        factor =(self .current_zoom +zoom_step )/self .current_zoom 
+        self .current_zoom +=zoom_step 
         self .scale (factor ,factor )
-        self .zoom_label .setText ((t ("zoom")if t else "Zoom")+ f": {int (self .current_zoom *100 )}%")
+        self .zoom_label .setText ((t ("zoom")if t else "Zoom")+f": {int (self .current_zoom *100 )}%")
         self .zoom_changed .emit (self .current_zoom )
     def resizeEvent (self ,event ):
         super ().resizeEvent (event )
@@ -440,7 +439,7 @@ class MapTab (QWidget ):
             if hasattr (self .view ,'coords_label'):
                 self .view .coords_label .setText (f"{t ('cursor_coords')if t else 'Cursor'}: 0, 0")
             if hasattr (self .view ,'zoom_label'):
-                self .view .zoom_label .setText ((t ("zoom")if t else "Zoom")+ ": 100%")
+                self .view .zoom_label .setText ((t ("zoom")if t else "Zoom")+": 100%")
     def _load_config (self ):
         base_dir =os .path .dirname (os .path .dirname (os .path .dirname (os .path .abspath (__file__ ))))
         config_path =os .path .join (base_dir ,'data','configs','map_viewer.json')
@@ -606,8 +605,8 @@ class MapTab (QWidget ):
         if self .map_width >0 and self .map_height >0 :
             self .view .fitInView (self .scene .sceneRect (),Qt .KeepAspectRatio )
             viewport =self .view .viewport ()
-            self .view .current_zoom =self .view .viewport ().width ()/self .map_width
-            self .view .zoom_label .setText ((t ("zoom")if t else "Zoom")+ f": {int (self .view .current_zoom *100 )}%")
+            self .view .current_zoom =self .view .viewport ().width ()/self .map_width 
+            self .view .zoom_label .setText ((t ("zoom")if t else "Zoom")+f": {int (self .view .current_zoom *100 )}%")
             self .view .zoom_changed .emit (self .view .current_zoom )
     def _setup_animation (self ):
         self .anim_timer =QTimer (self )
@@ -680,7 +679,6 @@ class MapTab (QWidget ):
                             bx ,by =palworld_coord .sav_to_map (translation ['x'],translation ['y'],new =True )
                             if bx is not None :
                                 img_x ,img_y =self ._to_image_coordinates (bx ,by ,self .map_width ,self .map_height )
-                                # Convert to Old coordinates for display
                                 save_x ,save_y =palworld_coord .map_to_sav (bx ,by ,new =True )
                                 old_bx ,old_by =palworld_coord .sav_to_map (save_x ,save_y ,new =False )
                                 valid_bases .append ({
@@ -693,7 +691,7 @@ class MapTab (QWidget ):
                                 'leader_name':leader_name 
                                 })
                         except :
-                            pass
+                            pass 
                 guilds [gid ]={
                 'guild_name':g_val ['RawData']['value'].get ('guild_name',t ('map.unknown.guild')if t else 'Unknown'),
                 'leader_name':leader_name ,
@@ -1089,9 +1087,9 @@ class MapTab (QWidget ):
         'JSON Files (*.json)'
         )
         if not file_paths :
-            return
-        successful_imports =0
-        failed_imports =0
+            return 
+        successful_imports =0 
+        failed_imports =0 
         failed_files =[]
         imported_coords_list =[]
         for file_path in file_paths :
@@ -1099,8 +1097,7 @@ class MapTab (QWidget ):
                 with open (file_path ,'r',encoding ='utf-8')as f :
                     exported_data =json .load (f )
                 if import_base_json (constants .loaded_level_json ,exported_data ,guild_id ):
-                    successful_imports +=1
-                    # Try to get coordinates for animation
+                    successful_imports +=1 
                     try :
                         raw_t =exported_data ['base_camp']['value']['RawData']['value']['transform']['translation']
                         bx ,by =palworld_coord .sav_to_map (raw_t ['x'],raw_t ['y'],new =True )
@@ -1108,50 +1105,48 @@ class MapTab (QWidget ):
                         imported_coords_list .append ((bx ,by ,img_x ,img_y ))
                         self ._play_effect (ImportEffect ,img_x ,img_y )
                     except :
-                        pass
+                        pass 
                 else :
-                    failed_imports +=1
+                    failed_imports +=1 
                     failed_files .append (os .path .basename (file_path )+' (import failed)')
             except Exception as e :
-                failed_imports +=1
+                failed_imports +=1 
                 failed_files .append (os .path .basename (file_path )+f' (error: {str (e )})')
         self .refresh ()
         if self .parent_window :
             self .parent_window .refresh_all ()
-        # Animate to the first imported base if any were successful
         if imported_coords_list :
             world_x ,world_y ,img_x ,img_y =imported_coords_list [0 ]
             self .view .animate_to_coords (img_x ,img_y ,zoom_level =self .config ['zoom']['double_click_target'])
         if successful_imports >0 :
             msg =f'Successfully imported {successful_imports } base(s).'
             if failed_imports >0 :
-                msg +=f'\nFailed to import {failed_imports } file(s):\n' +'\n'.join (failed_files )
+                msg +=f'\nFailed to import {failed_imports } file(s):\n'+'\n'.join (failed_files )
             QMessageBox .information (
             self ,
             t ('success.title')if t else 'Success',
-            msg
+            msg 
             )
         else :
             QMessageBox .warning (
             self ,
             t ('error.title')if t else 'Error',
-            f'Failed to import any bases.\n' +'\n'.join (failed_files )
+            f'Failed to import any bases.\n'+'\n'.join (failed_files )
             )
     def _export_bases_for_guild (self ,guild_id ):
         guild_name =self .guilds_data .get (guild_id ,{}).get ('guild_name','')
         if not guild_name :
             QMessageBox .warning (self ,t ('error.title'),f'Guild not found: {guild_id }')
-            return
+            return 
         guild_bases =self .guilds_data .get (guild_id ,{}).get ('bases',[])
         if not guild_bases :
             QMessageBox .information (self ,t ('Info')if t else 'Info',f'No bases found for guild "{guild_name }".')
-            return
-        # Select directory to export to
+            return 
         export_dir =QFileDialog .getExistingDirectory (self ,f'Select Export Directory for "{guild_name }"')
         if not export_dir :
-            return
-        successful_exports =0
-        failed_exports =0
+            return 
+        successful_exports =0 
+        failed_exports =0 
         failed_bases =[]
         class CustomEncoder (json .JSONEncoder ):
             def default (self ,obj ):
@@ -1163,26 +1158,24 @@ class MapTab (QWidget ):
             try :
                 data =export_base_json (constants .loaded_level_json ,bid )
                 if not data :
-                    failed_exports +=1
+                    failed_exports +=1 
                     failed_bases .append (f'Base {bid } (no data)')
-                    continue
-                # Create filename with guild info for organization
+                    continue 
                 safe_gname =''.join (c for c in guild_name if c .isalnum ()or c in (' ','-','_')).rstrip ()
                 filename =f'base_{bid }_{safe_gname }.json'
                 file_path =os .path .join (export_dir ,filename )
                 with open (file_path ,'w',encoding ='utf-8')as f :
                     json .dump (data ,f ,cls =CustomEncoder ,indent =2 )
-                successful_exports +=1
-                # Play export effect on the map
+                successful_exports +=1 
                 img_x ,img_y =base_data ['img_coords']
                 self ._play_effect (ExportEffect ,img_x ,img_y )
             except Exception as e :
-                failed_exports +=1
+                failed_exports +=1 
                 failed_bases .append (f'Base {bid } (error: {str (e )})')
         if successful_exports >0 :
             msg =f'Successfully exported {successful_exports } base(s) for guild "{guild_name }" to {export_dir }.'
             if failed_exports >0 :
-                msg +=f'\nFailed to export {failed_exports } base(s):\n' +'\n'.join (failed_bases )
+                msg +=f'\nFailed to export {failed_exports } base(s):\n'+'\n'.join (failed_bases )
             QMessageBox .information (self ,t ('success.title'),msg )
         else :
-            QMessageBox .warning (self ,t ('error.title'),f'Failed to export any bases for guild "{guild_name }".\n' +'\n'.join (failed_bases ))
+            QMessageBox .warning (self ,t ('error.title'),f'Failed to export any bases for guild "{guild_name }".\n'+'\n'.join (failed_bases ))

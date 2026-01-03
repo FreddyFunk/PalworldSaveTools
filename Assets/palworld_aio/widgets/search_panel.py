@@ -34,7 +34,7 @@ class SearchPanel (QWidget ):
         layout .addLayout (search_layout )
         self .tree =QTreeWidget ()
         self .tree .setObjectName ("searchTree")
-        self .columns =[t (k )if k else '' for k in self .column_keys ]
+        self .columns =[t (k )if k else ''for k in self .column_keys ]
         self .tree .setHeaderLabels (self .columns )
         self .tree .setAlternatingRowColors (True )
         self .tree .setRootIsDecorated (False )
@@ -96,5 +96,5 @@ class SearchPanel (QWidget ):
     def refresh_labels (self ):
         self .search_label .setText (t (self .label_key )if t else self .label_key )
         self .search_input .setPlaceholderText (t ('search.placeholder')if t else 'Type to search...')
-        self .columns =[t (k )if k else '' for k in self .column_keys ]
+        self .columns =[t (k )if k else ''for k in self .column_keys ]
         self .tree .setHeaderLabels (self .columns )

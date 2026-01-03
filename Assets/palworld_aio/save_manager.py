@@ -1,29 +1,29 @@
-import os
-import sys
-import time
-import shutil
-import json
-import logging
-import threading
-import re
-from collections import defaultdict
-from concurrent .futures import ThreadPoolExecutor ,as_completed
-from PySide6 .QtWidgets import QFileDialog ,QMessageBox
-from PySide6 .QtCore import QObject ,Signal
-from palworld_save_tools .gvas import GvasFile
-from palworld_save_tools .palsav import decompress_sav_to_gvas
-from palworld_save_tools .paltypes import PALWORLD_TYPE_HINTS
-from palobject import SKP_PALWORLD_CUSTOM_PROPERTIES
-from palobject import MappingCacheObject ,toUUID
-from import_libs import backup_whole_directory ,run_with_loading
-import palworld_coord
-from i18n import t
+import os 
+import sys 
+import time 
+import shutil 
+import json 
+import logging 
+import threading 
+import re 
+from collections import defaultdict 
+from concurrent .futures import ThreadPoolExecutor ,as_completed 
+from PySide6 .QtWidgets import QFileDialog ,QMessageBox 
+from PySide6 .QtCore import QObject ,Signal 
+from palworld_save_tools .gvas import GvasFile 
+from palworld_save_tools .palsav import decompress_sav_to_gvas 
+from palworld_save_tools .paltypes import PALWORLD_TYPE_HINTS 
+from palobject import SKP_PALWORLD_CUSTOM_PROPERTIES 
+from palobject import MappingCacheObject ,toUUID 
+from import_libs import backup_whole_directory ,run_with_loading 
+import palworld_coord 
+from i18n import t 
 try :
-    from palworld_aio import constants
-    from palworld_aio .utils import sav_to_json ,json_to_sav ,extract_value ,sanitize_filename ,format_duration_short
+    from palworld_aio import constants 
+    from palworld_aio .utils import sav_to_json ,json_to_sav ,extract_value ,sanitize_filename ,format_duration_short 
 except ImportError :
-    from .import constants
-    from .utils import sav_to_json ,json_to_sav ,extract_value ,sanitize_filename ,format_duration_short
+    from .import constants 
+    from .utils import sav_to_json ,json_to_sav ,extract_value ,sanitize_filename ,format_duration_short 
 class SaveManager (QObject ):
     load_started =Signal ()
     load_finished =Signal (bool )
@@ -179,9 +179,7 @@ class SaveManager (QObject ):
             return duration 
         run_with_loading (lambda _ :None ,save_task )
     def _sanitize_for_alignment (self ,text ):
-        # Remove emojis, special Unicode characters, and other symbols that break monospace alignment
-        # Keep basic ASCII, Latin characters, and common punctuation
-        return re .sub (r'[^\x00-\x7F\u00C0-\u017F\u0080-\u00BF]', '', text )
+        return re .sub (r'[^\x00-\x7F\u00C0-\u017F\u0080-\u00BF]','',text )
     def _build_player_levels (self ):
         char_map =constants .loaded_level_json ['properties']['worldSaveData']['value'].get ('CharacterSaveParameterMap',{}).get ('value',[])
         uid_level_map =defaultdict (lambda :'?')
@@ -381,21 +379,19 @@ class SaveManager (QObject ):
         ch .setFormatter (formatter )
         logger .addHandler (fh )
         logger .addHandler (ch )
-        # Players log setup
         players_logger =logging .getLogger ('PlayersLogger')
         players_logger .handlers .clear ()
         players_logger .setLevel (logging .INFO )
-        players_logger .propagate =False
+        players_logger .propagate =False 
         players_fh =logging .FileHandler (players_log_path ,encoding ='utf-8')
         players_fh .setFormatter (logging .Formatter ('%(message)s'))
         players_logger .addHandler (players_fh )
-        # Add header to players.log
-        players_logger .info ('=' * 150)
-        players_logger .info (' ' * 60 + 'PLAYERS LOG')
-        players_logger .info ('=' * 150)
+        players_logger .info ('='*150 )
+        players_logger .info (' '*60 +'PLAYERS LOG')
+        players_logger .info ('='*150 )
         players_logger .info ('')
         players_logger .info (f"{'Player Name':<30} | {'Last Seen':<15} | {'Level':<5} | {'Pals':<5} | {'UID':<36} | {'Guild Name':<20} | {'Guild ID':<36}")
-        players_logger .info ('-' * 150)
+        players_logger .info ('-'*150 )
         tick =data_source ['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
         total_players =total_caught =total_owned =total_bases =active_guilds =0 
         if constants .srcGuildMapping :
@@ -428,12 +424,11 @@ class SaveManager (QObject ):
                     last =next ((p .get ('player_info',{}).get ('last_online_real_time')for p in players if p .get ('player_uid')==uid ),None )
                     lastseen ='Unknown'if last is None else format_duration_short ((tick -int (last ))/10000000.0 )
                     logger .info (f'Player: {pname } | UID: {uid } | Level: {level } | Caught: {caught } | Owned: {owned } | Encounters: {encounters } | Uniques: {uniques } | Last Online: {lastseen }')
-                    # Log to players.log in the specified format (sanitize player name for alignment)
                     sanitized_pname =self ._sanitize_for_alignment (pname )
-                    players_logger .info (f'{sanitized_pname:<30} | {lastseen:<15} | {level:<5} | {owned:<5} | {str(uid):<36} | {guild_name:<20} | {str(gid):<36}')
+                    players_logger .info (f'{sanitized_pname :<30} | {lastseen :<15} | {level :<5} | {owned :<5} | {str (uid ):<36} | {guild_name :<20} | {str (gid ):<36}')
                     total_players +=1 
                     total_caught +=caught 
-                    total_owned +=owned
+                    total_owned +=owned 
                 logger .info ('')
                 logger .info ('='*60 )
         total_worker_dropped =constants .PLAYER_PAL_COUNTS .get ('worker_dropped',0 )

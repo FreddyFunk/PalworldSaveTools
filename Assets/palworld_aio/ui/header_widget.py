@@ -78,32 +78,32 @@ class HeaderWidget (QWidget ):
         self .app_version_label .setToolTip ("Click to open GitHub repository")
         self .app_version_label .mousePressEvent =self ._open_github 
         layout .addWidget (self .app_version_label ,alignment =Qt .AlignVCenter )
-        self.game_version_label = QLabel(f"{nf.icons['nf-fa-save']} {game_version}")
-        self.game_version_label.setObjectName("gameVersionChip")
-        self.game_version_label.setFont(QFont("Hack Nerd Font", 11))
-        layout.addWidget(self.game_version_label, alignment=Qt.AlignVCenter)
-        info_btn = QToolButton()
-        info_btn.setObjectName("hdrBtn")
-        info_btn.setToolTip(t("about.title") if t else "About PST")
-        try:
-            info_btn.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxInformation))
-        except:
-            pass
-        info_btn.setIconSize(QSize(26, 26))
-        info_btn.clicked.connect(self.about_clicked.emit)
-        layout.addWidget(info_btn)
-        self.warn_btn = QToolButton()
-        self.warn_btn.setObjectName("hdrBtn")
-        self.warn_btn.setToolTip(f"Warnings (Palworld v{game_version})")
-        try:
-            self.warn_btn.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))
-        except:
-            pass
-        self.warn_btn.setStyleSheet("color: #FFD24D;")
-        self.warn_btn.setIconSize(QSize(26, 26))
-        self.warn_btn.setVisible(False)
-        layout.addWidget(self.warn_btn)
-        layout.addItem(QSpacerItem(20, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self .game_version_label =QLabel (f"{nf .icons ['nf-fa-save']} {game_version }")
+        self .game_version_label .setObjectName ("gameVersionChip")
+        self .game_version_label .setFont (QFont ("Hack Nerd Font",11 ))
+        layout .addWidget (self .game_version_label ,alignment =Qt .AlignVCenter )
+        info_btn =QToolButton ()
+        info_btn .setObjectName ("hdrBtn")
+        info_btn .setToolTip (t ("about.title")if t else "About PST")
+        try :
+            info_btn .setIcon (self .style ().standardIcon (QStyle .SP_MessageBoxInformation ))
+        except :
+            pass 
+        info_btn .setIconSize (QSize (26 ,26 ))
+        info_btn .clicked .connect (self .about_clicked .emit )
+        layout .addWidget (info_btn )
+        self .warn_btn =QToolButton ()
+        self .warn_btn .setObjectName ("hdrBtn")
+        self .warn_btn .setToolTip (f"Warnings (Palworld v{game_version })")
+        try :
+            self .warn_btn .setIcon (self .style ().standardIcon (QStyle .SP_MessageBoxWarning ))
+        except :
+            pass 
+        self .warn_btn .setStyleSheet ("color: #FFD24D;")
+        self .warn_btn .setIconSize (QSize (26 ,26 ))
+        self .warn_btn .setVisible (False )
+        layout .addWidget (self .warn_btn )
+        layout .addItem (QSpacerItem (20 ,10 ,QSizePolicy .Expanding ,QSizePolicy .Minimum ))
         self .sidebar_btn =QPushButton ("\u25C0")
         self .sidebar_btn .setObjectName ("controlChip")
         self .sidebar_btn .setFlat (True )
@@ -111,13 +111,13 @@ class HeaderWidget (QWidget ):
         self .sidebar_btn .setFont (QFont ("Consolas",14 ))
         self .sidebar_btn .clicked .connect (self .sidebar_toggle_clicked .emit )
         layout .addWidget (self .sidebar_btn )
-        theme_btn = QPushButton(nf.icons['nf-md-theme_light_dark'])
-        theme_btn.setObjectName("controlChip")
-        theme_btn.setFlat(True)
-        theme_btn.setToolTip(t("toggle_theme") if t else "Toggle Theme")
-        theme_btn.setFont(QFont("Hack Nerd Font", 14))
-        theme_btn.clicked.connect(self.theme_toggle_clicked.emit)
-        layout.addWidget(theme_btn)
+        theme_btn =QPushButton (nf .icons ['nf-md-theme_light_dark'])
+        theme_btn .setObjectName ("controlChip")
+        theme_btn .setFlat (True )
+        theme_btn .setToolTip (t ("toggle_theme")if t else "Toggle Theme")
+        theme_btn .setFont (QFont ("Hack Nerd Font",14 ))
+        theme_btn .clicked .connect (self .theme_toggle_clicked .emit )
+        layout .addWidget (theme_btn )
         minimize_btn =QPushButton (nf .icons ['nf-md-circle_medium'])
         minimize_btn .setObjectName ("controlChip")
         minimize_btn .setFlat (True )
@@ -219,4 +219,4 @@ class HeaderWidget (QWidget ):
         from ..widgets import MenuPopup 
         if self ._menu_popup is None :
             self ._menu_popup =MenuPopup (self )
-        return self ._menu_popup
+        return self ._menu_popup 

@@ -90,14 +90,14 @@ class MenuPopup (QWidget ):
     def _check_cursor_position (self ):
         cursor_pos =QGuiApplication .primaryScreen ().availableGeometry ().topLeft ()+QCursor .pos ()
         cursor_pos =QCursor .pos ()
-        over_button =None
+        over_button =None 
         for category ,btn in self .menu_buttons .items ():
             is_hovered =self ._is_point_in_widget (cursor_pos ,btn )
             btn .setProperty ("hovered",is_hovered )
             btn .style ().unpolish (btn )
             btn .style ().polish (btn )
             if is_hovered :
-                over_button =category
+                over_button =category 
         over_popup =self ._is_point_in_widget (cursor_pos ,self )
         over_submenu =self ._current_menu and self ._is_point_in_widget (cursor_pos ,self ._current_menu )
         if over_button and over_button !=self ._current_category :
@@ -147,7 +147,7 @@ class MenuPopup (QWidget ):
         """)
     def _create_menu_button (self ,key ,icon_key ,label ):
         btn =HoverMenuButton (key ,icon_key ,label ,self .container )
-        return btn
+        return btn 
     def set_menu_actions (self ,actions_dict ):
         self ._menu_actions =actions_dict 
     def _show_submenu (self ,category ,button ):

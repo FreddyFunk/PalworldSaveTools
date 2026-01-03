@@ -585,35 +585,26 @@ def update_gui_progress (step :int ,message :str ,pct :int =0 ):
         except Exception :
             pass 
 def spawn_aio_and_exit (venv_py :Path ):
-    """Launch palworld_aio and block until it closes."""
-    global splash_window, app
 
+    global splash_window ,app 
     try :
-        # Close splash window first if it exists
         if splash_window is not None :
             try :
                 splash_window .close ()
                 splash_window .deleteLater ()
             except Exception :
-                pass
-
-        # Quit the Qt application event loop if it's running
+                pass 
         if app is not None :
             try :
                 app .quit ()
                 app .processEvents ()
             except Exception :
-                pass
-
+                pass 
         main_py =PROJECT_DIR /"Assets"/"palworld_aio"/"main.py"
-
-        # Use subprocess.run() to block until palworld_aio closes
         result =subprocess .run (
-            [str (venv_py ),str (main_py )],
-            cwd =str (PROJECT_DIR )
+        [str (venv_py ),str (main_py )],
+        cwd =str (PROJECT_DIR )
         )
-
-        # Exit with the same code as palworld_aio
         sys .exit (result .returncode )
     except KeyboardInterrupt :
         if DEBUG :
@@ -678,7 +669,6 @@ def main ():
                         pass 
                 if get_config_value ("checkstartlogs",False ):
                     input ("Press Enter to continue to palworld_aio...")
-                # Launch palworld_aio directly
                 QTimer .singleShot (350 ,lambda :spawn_aio_and_exit (venv_py ))
             _signals .finished .connect (on_finished )
             _worker_thread =threading .Thread (target =backend_worker ,args =(venv_py ,_signals ),daemon =True )
@@ -768,7 +758,6 @@ def main ():
             if rc_final ==0 :
                 if get_config_value ("checkstartlogs",False ):
                     input ("Press Enter to continue to palworld_aio...")
-                # Launch palworld_aio directly
                 main_py =PROJECT_DIR /"Assets"/"palworld_aio"/"main.py"
                 try :
                     subprocess .run ([str (venv_py ),str (main_py )],cwd =str (PROJECT_DIR ))

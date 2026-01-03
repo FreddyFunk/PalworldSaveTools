@@ -1,4 +1,4 @@
-import sys ,os
+import sys ,os 
 sys .path .insert (0 ,os .path .abspath ("Assets"))
 sys .path .insert (0 ,os .path .abspath ("Assets/resources"))
 from cx_Freeze import setup ,Executable 

@@ -1,5 +1,5 @@
-import sys
-import os
+import sys 
+import os 
 os .environ ['QT_LOGGING_RULES']='*=false'
 os .environ ['QT_DEBUG_PLUGINS']='0'
 if getattr (sys ,'frozen',False ):
@@ -60,18 +60,13 @@ def run_aio ():
             init_language ('en_US')
     except Exception :
         init_language ('en_US')
-
-    # Check for CLI mode first
-    if len (sys .argv )>1 and not sys.argv[1].startswith('--'):
-        # Pure CLI mode - no GUI components
+    if len (sys .argv )>1 and not sys .argv [1 ].startswith ('--'):
         path_arg =' '.join (sys .argv [1 :]).strip ().strip ('"')
         print (f"Processing save file: {path_arg }")
-
-        # CLI-specific load_save without GUI components
         if constants .loaded_level_json is not None :
-            from palworld_aio .utils import restart_program
+            from palworld_aio .utils import restart_program 
             restart_program ()
-        p =path_arg
+        p =path_arg 
         if not p :
             print ("Error: No path provided")
             sys .exit (1 )
@@ -84,12 +79,11 @@ def run_aio ():
             print ("Error: Players folder not found")
             sys .exit (1 )
         print ("Loading save...")
-        constants .current_save_path =d
-        constants .backup_save_path =constants .current_save_path
-        import time
-        from palworld_aio .utils import sav_to_json
-        from palobject import MappingCacheObject ,toUUID
-
+        constants .current_save_path =d 
+        constants .backup_save_path =constants .current_save_path 
+        import time 
+        from palworld_aio .utils import sav_to_json 
+        from palobject import MappingCacheObject ,toUUID 
         t0 =time .perf_counter ()
         constants .loaded_level_json =sav_to_json (p )
         t1 =time .perf_counter ()
@@ -107,31 +101,30 @@ def run_aio ():
                 constants .srcGuildMapping .GroupSaveDataMap ={}
         except Exception as e :
             print (f"Error: {e }")
-            constants .srcGuildMapping =None
+            constants .srcGuildMapping =None 
         constants .base_guild_lookup ={}
         guild_name_map ={}
         if constants .srcGuildMapping :
             for gid_uuid ,gdata in constants .srcGuildMapping .GroupSaveDataMap .items ():
                 gid =str (gid_uuid )
                 guild_name =gdata ['value']['RawData']['value'].get ('guild_name','Unnamed Guild')
-                guild_name_map [gid .lower ()]=guild_name
+                guild_name_map [gid .lower ()]=guild_name 
                 for base_id_uuid in gdata ['value']['RawData']['value'].get ('base_ids',[]):
                     constants .base_guild_lookup [str (base_id_uuid )]={'GuildName':guild_name ,'GuildID':gid }
         print ("Loading done")
         base_path =constants .get_base_path ()
         log_folder =os .path .join (base_path ,'Scan Save Logger')
-        import shutil
+        import shutil 
         if os .path .exists (log_folder ):
             try :
                 shutil .rmtree (log_folder )
             except :
-                pass
+                pass 
         os .makedirs (log_folder ,exist_ok =True )
         player_pals_count ={}
         save_manager ._count_pals_found (data_source ,player_pals_count ,log_folder ,constants .current_save_path ,guild_name_map )
-        constants .PLAYER_PAL_COUNTS =player_pals_count
+        constants .PLAYER_PAL_COUNTS =player_pals_count 
         save_manager ._process_scan_log (data_source ,playerdir ,log_folder ,guild_name_map )
-
         print ("Running cleanup operations...")
         remove_invalid_items_from_save ()
         remove_invalid_pals_from_save ()
@@ -139,17 +132,14 @@ def run_aio ():
         delete_unreferenced_data ()
         delete_non_base_map_objects ()
         print ("Saving changes...")
-        # Direct synchronous save for CLI mode
         if constants .current_save_path and constants .loaded_level_json :
-            from import_libs import backup_whole_directory
-            from palworld_aio.utils import json_to_sav
-
+            from import_libs import backup_whole_directory 
+            from palworld_aio .utils import json_to_sav 
             backup_whole_directory (constants .backup_save_path ,'Backups/AllinOneTools')
             level_sav_path =os .path .join (constants .current_save_path ,'Level.sav')
             t0 =time .perf_counter ()
             json_to_sav (constants .loaded_level_json ,level_sav_path )
             t1 =time .perf_counter ()
-            # Handle player file deletions
             players_folder =os .path .join (constants .current_save_path ,'Players')
             for uid in constants .files_to_delete :
                 f =os .path .join (players_folder ,uid +'.sav')
@@ -157,49 +147,38 @@ def run_aio ():
                 try :
                     os .remove (f )
                 except FileNotFoundError :
-                    pass
+                    pass 
                 try :
                     os .remove (f_dps )
                 except FileNotFoundError :
-                    pass
+                    pass 
             constants .files_to_delete .clear ()
-            duration =t1 -t0
+            duration =t1 -t0 
             print (f'Changes saved successfully in {duration :.2f} seconds')
-        else:
+        else :
             print ("Error: No save file loaded")
         sys .exit (0 )
-
-    # Check for test loading popup argument
-    if '--test-loading-popup' in sys.argv:
-        from palworld_aio.widgets import LoadingPopup
-
-        app = QApplication.instance()
-        if app is None:
-            app = QApplication(sys.argv)
-
-        # Create and show the loading popup for testing
-        popup = LoadingPopup()
-        popup.show_with_fade()
-
-        # Keep it visible for 5 seconds, then fade out
-        def hide_popup():
-            popup.hide_with_fade(lambda: app.quit())
-
-        from PySide6.QtCore import QTimer
-        QTimer.singleShot(5000, hide_popup)
-
-        sys.exit(app.exec())
-
-    # GUI mode - no CLI arguments provided
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    if os.path.exists(constants.ICON_PATH):
-        app.setWindowIcon(QIcon(constants.ICON_PATH))
-    window = MainWindow()
-    center_window(window)
-    window.show()
-    sys.exit(app.exec())
+    if '--test-loading-popup'in sys .argv :
+        from palworld_aio .widgets import LoadingPopup 
+        app =QApplication .instance ()
+        if app is None :
+            app =QApplication (sys .argv )
+        popup =LoadingPopup ()
+        popup .show_with_fade ()
+        def hide_popup ():
+            popup .hide_with_fade (lambda :app .quit ())
+        from PySide6 .QtCore import QTimer 
+        QTimer .singleShot (5000 ,hide_popup )
+        sys .exit (app .exec ())
+    app =QApplication .instance ()
+    if app is None :
+        app =QApplication (sys .argv )
+    app .setStyle ('Fusion')
+    if os .path .exists (constants .ICON_PATH ):
+        app .setWindowIcon (QIcon (constants .ICON_PATH ))
+    window =MainWindow ()
+    center_window (window )
+    window .show ()
+    sys .exit (app .exec ())
 if __name__ =='__main__':
     run_aio ()
