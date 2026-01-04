@@ -321,6 +321,10 @@ def rename_guild (guild_id ,new_name ):
     for g in wsd ['GroupSaveDataMap']['value']:
         if are_equal_uuids (g ['key'],guild_id ):
             g ['value']['RawData']['value']['guild_name']=new_name 
+            gid_str =str (guild_id )
+            for base_id ,lookup_data in constants .base_guild_lookup .items ():
+                if lookup_data .get ('GuildID')==gid_str :
+                    constants .base_guild_lookup [base_id ]['GuildName']=new_name 
             return True 
     return False 
 def max_guild_level (guild_id ):

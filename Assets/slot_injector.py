@@ -54,7 +54,7 @@ class SlotNumUpdaterApp (QDialog ):
         self .browse_button .clicked .connect (self .browse_file )
         self .file_label =QLabel (t ("slot.select_level_sav"))
         self .file_entry =QLineEdit ()
-        self .file_entry .setPlaceholderText (t ("Path to Level.sav"))
+        self .file_entry .setPlaceholderText (t ("slot.path_placeholder"))
         input_grid .addWidget (self .browse_button ,0 ,0 )
         input_grid .addWidget (self .file_label ,0 ,1 ,alignment =Qt .AlignLeft )
         input_grid .addWidget (self .file_entry ,0 ,2 ,1 ,2 )

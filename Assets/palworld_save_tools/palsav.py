@@ -8,19 +8,19 @@ compressor =Compressor ()
 oozlib =OozLib ()
 z_lib =Zlib ()
 def configure_logging (debug :bool =False ):
-    if debug :
-        logger .remove ()
-        logger .add (
-        sys .stdout ,
-        colorize =True ,
-        level ="DEBUG",
-        format ="{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | <cyan>{name}</cyan>:<blue>{function}</blue>:{line} 🡆 {message}",
-        )
-    else :
-        logger .remove ()
-        logger .add (
-        sys .stdout ,format ="<level>{level}</level> 🡆 {message}",level ="INFO"
-        )
+    logger .remove ()
+    if sys .stdout is not None :
+        if debug :
+            logger .add (
+            sys .stdout ,
+            colorize =True ,
+            level ="DEBUG",
+            format ="{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | <cyan>{name}</cyan>:<blue>{function}</blue>:{line} 🡆 {message}",
+            )
+        else :
+            logger .add (
+            sys .stdout ,format ="<level>{level}</level> 🡆 {message}",level ="INFO"
+            )
 def decompress_sav_to_gvas (data :bytes ,debug :bool =False )->tuple [bytes ,int ]:
     configure_logging (debug )
     format =compressor .check_sav_format (data )

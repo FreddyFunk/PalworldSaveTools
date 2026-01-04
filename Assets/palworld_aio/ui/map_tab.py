@@ -843,12 +843,12 @@ class MapTab (QWidget ):
         coords =base_data .get ('coords',(0 ,0 ))
         info =f"""
         <b>{guild_name }</b><br>
-        Level: {guild_level }<br>
-        Admin: {leader_name }<br>
-        Members: {member_count }<br>
-        Base Camps: {base_position }/{total_bases }<br>
-        Base ID: {base_id }<br>
-        Location: X:{int (coords [0 ])}, Y:{int (coords [1 ])}
+        {t ('map.info.level')if t else 'Level:'} {guild_level }<br>
+        {t ('map.info.admin')if t else 'Admin:'} {leader_name }<br>
+        {t ('map.info.members')if t else 'Members:'} {member_count }<br>
+        {t ('map.info.base_camps')if t else 'Base Camps:'} {base_position }/{total_bases }<br>
+        {t ('map.info.base_id')if t else 'Base ID:'} {base_id }<br>
+        {t ('map.info.location')if t else 'Location:'} X:{int (coords [0 ])}, Y:{int (coords [1 ])}
         """
         self .info_label .setText (info .strip ())
     def _on_marker_clicked (self ,base_data ):

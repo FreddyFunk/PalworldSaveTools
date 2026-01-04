@@ -37,7 +37,6 @@ class InputDialog (QDialog ):
         self .result_value =self .input_field .text ()
         super ().accept ()
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :
@@ -81,7 +80,6 @@ class DaysInputDialog (QDialog ):
         self .result_value =self .spin_box .value ()
         super ().accept ()
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :
@@ -157,7 +155,6 @@ class KillNearestBaseDialog (QDialog ):
         clipboard =QApplication .clipboard ()
         clipboard .setText (self .output_text .toPlainText ())
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :
@@ -187,7 +184,6 @@ class ConfirmDialog (QDialog ):
         button_layout .addWidget (no_btn )
         layout .addLayout (button_layout )
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :
@@ -278,7 +274,6 @@ class PalDefenderDialog (QDialog ):
         self .output_text .setStyleSheet (f"background-color: {constants .GLASS }; color: {constants .TEXT };")
         layout .addWidget (self .output_text )
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :

@@ -3,19 +3,16 @@ QWidget ,QVBoxLayout ,QHBoxLayout ,QPushButton ,QFrame ,
 QGraphicsDropShadowEffect ,QMenu ,QLabel 
 )
 from PySide6 .QtCore import Qt ,QPoint ,Signal ,QTimer ,QEvent ,QRect 
-from PySide6 .QtGui import QFont ,QColor ,QCursor ,QEnterEvent ,QGuiApplication 
-try :
-    import nerdfont as nf 
-except :
-    class nf :
-        icons ={
-        'nf-md-file':'\U000f0214',
-        'nf-md-function':'\U000f0295',
-        'nf-md-map':'\U000f034d',
-        'nf-md-playlist_remove':'\U000f0413',
-        'nf-md-translate':'\U000f05ca',
-        'nf-md-chevron_right':'\U000f0142',
-        }
+from PySide6 .QtGui import QFont ,QColor ,QCursor ,QEnterEvent ,QGuiApplication ,QIcon 
+class nf :
+    icons ={
+    'nf-md-file':'📁',
+    'nf-md-function':'⚙️',
+    'nf-md-map':'🗺️',
+    'nf-md-playlist_remove':'🚫',
+    'nf-md-translate':'🌐',
+    'nf-md-chevron_right':'▶️',
+    }
 from i18n import t 
 try :
     from palworld_aio import constants 
@@ -166,6 +163,8 @@ class MenuPopup (QWidget ):
                 menu .addSeparator ()
             text ,callback =item [0 ],item [1 ]
             action =menu .addAction (text )
+            if len (item )>=3 and item [2 ]!='separator':
+                action .setIcon (QIcon (item [2 ]))
             action .triggered .connect (lambda checked ,cb =callback :self ._on_menu_action (cb ))
         btn_pos =button .mapToGlobal (QPoint (button .width (),0 ))
         self ._current_menu =menu 

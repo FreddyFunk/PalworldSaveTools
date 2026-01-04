@@ -52,7 +52,6 @@ MANAGEMENT_TOOL_KEYS =[
 "tool.restore_map",
 ]
 def center_on_parent (dialog ):
-
     parent =dialog .parent ()
     size =dialog .sizeHint ()
     if not size .isValid ():

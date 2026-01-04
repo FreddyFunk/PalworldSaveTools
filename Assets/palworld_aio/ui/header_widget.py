@@ -84,19 +84,19 @@ class HeaderWidget (QWidget ):
         self .game_version_label .setObjectName ("gameVersionChip")
         self .game_version_label .setFont (QFont ("Hack Nerd Font",11 ))
         layout .addWidget (self .game_version_label ,alignment =Qt .AlignVCenter )
-        info_btn =QToolButton ()
-        info_btn .setObjectName ("hdrBtn")
-        info_btn .setToolTip (t ("about.title")if t else "About PST")
+        self .info_btn =QToolButton ()
+        self .info_btn .setObjectName ("hdrBtn")
+        self .info_btn .setToolTip (t ("about.title")if t else "About PST")
         try :
-            info_btn .setIcon (self .style ().standardIcon (QStyle .SP_MessageBoxInformation ))
+            self .info_btn .setIcon (self .style ().standardIcon (QStyle .SP_MessageBoxInformation ))
         except :
             pass 
-        info_btn .setIconSize (QSize (26 ,26 ))
-        info_btn .clicked .connect (self .about_clicked .emit )
-        layout .addWidget (info_btn )
+        self .info_btn .setIconSize (QSize (26 ,26 ))
+        self .info_btn .clicked .connect (self .about_clicked .emit )
+        layout .addWidget (self .info_btn )
         self .warn_btn =QToolButton ()
         self .warn_btn .setObjectName ("hdrBtn")
-        self .warn_btn .setToolTip (f"Warnings (Palworld v{game_version })")
+        self .warn_btn .setToolTip (t ("warning.title",game_version =game_version )if t else f"Warnings (Palworld v{game_version })")
         try :
             self .warn_btn .setIcon (self .style ().standardIcon (QStyle .SP_MessageBoxWarning ))
         except :
@@ -106,48 +106,48 @@ class HeaderWidget (QWidget ):
         self .warn_btn .setVisible (False )
         layout .addWidget (self .warn_btn )
         layout .addItem (QSpacerItem (20 ,10 ,QSizePolicy .Expanding ,QSizePolicy .Minimum ))
-        theme_btn =QPushButton (nf .icons ['nf-md-theme_light_dark'])
-        theme_btn .setObjectName ("themeChip")
-        theme_btn .setFlat (True )
-        theme_btn .setToolTip (t ("toggle_theme")if t else "Toggle Theme")
-        theme_btn .setFont (QFont ("Hack Nerd Font",14 ))
-        theme_btn .clicked .connect (self .theme_toggle_clicked .emit )
-        layout .addWidget (theme_btn )
-        discord_btn =QPushButton (nf .icons ['nf-fa-discord'])
-        discord_btn .setObjectName ("discordChip")
-        discord_btn .setFlat (True )
-        discord_btn .setToolTip ("Join Discord")
-        discord_btn .setFont (QFont ("Hack Nerd Font",14 ))
-        discord_btn .clicked .connect (self ._open_discord )
-        layout .addWidget (discord_btn )
-        minimize_btn =QPushButton (nf .icons ['nf-md-circle_medium'])
-        minimize_btn .setObjectName ("controlChip")
-        minimize_btn .setFlat (True )
-        minimize_btn .setToolTip ("Minimize")
-        minimize_btn .setFont (QFont ("Hack Nerd Font",14 ))
-        minimize_btn .clicked .connect (self .minimize_clicked .emit )
-        layout .addWidget (minimize_btn )
-        maximize_btn =QPushButton (nf .icons ['nf-fa-window_maximize'])
-        maximize_btn .setObjectName ("controlChip")
-        maximize_btn .setFlat (True )
-        maximize_btn .setToolTip ("Maximize")
-        maximize_btn .setFont (QFont ("Hack Nerd Font",14 ))
-        maximize_btn .clicked .connect (self .maximize_clicked .emit )
-        layout .addWidget (maximize_btn )
-        close_btn =QPushButton (nf .icons ['nf-fa-close'])
-        close_btn .setObjectName ("controlChip")
-        close_btn .setFlat (True )
-        close_btn .setToolTip ("Close")
-        close_btn .setFont (QFont ("Hack Nerd Font",14 ))
-        close_btn .clicked .connect (self .close_clicked .emit )
-        layout .addWidget (close_btn )
+        self .theme_btn =QPushButton (nf .icons ['nf-md-theme_light_dark'])
+        self .theme_btn .setObjectName ("themeChip")
+        self .theme_btn .setFlat (True )
+        self .theme_btn .setToolTip (t ("toggle_theme")if t else "Toggle Theme")
+        self .theme_btn .setFont (QFont ("Hack Nerd Font",14 ))
+        self .theme_btn .clicked .connect (self .theme_toggle_clicked .emit )
+        layout .addWidget (self .theme_btn )
+        self .discord_btn =QPushButton (nf .icons ['nf-fa-discord'])
+        self .discord_btn .setObjectName ("discordChip")
+        self .discord_btn .setFlat (True )
+        self .discord_btn .setToolTip (t ("button.discord")if t else "Join Discord")
+        self .discord_btn .setFont (QFont ("Hack Nerd Font",14 ))
+        self .discord_btn .clicked .connect (self ._open_discord )
+        layout .addWidget (self .discord_btn )
+        self .minimize_btn =QPushButton (nf .icons ['nf-md-circle_medium'])
+        self .minimize_btn .setObjectName ("controlChip")
+        self .minimize_btn .setFlat (True )
+        self .minimize_btn .setToolTip (t ("button.minimize")if t else "Minimize")
+        self .minimize_btn .setFont (QFont ("Hack Nerd Font",14 ))
+        self .minimize_btn .clicked .connect (self .minimize_clicked .emit )
+        layout .addWidget (self .minimize_btn )
+        self .maximize_btn =QPushButton (nf .icons ['nf-fa-window_maximize'])
+        self .maximize_btn .setObjectName ("controlChip")
+        self .maximize_btn .setFlat (True )
+        self .maximize_btn .setToolTip (t ("button.maximize")if t else "Maximize")
+        self .maximize_btn .setFont (QFont ("Hack Nerd Font",14 ))
+        self .maximize_btn .clicked .connect (self .maximize_clicked .emit )
+        layout .addWidget (self .maximize_btn )
+        self .close_btn =QPushButton (nf .icons ['nf-fa-close'])
+        self .close_btn .setObjectName ("controlChip")
+        self .close_btn .setFlat (True )
+        self .close_btn .setToolTip (t ("button.close")if t else "Close")
+        self .close_btn .setFont (QFont ("Hack Nerd Font",14 ))
+        self .close_btn .clicked .connect (self .close_clicked .emit )
+        layout .addWidget (self .close_btn )
     def _open_github (self ,event ):
         import webbrowser 
         import webbrowser 
         webbrowser .open ("https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest")
     def _open_discord (self ):
         import webbrowser 
-        webbrowser .open ("https://discord.gg/YWZFPy9G8J")
+        webbrowser .open ("https://discord.gg/sYcZwcT4cT")
     def update_logo (self ):
         base_path =constants .get_assets_path ()
         logo_name ='PalworldSaveTools_Blue.png'if self .is_dark_mode else 'PalworldSaveTools_Black.png'
@@ -203,9 +203,24 @@ class HeaderWidget (QWidget ):
         btn_pos =self .menu_chip_btn .mapToGlobal (QPoint (0 ,self .menu_chip_btn .height ()))
         self ._menu_popup .show_at (btn_pos )
     def refresh_labels (self ):
+        tools_version ,game_version =get_versions ()
         if hasattr (self ,'menu_chip_btn'):
             self .menu_chip_btn .setText (f"{nf .icons ['nf-md-menu']} {t ('menu_button')if t else 'Menu'}")
             self .menu_chip_btn .setToolTip (t ("Open Menu")if t else "Open Menu")
+        if hasattr (self ,'info_btn'):
+            self .info_btn .setToolTip (t ("about.title")if t else "About PST")
+        if hasattr (self ,'warn_btn'):
+            self .warn_btn .setToolTip (t ("warning.title",game_version =game_version )if t else f"Warnings (Palworld v{game_version })")
+        if hasattr (self ,'theme_btn'):
+            self .theme_btn .setToolTip (t ("toggle_theme")if t else "Toggle Theme")
+        if hasattr (self ,'discord_btn'):
+            self .discord_btn .setToolTip (t ("button.discord")if t else "Join Discord")
+        if hasattr (self ,'minimize_btn'):
+            self .minimize_btn .setToolTip (t ("button.minimize")if t else "Minimize")
+        if hasattr (self ,'maximize_btn'):
+            self .maximize_btn .setToolTip (t ("button.maximize")if t else "Maximize")
+        if hasattr (self ,'close_btn'):
+            self .close_btn .setToolTip (t ("button.close")if t else "Close")
     def set_menu_actions (self ,actions_dict ):
         from ..widgets import MenuPopup 
         if self ._menu_popup is None :

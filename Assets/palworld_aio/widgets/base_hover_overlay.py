@@ -83,12 +83,12 @@ class BaseHoverOverlay (QWidget ):
         base_id =str (base_data .get ('base_id',''))[:16 ]+'...'
         coords =base_data .get ('coords',(0 ,0 ))
         self .guild_label .setText (guild_name )
-        self .level_label .setText (f"Level: {guild_level }")
-        self .leader_label .setText (f"Admin: {leader_name }")
-        self .members_label .setText (f"Members: {member_count }")
-        self .bases_label .setText (f"Base Camps: {base_position }/{total_bases }")
-        self .base_id_label .setText (f"Base ID: {base_id }")
-        self .coords_label .setText (f"Location: X:{int (coords [0 ])}, Y:{int (coords [1 ])}")
+        self .level_label .setText (f"{t ('map.info.level')if t else 'Level:'} {guild_level }")
+        self .leader_label .setText (f"{t ('map.info.admin')if t else 'Admin:'} {leader_name }")
+        self .members_label .setText (f"{t ('map.info.members')if t else 'Members:'} {member_count }")
+        self .bases_label .setText (f"{t ('map.info.base_camps')if t else 'Base Camps:'} {base_position }/{total_bases }")
+        self .base_id_label .setText (f"{t ('map.info.base_id')if t else 'Base ID:'} {base_id }")
+        self .coords_label .setText (f"{t ('map.info.location')if t else 'Location:'} X:{int (coords [0 ])}, Y:{int (coords [1 ])}")
         self .adjustSize ()
         offset_x =20 
         offset_y =-self .height ()//2 

@@ -21,7 +21,8 @@ def get_guilds ():
             continue 
         gid =str (g ['key'])
         gname =g ['value']['RawData']['value'].get ('guild_name','Unknown')
-        out .append ({'id':gid ,'name':gname })
+        glevel =g ['value']['RawData']['value'].get ('base_camp_level',1 )
+        out .append ({'id':gid ,'name':gname ,'level':glevel })
     return out 
 def get_guild_members (gid ):
     if not constants .loaded_level_json :

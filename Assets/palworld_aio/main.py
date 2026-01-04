@@ -4,10 +4,37 @@ import traceback
 os .environ ['QT_LOGGING_RULES']='*=false'
 os .environ ['QT_DEBUG_PLUGINS']='0'
 if getattr (sys ,'frozen',False ):
+    class MockLogger :
+        def __getattr__ (self ,name ):
+            return lambda *args ,**kwargs :None 
+        def remove (self ):
+            pass 
+        def add (self ,*args ,**kwargs ):
+            pass 
+    sys .modules ['loguru']=type ('MockModule',(),{'logger':MockLogger ()})()
+    sys .modules ['loguru.logger']=MockLogger ()
+    import io 
+    class MockStdin :
+        def read (self ,size =-1 ):
+            return ""
+        def readline (self ,size =-1 ):
+            return "\n"
+        def readlines (self ,hint =-1 ):
+            return []
+        def __iter__ (self ):
+            return iter ([])
+        def __next__ (self ):
+            raise StopIteration 
+    sys .stdin =MockStdin ()
+    sys .stdout =io .StringIO ()
+    sys .stderr =io .StringIO ()
+if getattr (sys ,'frozen',False ):
     base_dir =os .path .dirname (sys .executable )
-    assets_dir =os .path .join (base_dir ,"Assets")
 else :
     base_dir =os .path .dirname (os .path .dirname (os .path .abspath (__file__ )))
+if getattr (sys ,'frozen',False ):
+    assets_dir =os .path .join (base_dir ,"Assets")
+else :
     assets_dir =base_dir if os .path .basename (base_dir )=="Assets"else os .path .join (base_dir ,"Assets")
 if assets_dir not in sys .path :
     sys .path .insert (0 ,assets_dir )

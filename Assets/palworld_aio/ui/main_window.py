@@ -140,8 +140,8 @@ class MainWindow (QMainWindow ):
         self .players_panel =SearchPanel (
         'deletion.search_players',
         ['deletion.col.player_name','deletion.col.last_seen','deletion.col.level',
-        'deletion.col.pals','','deletion.col.guild_name','deletion.col.guild_id'],
-        [140 ,120 ,60 ,60 ,150 ,180 ,180 ]
+        'deletion.col.pals','deletion.col.uid','deletion.col.guild_name','deletion.col.guild_id','deletion.col.guild_level'],
+        [140 ,120 ,60 ,60 ,150 ,180 ,180 ,60 ]
         )
         self .players_panel .item_selected .connect (self ._on_player_selected )
         self .players_panel .tree .customContextMenuRequested .connect (self ._show_player_context_menu )
@@ -155,8 +155,8 @@ class MainWindow (QMainWindow ):
         splitter =QSplitter (Qt .Vertical )
         self .guilds_panel =SearchPanel (
         'deletion.search_guilds',
-        ['deletion.col.guild_name','deletion.col.guild_id'],
-        [200 ,300 ]
+        ['deletion.col.guild_name','deletion.col.guild_id','deletion.col.guild_level'],
+        [200 ,300 ,60 ]
         )
         self .guilds_panel .item_selected .connect (self ._on_guild_selected )
         self .guilds_panel .tree .customContextMenuRequested .connect (self ._show_guild_context_menu )
@@ -164,7 +164,7 @@ class MainWindow (QMainWindow ):
         self .guild_members_panel =SearchPanel (
         'deletion.guild_members',
         ['deletion.col.member','deletion.col.last_seen','deletion.col.level',
-        'deletion.col.pals',''],
+        'deletion.col.pals','deletion.col.uid'],
         [200 ,120 ,60 ,100 ,300 ]
         )
         self .guild_members_panel .item_selected .connect (self ._on_guild_member_selected )
@@ -179,8 +179,8 @@ class MainWindow (QMainWindow ):
         layout .setContentsMargins (10 ,10 ,10 ,10 )
         self .bases_panel =SearchPanel (
         'deletion.search_bases',
-        ['deletion.col.base_id','deletion.col.guild_id','deletion.col.guild_name'],
-        [200 ,250 ,250 ]
+        ['deletion.col.base_id','deletion.col.guild_id','deletion.col.guild_name','deletion.col.guild_level'],
+        [200 ,200 ,200 ,100 ]
         )
         self .bases_panel .item_selected .connect (self ._on_base_selected )
         self .bases_panel .tree .customContextMenuRequested .connect (self ._show_base_context_menu )
@@ -264,7 +264,16 @@ class MainWindow (QMainWindow ):
         (t ('deletion.menu.save_exclusions')if t else 'Save Exclusions',self ._save_exclusions ),
         ],
         'languages':[
-        (t (f'lang.{code }')if t else code ,partial (self ._change_language ,code ))
+        (t (f'lang.{code }')if t else code ,partial (self ._change_language ,code ),{
+        'en_US':'🇺🇸',
+        'zh_CN':'🇨🇳',
+        'ru_RU':'🇷🇺',
+        'fr_FR':'🇫🇷',
+        'es_ES':'🇪🇸',
+        'de_DE':'🇩🇪',
+        'ja_JP':'🇯🇵',
+        'ko_KR':'🇰🇷'
+        }[code ])
         for code in ['en_US','zh_CN','ru_RU','fr_FR','es_ES','de_DE','ja_JP','ko_KR']
         ],
         }
@@ -446,8 +455,10 @@ class MainWindow (QMainWindow ):
             self .refresh_all ()
             self .results_widget .refresh_stats_before ()
             self .status_bar .showMessage (t ('status.loaded')if t else 'Save loaded successfully',5000 )
+            QMessageBox .information (self ,t ('success.title'),t ('save.loaded'))
         else :
             self .status_bar .showMessage (t ('status.load_failed')if t else 'Failed to load save',5000 )
+            QMessageBox .critical (self ,t ('error.title'),t ('save.load_failed'))
     def _on_save_finished (self ,duration ):
         self .status_bar .showMessage (f"{t ('status.saved')if t else 'Save completed'} ({duration :.2f}s)",5000 )
         QMessageBox .information (self ,t ('success.title'),t ('save.complete'))
@@ -467,18 +478,22 @@ class MainWindow (QMainWindow ):
         for uid ,name ,gid ,lastseen ,level in players :
             pals =constants .PLAYER_PAL_COUNTS .get (uid .replace ('-','').lower (),0 )
             gname =save_manager .get_guild_name_by_id (gid )
-            self .players_panel .add_item ([name ,lastseen ,level ,pals ,uid ,gname ,gid ])
+            glevel =save_manager .get_guild_level_by_id (gid )
+            is_leader =save_manager .is_player_guild_leader (gid ,uid )
+            display_name =f'[L] {name }'if is_leader else name 
+            self .players_panel .add_item ([display_name ,lastseen ,level ,pals ,uid ,gname ,gid ,glevel ])
     def _refresh_guilds (self ):
         self .guilds_panel .clear ()
         self .guild_members_panel .clear ()
         guilds =get_guilds ()
         for g in guilds :
-            self .guilds_panel .add_item ([g ['name'],g ['id']])
+            self .guilds_panel .add_item ([g ['name'],g ['id'],g ['level']])
     def _refresh_bases (self ):
         self .bases_panel .clear ()
         bases =get_bases ()
         for b in bases :
-            self .bases_panel .add_item ([b ['id'],b ['guild_id'],b ['guild_name']])
+            glevel =save_manager .get_guild_level_by_id (b ['guild_id'])
+            self .bases_panel .add_item ([b ['id'],b ['guild_id'],b ['guild_name'],glevel ])
     def _refresh_map (self ):
         if hasattr (self ,'map_tab'):
             self .map_tab .refresh ()
@@ -593,6 +608,7 @@ class MainWindow (QMainWindow ):
         menu .addAction (self ._create_action (t ('player.viewing_cage.menu'),lambda :self ._unlock_viewing_cage (item .text (4 ))))
         menu .addAction (self ._create_action (t ('player.reset_timestamp.menu')if t else 'Reset Timestamp',lambda :self ._reset_player_timestamp (item .text (4 ))))
         menu .addSeparator ()
+        menu .addAction (self ._create_action (t ('guild.ctx.make_leader'),lambda :self ._make_leader (item .text (6 ),item .text (4 ))))
         menu .addAction (self ._create_action (t ('deletion.ctx.delete_guild'),lambda :self ._delete_guild (item .text (6 ))))
         menu .addAction (self ._create_action (t ('guild.rename.menu'),lambda :self ._rename_guild_action (item .text (6 ),item .text (5 ))))
         menu .addAction (self ._create_action (t ('guild.menu.max_level'),lambda :self ._max_guild_level (item .text (6 ))))
@@ -636,6 +652,8 @@ class MainWindow (QMainWindow ):
         menu .addAction (self ._create_action (t ('deletion.ctx.add_exclusion'),lambda :self ._add_exclusion ('bases',item .text (0 ))))
         menu .addAction (self ._create_action (t ('deletion.ctx.remove_exclusion'),lambda :self ._remove_exclusion ('bases',item .text (0 ))))
         menu .addAction (self ._create_action (t ('deletion.ctx.delete_base'),lambda :self ._delete_base (item .text (0 ),item .text (1 ))))
+        menu .addAction (self ._create_action (t ('guild.rename.menu'),lambda :self ._rename_guild_action (item .text (1 ),item .text (2 ))))
+        menu .addAction (self ._create_action (t ('guild.menu.max_level'),lambda :self ._max_guild_level (item .text (1 ))))
         menu .addAction (self ._create_action (t ('export.base'),lambda :self ._export_base (item .text (0 ))))
         menu .addAction (self ._create_action (t ('import.base'),lambda :self ._import_base (item .text (1 ))))
         menu .addAction (self ._create_action (t ('clone.base'),lambda :self ._clone_base (item .text (0 ),item .text (1 ))))
@@ -698,14 +716,24 @@ class MainWindow (QMainWindow ):
             QMessageBox .information (self ,t ('success.title'),t ('world.rename.done'))
     def _delete_empty_guilds (self ):
         if not constants .loaded_level_json :
-            QMessageBox .warning (self ,t ('Error'),t ('error.no_save_loaded'))
+            msg_box =QMessageBox (self )
+            msg_box .setWindowTitle (t ('error.title')if t else 'Error')
+            msg_box .setText (t ('error.no_save_loaded')if t else 'No save file loaded.')
+            msg_box .setIcon (QMessageBox .Warning )
+            msg_box .addButton (t ('button.ok')if t else 'OK',QMessageBox .AcceptRole )
+            msg_box .exec ()
             return 
         removed =delete_empty_guilds (self )
         self .refresh_all ()
         QMessageBox .information (self ,t ('Done'),t ('deletion.empty_guilds_removed',count =removed ))
     def _delete_inactive_bases (self ):
         if not constants .loaded_level_json :
-            QMessageBox .warning (self ,t ('Error')if t else 'Error',t ('error.no_save_loaded')if t else 'No save file loaded.')
+            msg_box =QMessageBox (self )
+            msg_box .setWindowTitle (t ('error.title')if t else 'Error')
+            msg_box .setText (t ('error.no_save_loaded')if t else 'No save file loaded.')
+            msg_box .setIcon (QMessageBox .Warning )
+            msg_box .addButton (t ('button.ok')if t else 'OK',QMessageBox .AcceptRole )
+            msg_box .exec ()
             return 
         days =DaysInputDialog .get_days (
         t ('deletion.inactive_bases.title')if t else 'Delete Inactive Bases',
@@ -737,7 +765,7 @@ class MainWindow (QMainWindow ):
                 if delete_base_camp (b ,gid ):
                     cnt +=1 
         if cnt >0 :
-            print (f'Deleted {cnt } orphaned bases')
+            QMessageBox .information (self ,t ('Done'),f'Deleted {cnt } orphaned bases')
     def _delete_duplicate_players (self ):
         if not constants .loaded_level_json :
             QMessageBox .warning (self ,t ('Error'),t ('error.no_save_loaded'))
@@ -899,6 +927,7 @@ class MainWindow (QMainWindow ):
         if old_lang !=code :
             self .user_settings ["language"]=code 
             self ._save_user_settings ()
+            load_resources (code )
             set_language (code )
             self .setWindowTitle (t ('deletion.title')if t else 'All-in-One Tools')
             self ._update_tab_texts ()
@@ -957,12 +986,14 @@ class MainWindow (QMainWindow ):
             return 
         delete_player (uid )
         self .refresh_all ()
+        QMessageBox .information (self ,t ('Done'),t ('deletion.player_deleted'))
     def _delete_guild (self ,gid ):
         if gid in constants .exclusions .get ('guilds',[]):
             QMessageBox .warning (self ,t ('warning.title')if t else 'Warning',t ('deletion.warning.protected_guild')if t else f'Guild {gid } is in exclusion list and cannot be deleted.')
             return 
         delete_guild (gid )
         self .refresh_all ()
+        QMessageBox .information (self ,t ('Done'),t ('deletion.guild_deleted'))
     def _delete_base (self ,bid ,gid ):
         if bid in constants .exclusions .get ('bases',[]):
             QMessageBox .warning (self ,t ('warning.title')if t else 'Warning',t ('deletion.warning.protected_base')if t else f'Base {bid } is in exclusion list and cannot be deleted.')
@@ -975,6 +1006,7 @@ class MainWindow (QMainWindow ):
                 delete_base_camp (b ,gid )
                 break 
         self .refresh_all ()
+        QMessageBox .information (self ,t ('Done'),t ('deletion.base_deleted'))
     def _rename_player (self ,uid ,old_name ):
         new_name =InputDialog .get_text (t ('player.rename.title'),t ('player.rename.prompt'),self )
         if new_name :
@@ -999,6 +1031,7 @@ class MainWindow (QMainWindow ):
     def _make_leader (self ,gid ,uid ):
         make_member_leader (gid ,uid )
         self .refresh_all ()
+        QMessageBox .information (self ,t ('Done'),t ('guild.leader_changed'))
     def _import_base_to_guild (self ,gid ):
         file_paths ,_ =QFileDialog .getOpenFileNames (self ,'Select Base JSON Files','','JSON Files (*.json)')
         if not file_paths :
