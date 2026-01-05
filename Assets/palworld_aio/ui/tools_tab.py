@@ -78,7 +78,6 @@ def center_on_parent (dialog ):
 class ConversionOptionsDialog (QDialog ):
     def __init__ (self ,parent =None ):
         super ().__init__ (parent )
-        self .setAttribute (Qt .WA_StyledBackground ,True )
         self .selected_option =None
         self .setWindowTitle (t ("tool.convert.saves")if t else "Convert Save Files")
         self .setModal (True )
@@ -124,7 +123,7 @@ class ConversionOptionsDialog (QDialog ):
         glass_layout .addWidget (cancel_btn ,alignment =Qt .AlignCenter )
         main_layout .addWidget (glass )
     def _on_option_selected (self ,index ):
-        self .selected_option =index
+        self .selected_option =index 
         self .accept ()
     def keyPressEvent (self ,event ):
         if event .key ()==Qt .Key_Escape :
@@ -143,9 +142,7 @@ class ConversionOptionsDialog (QDialog ):
                     self .setStyleSheet (qss_content )
             except Exception as e :
                 print (f"Failed to load theme {theme_file }: {e }")
-                self ._apply_fallback_styles (is_dark )
-        else :
-            self ._apply_fallback_styles (is_dark )
+        self ._apply_fallback_styles (is_dark )
     def _apply_fallback_styles (self ,is_dark ):
         if is_dark :
             bg_gradient ="qlineargradient(spread:pad, x1:0.0, y1:0.0, x2:1.0, y2:1.0, stop:0 #07080a, stop:0.5 #08101a, stop:1 #05060a)"
@@ -165,8 +162,8 @@ class ToolButton (QWidget ):
         self .setMouseTracking (True )
         self .is_hovered =False 
         self .hover_animation =None 
-        self ._current_bg_opacity =0.0
-        self ._current_text_opacity =0.8
+        self ._current_bg_opacity =0.0 
+        self ._current_text_opacity =0.8 
         layout =QHBoxLayout (self )
         layout .setContentsMargins (8 ,6 ,8 ,6 )
         layout .setSpacing (12 )
@@ -202,7 +199,7 @@ class ToolButton (QWidget ):
             self ._bg_animation =QPropertyAnimation (self ,b"bg_opacity")
             self ._bg_animation .setDuration (200 )
             self ._bg_animation .setEasingCurve (QEasingCurve .InOutQuad )
-        target_opacity =0.3 if hovering else 0.0
+        target_opacity =0.3 if hovering else 0.0 
         self ._bg_animation .setStartValue (self ._current_bg_opacity if hasattr (self ,'_current_bg_opacity')else 0.0 )
         self ._bg_animation .setEndValue (target_opacity )
         self ._bg_animation .start ()
@@ -333,7 +330,7 @@ class ToolsTab (QWidget ):
             raise 
     def _run_converting_tool (self ,index ):
         try :
-            dialog =None
+            dialog =None 
             if index ==0 :
                 options_dialog =ConversionOptionsDialog (self )
                 self ._animate_dialog_slide_in (options_dialog )
@@ -362,7 +359,7 @@ class ToolsTab (QWidget ):
             print (f"Error running converting tool {index }: {e }")
     def _run_management_tool (self ,index ):
         try :
-            dialog =None
+            dialog =None 
             if index ==0 :
                 dialog =self ._import_and_call ("slot_injector","slot_injector")
             elif index ==1 :
@@ -380,7 +377,7 @@ class ToolsTab (QWidget ):
             print (f"Error running management tool {index }: {e }")
     def _animate_dialog_slide_in (self ,dialog ):
         if dialog is None :
-            return
+            return 
         dialog .adjustSize ()
         center_window (dialog )
         dialog .setWindowOpacity (0.0 )

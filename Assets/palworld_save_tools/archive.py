@@ -5,7 +5,8 @@ import struct
 import sys 
 import uuid 
 from typing import Any ,Callable ,Optional ,Sequence ,Union 
-from loguru import logger 
+import logging 
+logger =logging .getLogger (__name__ )
 _float =float 
 _bytes =bytes 
 try :

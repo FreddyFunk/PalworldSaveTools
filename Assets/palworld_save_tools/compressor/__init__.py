@@ -1,6 +1,7 @@
 from typing import Tuple 
-from loguru import logger 
+import logging 
 from palworld_save_tools .compressor .enums import SaveType ,MagicBytes 
+logger =logging .getLogger (__name__ )
 class Compressor :
     def __init__ (self ):
         pass 

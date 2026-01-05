@@ -172,14 +172,12 @@ class GamePassSaveFixWidget (QWidget ):
     @staticmethod 
     def unzip_file (zip_file_path ,extract_to_folder ):
         os .makedirs (extract_to_folder ,exist_ok =True )
-        print (f"DEBUG: Attempting extraction of {zip_file_path }...")
         try :
             with zipfile .ZipFile (zip_file_path ,"r")as zip_ref :
                 zip_ref .extractall (extract_to_folder )
-            print ("DEBUG: Extraction completed successfully.")
             return True 
         except Exception as e :
-            print (f"DEBUG: Error extracting zip file {zip_file_path }: {e }")
+            print (f"Error extracting zip file {zip_file_path }: {e }")
             return False 
     def convert_save_files (self ):
         saveFolders =self .list_folders_in_directory ("./saves")
@@ -241,12 +239,6 @@ class GamePassSaveFixWidget (QWidget ):
             try :
                 import logging 
                 logging .disable (logging .CRITICAL )
-                try :
-                    from loguru import logger 
-                    logger .remove ()
-                    logger .add (lambda msg :None ,level ="CRITICAL",enqueue =True )
-                except :
-                    pass 
                 from palworld_save_tools .commands import convert 
                 old_argv =sys .argv 
                 sys .argv =["convert",save_path ]

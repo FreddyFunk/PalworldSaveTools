@@ -1,6 +1,7 @@
 from typing import Any 
-from loguru import logger 
+import logging 
 from palworld_save_tools .archive import *
+logger =logging .getLogger (__name__ )
 def decode (
 reader :FArchiveReader ,type_name :str ,size :int ,path :str 
 )->dict [str ,Any ]:

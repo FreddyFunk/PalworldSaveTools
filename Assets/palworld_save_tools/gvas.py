@@ -1,7 +1,8 @@
 import base64 
 from typing import Any ,Callable 
-from loguru import logger 
+import logging 
 from palworld_save_tools .archive import FArchiveReader ,FArchiveWriter 
+logger =logging .getLogger (__name__ )
 def custom_version_reader (reader :FArchiveReader ):
     return (reader .guid (),reader .i32 ())
 def custom_version_writer (writer :FArchiveWriter ,value :tuple [str ,int ]):

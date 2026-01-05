@@ -26,7 +26,7 @@ def find_pyside6_assets ():
     return None 
 build_exe_options ={
 "packages":[
-"i18n","pygame","loguru","subprocess","pathlib","shutil","matplotlib","pandas",
+"i18n","pygame","subprocess","pathlib","shutil","matplotlib","pandas",
 "customtkinter","cityhash","tkinter","json","uuid","time","datetime",
 "struct","enum","collections","itertools","math","zlib","gzip","zipfile",
 "threading","multiprocessing","io","base64","binascii","hashlib","hmac",
@@ -59,7 +59,7 @@ ps6_a =find_pyside6_assets ()
 if ps6_a :build_exe_options ["include_files"].append (ps6_a )
 setup (
 name ="PalworldSaveTools",
-version ="1.1.50",
+version="1.1.50",
 options ={"build_exe":build_exe_options },
 executables =[
 Executable (

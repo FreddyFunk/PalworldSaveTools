@@ -313,7 +313,8 @@ QCheckBox {
 
 /* QDialog */
 QDialog {
-    background: white;
+    background: qlineargradient(spread:pad, x1:0.0, y1:0.0, x2:1.0, y2:1.0,
+                stop:0 #e6ecef, stop:0.5 #bdd5df, stop:1 #a7c9da);
     color: #000000;
     font-family: "Segoe UI", Roboto, Arial;
 }

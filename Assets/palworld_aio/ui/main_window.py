@@ -6,7 +6,7 @@ import re
 import io 
 import sys 
 from functools import partial 
-from loguru import logger 
+import logging 
 from PySide6 .QtWidgets import (
 QMainWindow ,QWidget ,QVBoxLayout ,QHBoxLayout ,QLabel ,
 QPushButton ,QFrame ,QMenuBar ,QMenu ,QStatusBar ,
@@ -63,7 +63,7 @@ class DetachedStatusWindow (QWidget ):
     def __init__ (self ,parent =None ):
         super ().__init__ ()
         self .parent =parent 
-        self .setWindowFlags (Qt .Window |Qt .FramelessWindowHint |Qt .Tool )
+        self .setWindowFlags (Qt .Window |Qt .FramelessWindowHint |Qt .Tool |Qt .WindowStaysOnTopHint )
         self .setAttribute (Qt .WA_TranslucentBackground )
         self .setMinimumSize (600 ,400 )
         self ._drag_pos =QPoint ()
@@ -125,7 +125,7 @@ class DetachedStatusWindow (QWidget ):
     def setup_status_ui (self ):
         head =QHBoxLayout ()
         txt_color ="#dfeefc"if self .is_dark else "#000000"
-        self .title_label =QLabel ("Console")
+        self .title_label =QLabel (t ("console.title"))
         self .title_label .setStyleSheet (f"font-weight: bold; font-size: 14px; color: {txt_color };")
         head .addWidget (self .title_label )
         head .addStretch ()
@@ -144,6 +144,8 @@ class DetachedStatusWindow (QWidget ):
         self ._load_theme ()
         txt_color ="#dfeefc"if self .is_dark else "#000000"
         self .title_label .setStyleSheet (f"font-weight: bold; font-size: 14px; color: {txt_color };")
+    def refresh_title (self ):
+        self .title_label .setText (t ("console.title"))
     def append_message (self ,text ):
         self .text_edit .append (text )
         document =self .text_edit .document ()
@@ -234,9 +236,15 @@ class MainWindow (QMainWindow ):
             pass 
         self .status_stream =StatusBarStream (self .status_bar ,self )
         self .status_stream .detach_state_changed .connect (self ._on_detach_state_changed )
-        sys .stdout =self .status_stream 
-        sys .stderr =self .status_stream 
-        logger .add (self .status_stream ,level ="INFO",format ="{message}")
+        sys .stdout =self .status_stream
+        sys .stderr =self .status_stream
+        import logging
+        handler =logging .StreamHandler (self .status_stream )
+        handler .setLevel (logging .INFO )
+        handler .setFormatter (logging .Formatter ("{message}",style ='{'))
+        logging .getLogger ().addHandler (handler )
+        if self .user_settings .get ("console_detached",False ):
+            self .status_stream .detach ()
     def _setup_ui (self ):
         self .setWindowTitle (t ('deletion.title')if t else 'All-in-One Tools')
         self .setMinimumSize (1400 ,800 )
@@ -293,9 +301,9 @@ class MainWindow (QMainWindow ):
         self .status_bar .setMinimumHeight (35 )
         self .setStatusBar (self .status_bar )
         self .status_bar .showMessage (t ('status.ready')if t else 'Ready')
-        detach_btn =QPushButton ("Detach")
+        detach_btn =QPushButton (t ("console.detach"))
         detach_btn .setObjectName ("detachButton")
-        detach_btn .setFixedSize (60 ,20 )
+        detach_btn .setFixedSize (120 ,20 )
         detach_btn .setStyleSheet ("font-size: 10px;")
         detach_btn .clicked .connect (self ._detach_status )
         self .status_bar .addPermanentWidget (detach_btn )
@@ -460,7 +468,8 @@ class MainWindow (QMainWindow ):
         "theme":"dark",
         "language":"en_US",
         "show_icons":True ,
-        "boot_preference":"menu"
+        "boot_preference":"menu",
+        "console_detached":False
         }
         if os .path .exists (user_cfg_path ):
             try :
@@ -508,7 +517,7 @@ class MainWindow (QMainWindow ):
             self .results_widget .set_theme (self .is_dark_mode )
     def _apply_fallback_styles (self ):
         border_color ="rgba(70,70,70,1.0)"if self .is_dark_mode else "rgba(70,70,70,1.0)"
-        from PySide6 .QtWidgets import QApplication
+        from PySide6 .QtWidgets import QApplication 
         QApplication .instance ().setStyleSheet (f"""
             QMainWindow {{
                 background-color: {constants .BG };
@@ -596,10 +605,12 @@ class MainWindow (QMainWindow ):
                 self .status_stream .attach ()
             else :
                 self .status_stream .detach ()
+        self .user_settings ["console_detached"] =self .status_stream .detached if self .status_stream else False
+        self ._save_user_settings ()
     def _on_detach_state_changed (self ,detached ):
         detach_btn =self .status_bar .findChild (QPushButton )
         if detach_btn :
-            detach_btn .setText ("Reattach"if detached else "Detach")
+            detach_btn .setText (t ("console.reattach")if detached else t ("console.detach"))
     def check_github_update (self ,force_test =False ):
         try :
             r =urllib .request .urlopen (GITHUB_RAW_URL ,timeout =5 )
@@ -1187,6 +1198,8 @@ class MainWindow (QMainWindow ):
             self ._save_user_settings ()
             load_resources (code )
             set_language (code )
+            if self .status_stream .detach_window :
+                self .status_stream .detach_window .refresh_title ()
             self .setWindowTitle (t ('deletion.title')if t else 'All-in-One Tools')
             self ._update_tab_texts ()
             self ._setup_menus ()
@@ -1226,6 +1239,9 @@ class MainWindow (QMainWindow ):
             self .excl_guilds_panel .refresh_labels ()
         if hasattr (self ,'excl_bases_panel'):
             self .excl_bases_panel .refresh_labels ()
+        detach_btn =self .status_bar .findChild (QPushButton )
+        if detach_btn :
+            detach_btn .setText (t ("console.reattach")if self .status_stream and self .status_stream .detached else t ("console.detach"))
         if hasattr (self ,'menu_bar'):
             self ._setup_menus ()
     def _add_exclusion (self ,excl_type ,value ):

@@ -399,7 +399,7 @@ class MapGraphicsView (QGraphicsView ):
         self .zoom_label .move (self .width ()-100 ,self .height ()-30 )
     def reset_view (self ):
         self .resetTransform ()
-        self .current_zoom =1.0
+        self .current_zoom =1.0 
         if self .scene ():
             rect =self .scene ().sceneRect ()
             if rect .width ()>0 and rect .height ()>0 :
@@ -467,7 +467,7 @@ class MapTab (QWidget ):
         },
         "zoom":{
         "factor":1.15 ,"min":1.0 ,"max":20.0 ,
-        "double_click_target":2.5 ,"animation_speed":0.2 ,"animation_fps":60
+        "double_click_target":2.5 ,"animation_speed":0.2 ,"animation_fps":60 
         },
         "effects":{
         "delete":{"enabled":True ,"duration":1000 ,"max_radius":150 ,
@@ -580,7 +580,7 @@ class MapTab (QWidget ):
         self .info_label .setWordWrap (True )
         self .info_label .setObjectName ("sectionHeader")
         sidebar_layout .addWidget (self .info_label )
-        self ._splitter =splitter
+        self ._splitter =splitter 
         splitter .addWidget (self ._map_widget )
         splitter .addWidget (self ._sidebar_widget )
         splitter .setStretchFactor (0 ,1 )
@@ -600,7 +600,7 @@ class MapTab (QWidget ):
                 scale =max (scale_x ,scale_y )
                 self .view .resetTransform ()
             self .view .scale (scale ,scale )
-            self .view .current_zoom =1.0
+            self .view .current_zoom =1.0 
             self .view .zoom_label .setText ((t ("zoom")if t else "Zoom")+f": {int (1.0 *100 )}%")
             self .view .zoom_changed .emit (1.0 )
     def _on_marker_hover_enter (self ,base_data ,global_pos ):
@@ -626,7 +626,7 @@ class MapTab (QWidget ):
             scale_y =viewport .height ()/self .map_height 
             scale =max (scale_x ,scale_y )
             self .view .scale (scale ,scale )
-            self .view .current_zoom =1.0
+            self .view .current_zoom =1.0 
             self .view .zoom_label .setText ((t ("zoom")if t else "Zoom")+f": {int (1.0 *100 )}%")
             self .view .zoom_changed .emit (1.0 )
     def _setup_animation (self ):

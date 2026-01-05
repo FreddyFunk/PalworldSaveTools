@@ -1,6 +1,7 @@
 from typing import Any ,Sequence 
-from loguru import logger 
+import logging 
 from palworld_save_tools .archive import *
+logger =logging .getLogger (__name__ )
 WORK_BASE_TYPES =set (
 [
 "EPalWorkableType::Progress",

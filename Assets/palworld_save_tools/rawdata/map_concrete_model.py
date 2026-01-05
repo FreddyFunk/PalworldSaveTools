@@ -1,11 +1,12 @@
 from typing import Any ,Optional ,Sequence 
-from loguru import logger 
+import logging 
 from palworld_save_tools .archive import (
 FArchiveReader ,
 FArchiveWriter ,
 uuid_reader ,
 uuid_writer ,
 )
+logger =logging .getLogger (__name__ )
 from palworld_save_tools .rawdata .common import (
 pal_item_and_num_read ,
 pal_item_and_slot_writer ,

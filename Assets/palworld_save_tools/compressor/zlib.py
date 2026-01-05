@@ -1,11 +1,10 @@
 import zlib 
-from loguru import logger 
 from palworld_save_tools .compressor import Compressor ,SaveType 
 class Zlib (Compressor ):
     def __init__ (self ):
         self .SAFE_SPACE_PADDING =128 
     def compress (self ,data :bytes ,save_type :int )->bytes :
-        logger .info ("Starting compression process with zlib...")
+        print ("Starting compression process with zlib...")
         uncompressed_len =len (data )
         compressed_data =zlib .compress (data )
         compressed_len =len (compressed_data )
@@ -15,12 +14,6 @@ class Zlib (Compressor ):
             )
         compressed_data =zlib .compress (compressed_data )
         magic_bytes =self ._get_magic (save_type )
-        logger .debug ("File information (Compress):")
-        logger .debug (f"  Magic bytes: {magic_bytes .decode ('ascii',errors ='ignore')}")
-        logger .debug (f"  Save type: 0x{save_type :02X}")
-        logger .debug (f"  Compressed size: {compressed_len :,} bytes")
-        logger .debug (f"  Uncompressed size: {uncompressed_len :,} bytes")
-        logger .debug (f"  Hex dump: {compressed_data .hex ()[:64 ]}")
         sav_data =self .build_sav (
         compressed_data ,
         uncompressed_len ,
@@ -30,7 +23,7 @@ class Zlib (Compressor ):
         )
         return sav_data 
     def decompress (self ,data :bytes )->bytes :
-        logger .info ("Starting decompression process with zlib...")
+        print ("Starting decompression process with zlib...")
         format_result =self .check_sav_format (data )
         if format_result is None :
             raise ValueError ("Unknown save format")
@@ -41,12 +34,6 @@ class Zlib (Compressor ):
         uncompressed_len ,compressed_len ,magic ,save_type ,data_offset =(
         self ._parse_sav_header (data )
         )
-        logger .debug ("File information (Decompress):")
-        logger .debug (f"  Magic bytes: {magic .decode ('ascii',errors ='ignore')}")
-        logger .debug (f"  Save type: 0x{save_type :02X}")
-        logger .debug (f"  Compressed size: {compressed_len :,} bytes")
-        logger .debug (f"  Uncompressed size: {uncompressed_len :,} bytes")
-        logger .debug ("Detected PLZ format (Zlib), starting decompression...")
         uncompressed_data =zlib .decompress (data [data_offset :])
         if save_type ==SaveType .PLZ .value :
             if compressed_len !=len (uncompressed_data ):
@@ -56,7 +43,7 @@ class Zlib (Compressor ):
             raise Exception (
             f"incorrect uncompressed length: {uncompressed_len } != {len (uncompressed_data )}"
             )
-        logger .info (
+        print (
         f"Decompression successful, decompressed size: {len (uncompressed_data ):,} bytes"
         )
         return uncompressed_data ,save_type 

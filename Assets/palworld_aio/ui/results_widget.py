@@ -129,7 +129,6 @@ class ResultsWidget (QWidget ):
             self .stats_panel .set_theme (is_dark )
         self ._refresh_value_card_colors ()
     def _refresh_value_card_colors (self ):
-
         if hasattr (self ,'player_label'):
             self .player_label .setObjectName ("statsField")
             self .player_label .setStyleSheet ("")

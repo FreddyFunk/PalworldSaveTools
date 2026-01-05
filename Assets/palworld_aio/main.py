@@ -4,15 +4,6 @@ import traceback
 os .environ ['QT_LOGGING_RULES']='*=false'
 os .environ ['QT_DEBUG_PLUGINS']='0'
 if getattr (sys ,'frozen',False ):
-    class MockLogger :
-        def __getattr__ (self ,name ):
-            return lambda *args ,**kwargs :None 
-        def remove (self ):
-            pass 
-        def add (self ,*args ,**kwargs ):
-            pass 
-    sys .modules ['loguru']=type ('MockModule',(),{'logger':MockLogger ()})()
-    sys .modules ['loguru.logger']=MockLogger ()
     import io 
     class MockStdin :
         def read (self ,size =-1 ):
