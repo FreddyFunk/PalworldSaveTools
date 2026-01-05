@@ -13,7 +13,7 @@ QPushButton ,QFrame ,QMenuBar ,QMenu ,QStatusBar ,
 QSplitter ,QMessageBox ,QFileDialog ,QInputDialog ,QDialog ,QCheckBox ,QComboBox ,QApplication ,
 QStackedWidget ,QTextEdit
 )
-from PySide6 .QtCore import Qt ,QTimer ,Signal ,QObject ,QPoint ,QPropertyAnimation ,QEasingCurve
+from PySide6 .QtCore import Qt ,QTimer ,Signal ,QObject ,QPoint
 from PySide6 .QtGui import QIcon ,QFont ,QAction ,QPixmap ,QCloseEvent ,QTextCursor
 from i18n import t ,set_language ,load_resources
 from common import get_versions
@@ -173,15 +173,7 @@ class StatusBarStream (QObject ):
         if not self .detached :
             self .detached =True 
             self .detach_window =DetachedStatusWindow (self .parent )
-            self .detach_window .setWindowOpacity (0.0 )
             self .detach_window .show ()
-            # Add fade-in animation
-            self .detach_window .fade_animation =QPropertyAnimation (self .detach_window ,b"windowOpacity")
-            self .detach_window .fade_animation .setDuration (300 )
-            self .detach_window .fade_animation .setStartValue (0.0 )
-            self .detach_window .fade_animation .setEndValue (1.0 )
-            self .detach_window .fade_animation .setEasingCurve (QEasingCurve .InOutQuad )
-            self .detach_window .fade_animation .start ()
             self .detach_state_changed .emit (True )
     def attach (self ):
         if self .detached :
@@ -622,7 +614,6 @@ class MainWindow (QMainWindow ):
             self .refresh_all ()
             self .results_widget .refresh_stats_before ()
             self .status_bar .showMessage (t ('status.loaded')if t else 'Save loaded successfully',5000 )
-<<<<<<< HEAD
             msg_box =QMessageBox (self )
             msg_box .setWindowTitle (t ('success.title'))
             msg_box .setText (t ('save.loaded'))
@@ -637,12 +628,6 @@ class MainWindow (QMainWindow ):
             msg_box .setIcon (QMessageBox .Critical )
             msg_box .addButton (t ('button.ok'),QMessageBox .AcceptRole )
             msg_box .exec ()
-=======
-            QMessageBox .information (self ,t ('success.title'),t ('save.loaded'))
-        else :
-            self .status_bar .showMessage (t ('status.load_failed')if t else 'Failed to load save',5000 )
-            QMessageBox .critical (self ,t ('error.title'),t ('save.load_failed'))
->>>>>>> 9f54371633b5deb9bf5a084f7b704155041a4caf
     def _on_save_finished (self ,duration ):
         self .status_bar .showMessage (f"{t ('status.saved')if t else 'Save completed'} ({duration :.2f}s)",5000 )
         msg_box =QMessageBox (self )
@@ -971,11 +956,7 @@ class MainWindow (QMainWindow ):
                 if delete_base_camp (b ,gid ):
                     cnt +=1 
         if cnt >0 :
-<<<<<<< HEAD
             QMessageBox .information (self ,t ('Done'),t ('orphaned_bases_deleted',count =cnt ))
-=======
-            QMessageBox .information (self ,t ('Done'),f'Deleted {cnt } orphaned bases')
->>>>>>> 9f54371633b5deb9bf5a084f7b704155041a4caf
     def _delete_duplicate_players (self ):
         if not constants .loaded_level_json :
             QMessageBox .warning (self ,t ('Error'),t ('error.no_save_loaded'))
