@@ -88,7 +88,6 @@ class LoadingPopup (QWidget ):
         self .fade_animation .finished .connect (on_fade_complete )
         self .fade_animation .start ()
     def _center_on_screen (self ):
-
         parent =self .parent ()
         size =self .size ()
         if parent and hasattr (parent ,'geometry'):

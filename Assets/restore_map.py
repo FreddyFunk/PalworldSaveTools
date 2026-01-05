@@ -105,7 +105,7 @@ def restore_map ():
             button_layout .addWidget (self .no_button )
             button_layout .addStretch ()
             glass_layout .addLayout (button_layout )
-            hint_label =QLabel (t ("Restore Source: {file}",file =resources_file ))
+            hint_label =QLabel (t ("restore_map.source",file =resources_file ))
             hint_label .setFont (QFont ("Segoe UI",9 ))
             hint_label .setAlignment (Qt .AlignCenter )
             hint_label .setStyleSheet ("color: rgba(223,238,252,0.7);")

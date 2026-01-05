@@ -138,9 +138,8 @@ def delete_inactive_players (days_threshold ,parent =None ):
             uid_obj =player .get ('player_uid','')
             uid =str (uid_obj .get ('value','')if isinstance (uid_obj ,dict )else uid_obj ).replace ('-','')
             if uid in excluded_players :
-                print (f'Player {uid } is excluded from deletion - skipping...')
                 keep_players .append (player )
-                continue 
+                continue
             player_name =player .get ('player_info',{}).get ('player_name','Unknown')
             last_online =player .get ('player_info',{}).get ('last_online_real_time')
             level =constants .player_levels .get (uid )
@@ -169,12 +168,11 @@ def delete_inactive_players (days_threshold ,parent =None ):
         removed_pals =delete_player_pals (wsd ,to_delete_uids )
         char_map =wsd .get ('CharacterSaveParameterMap',{}).get ('value',[])
         char_map [:]=[
-        entry for entry in char_map 
-        if str (entry .get ('key',{}).get ('PlayerUId',{}).get ('value','')).replace ('-','')not in to_delete_uids 
-        and str (entry .get ('value',{}).get ('RawData',{}).get ('value',{}).get ('object',{}).get ('SaveParameter',{}).get ('value',{}).get ('OwnerPlayerUId',{}).get ('value','')).replace ('-','')not in to_delete_uids 
+        entry for entry in char_map
+        if str (entry .get ('key',{}).get ('PlayerUId',{}).get ('value','')).replace ('-','')not in to_delete_uids
+        and str (entry .get ('value',{}).get ('RawData',{}).get ('value',{}).get ('object',{}).get ('SaveParameter',{}).get ('value',{}).get ('OwnerPlayerUId',{}).get ('value','')).replace ('-','')not in to_delete_uids
         ]
         total_players_after =sum ((len (g ['value']['RawData']['value'].get ('players',[]))for g in group_data_list if g ['value']['GroupType']['value']['value']=='EPalGroupType::Guild'))
-        print (t ('cleanup.preview_summary',before =total_players_before ,marked =len (deleted_info ),after =total_players_after ,pals =removed_pals ))
     return len (to_delete_uids )
 def delete_inactive_bases (days_threshold ,parent =None ):
     if not constants .loaded_level_json :
@@ -205,12 +203,11 @@ def delete_inactive_bases (days_threshold ,parent =None ):
         gid =as_uuid (b ['value']['RawData']['value'].get ('group_id_belong_to'))
         base_id =as_uuid (b ['key'])
         if base_id .replace ('-','').lower ()in excluded_bases :
-            print (f'Base {base_id } is excluded from deletion - skipping...')
-            continue 
+            continue
         if gid in inactive_guild_ids :
             if delete_base_camp (b ,gid ):
-                removed +=1 
-    return removed 
+                removed +=1
+    return removed
 def delete_duplicated_players (parent =None ):
     if not constants .current_save_path or not constants .loaded_level_json :
         return 0 
@@ -281,10 +278,7 @@ def delete_duplicated_players (parent =None ):
     for p in g ['value']['RawData']['value'].get ('players',[])
     }
     clean_character_save_parameter_map (wsd ,valid_uids )
-    for d in deleted_players :
-        print (t ('players.duplicate.kept',uid =d ['kept_uid'],name =d ['kept_name'],gid =d ['kept_gid'],last_online =format_duration_lambda (tick_now -d ['kept_last_online'])))
-        print (t ('players.duplicate.deleted',uid =d ['deleted_uid'],name =d ['deleted_name'],gid =d ['deleted_gid'],last_online =format_duration_lambda (tick_now -d ['deleted_last_online']))+'\n')
-    print (t ('players.duplicate.marked',count =len (deleted_players )))
+    # Removed verbose print statements for duplicate player processing
     return len (deleted_players )
 def delete_unreferenced_data (parent =None ):
     if not constants .loaded_level_json :
@@ -324,17 +318,13 @@ def delete_unreferenced_data (parent =None ):
             pid_raw =p .get ('player_uid')
             pid =normalize_uid (pid_raw )
             if pid not in char_uids :
-                name =p .get ('player_info',{}).get ('player_name','Unknown')
-                print (t ('player.removing_unreferenced',name =name ,pid =pid_raw ))
                 unreferenced_uids .append (pid )
-                continue 
+                continue
             level =constants .player_levels .get (pid ,None )
             if is_valid_level (level ):
-                all_invalid =False 
+                all_invalid =False
                 valid_players .append (p )
             else :
-                name =p .get ('player_info',{}).get ('player_name','Unknown')
-                print (t ('player.removing_invalid',name =name ,pid =pid_raw ))
                 invalid_uids .append (pid )
         if not valid_players or all_invalid :
             gid_raw =group ['key']
@@ -345,16 +335,14 @@ def delete_unreferenced_data (parent =None ):
                 if base_gid ==gid :
                     delete_base_camp (b ,gid_raw )
             group_data_list .remove (group )
-            removed_guilds +=1 
-            print (t ('guild.removed_empty_or_invalid',gid =gid_raw ))
-            continue 
-        raw ['players']=valid_players 
+            removed_guilds +=1
+            continue
+        raw ['players']=valid_players
         admin_uid_raw =raw .get ('admin_player_uid')
         admin_uid =normalize_uid (admin_uid_raw )
         keep_uids ={normalize_uid (p .get ('player_uid'))for p in valid_players }
         if admin_uid not in keep_uids :
             raw ['admin_player_uid']=valid_players [0 ]['player_uid']
-            print (t ('group.admin_reassigned',gid =group ['key'],admin =raw ['admin_player_uid']))
     char_map [:]=[
     entry for entry in char_map 
     if normalize_uid (entry .get ('key',{}).get ('PlayerUId'))not in unreferenced_uids +invalid_uids 
@@ -378,10 +366,7 @@ def delete_unreferenced_data (parent =None ):
             new_map_objects .append (obj )
     map_objects_wrapper ['values']=new_map_objects 
     removed_broken ,removed_drops =(len (broken_ids ),len (dropped_ids ))
-    for bid in broken_ids :
-        print (t ('mapobject.deleted_broken',id =bid ))
-    for did in dropped_ids :
-        print (t ('item.deleted_dropped',id =did ))
+    # Removed print statements for broken and dropped items
     return {
     'characters':len (all_removed_uids ),
     'pals':removed_pals ,
@@ -403,22 +388,16 @@ def delete_non_base_map_objects (parent =None ):
         base_camp_id =raw_data .get ('base_camp_id_belong_to')
         instance_id =raw_data .get ('instance_id','UNKNOWN_ID')
         object_name =m .get ('MapObjectId',{}).get ('value','UNKNOWN_OBJECT_TYPE')
-        print (t ('map_obj.checking_id',object_name =object_name ,instance_id =instance_id ))
-        should_keep =False 
+        should_keep =False
         if base_camp_id and base_camp_id in active_base_ids :
-            should_keep =True 
+            should_keep =True
         if should_keep :
             new_map_objs .append (m )
-            print (t ('map_obj.keeping_base',instance_id =instance_id ,object_name =object_name ,base_camp_id =base_camp_id ))
         else :
-            reason =t ('map_obj.reason_null_id')
-            if base_camp_id and base_camp_id not in active_base_ids :
-                reason =t ('map_obj.reason_orphaned',base_camp_id =base_camp_id )
-            print (t ('map_obj.deleting_orphan',instance_id =instance_id ,object_name =object_name ,reason =reason ))
+            pass
     deleted_count =initial_count -len (new_map_objs )
-    map_objs [:]=new_map_objs 
-    print (t ('map_obj.deleted_summary',deleted_count =deleted_count ,remaining_count =len (map_objs )))
-    return deleted_count 
+    map_objs [:]=new_map_objs
+    return deleted_count
 def delete_invalid_structure_map_objects (parent =None ):
     if not constants .loaded_level_json :
         return 0 
@@ -434,8 +413,7 @@ def delete_invalid_structure_map_objects (parent =None ):
                 if isinstance (asset ,str ):
                     valid_assets .add (asset .lower ())
     except Exception as e :
-        print (f'Failed to load structure validation data: {e }')
-        return 0 
+        return 0
     wsd =constants .loaded_level_json ['properties']['worldSaveData']['value']
     map_objs =wsd ['MapObjectSaveData']['value']['values']
     initial_count =len (map_objs )
@@ -446,12 +424,10 @@ def delete_invalid_structure_map_objects (parent =None ):
         if isinstance (object_name ,str )and object_name .lower ()in valid_assets :
             new_map_objs .append (m )
         else :
-            instance_id =m .get ('Model',{}).get ('value',{}).get ('RawData',{}).get ('value',{}).get ('instance_id','UNKNOWN_ID')
-            print (f'Removing invalid structure: {object_name } (ID: {instance_id })')
+            pass
     deleted_count =initial_count -len (new_map_objs )
-    map_objs [:]=new_map_objs 
-    print (t ('deletion.menu.remove_invalid_structures_summary',deleted_count =deleted_count ,remaining_count =len (map_objs )))
-    return deleted_count 
+    map_objs [:]=new_map_objs
+    return deleted_count
 def delete_all_skins (parent =None ):
     if not constants .loaded_level_json :
         return 0 
@@ -499,9 +475,8 @@ def delete_all_skins (parent =None ):
                         json_to_sav (p_json ,file_path )
                         fixed_player_files +=1 
                 except :
-                    pass 
-    print (t ('deletion.menu.remove_invalid_skins_summary',removed_level_skins =removed_level_skins ,fixed_player_files =fixed_player_files ))
-    return removed_level_skins +fixed_player_files 
+                    pass
+    return removed_level_skins +fixed_player_files
 def unlock_all_private_chests (parent =None ):
     if not constants .loaded_level_json :
         return 0 
@@ -525,8 +500,7 @@ def unlock_all_private_chests (parent =None ):
             for item in data :
                 deep_unlock (item )
     deep_unlock (wsd )
-    print (t ('chest.unlocked_summary',count =count ))
-    return count 
+    return count
 def remove_invalid_items_from_level (parent =None ):
     if not constants .loaded_level_json :
         return 0 
@@ -567,9 +541,8 @@ def remove_invalid_items_from_level (parent =None ):
                         elif 'id'in raw_val and isinstance (raw_val ['id'],dict ):
                             sid =raw_val ['id'].get ('static_id')
                     if isinstance (sid ,str )and sid .lower ()not in valid_items :
-                        print (f'Removing invalid item object: {sid }')
                         data .pop (i )
-                        removed_count +=1 
+                        removed_count +=1
                     else :
                         clean_recursive (item_obj )
                 else :
@@ -591,8 +564,7 @@ def remove_invalid_items_from_save (parent =None ):
                 if isinstance (aid ,str ):
                     valid_items .add (aid .lower ())
     except :
-        pass 
-    print (f'Loaded {len (valid_items )} valid item definitions')
+        pass
     players_dir =os .path .join (constants .current_save_path ,'Players')
     if not os .path .exists (players_dir ):
         return 0 
@@ -611,9 +583,8 @@ def remove_invalid_items_from_save (parent =None ):
                     if isinstance (key ,str )and key .lower ()in valid_items :
                         new_list .append (i )
                     else :
-                        print (f'[{filename }] Removed invalid craft record: {key }')
-                        changed =True 
-                        total_removed +=1 
+                        changed =True
+                        total_removed +=1
                 if changed :
                     data ['CraftItemCount']['value']=new_list 
             for v in data .values ():
@@ -632,12 +603,9 @@ def remove_invalid_items_from_save (parent =None ):
                 p_json =sav_to_json (file_path )
                 if clean_craft_records (p_json ,filename ):
                     json_to_sav (p_json ,file_path )
-                    fixed_files +=1 
-                    print (f'Successfully updated craft list for {filename }')
+                    fixed_files +=1
             except Exception as e :
-                print (f'Error processing player file {filename }: {e }')
-    result_msg =f'Processed {total_files } player files. Updated {fixed_files } files.'
-    print (result_msg )
+                pass
     remove_invalid_items_from_level (parent )
     return fixed_files 
 def remove_invalid_pals_from_save (parent =None ):
@@ -673,27 +641,24 @@ def remove_invalid_pals_from_save (parent =None ):
         if cid and cid .lower ()not in valid_all :
             inst =str (entry ['key']['InstanceId']['value'])
             removed_ids .add (inst )
-            removed +=1 
-            print (t ('palclean.removed_invalid',cid =cid ))
-            continue 
+            removed +=1
+            continue
         filtered .append (entry )
-    wsd ['CharacterSaveParameterMap']['value']=filtered 
+    wsd ['CharacterSaveParameterMap']['value']=filtered
     containers =wsd .get ('CharacterContainerSaveData',{}).get ('value',[])
     for cont in containers :
         try :
             slots =cont ['value']['Slots']['value']['values']
         except :
-            continue 
+            continue
         newslots =[]
         for s in slots :
             inst =s .get ('RawData',{}).get ('value',{}).get ('instance_id')
             if inst and str (inst )in removed_ids :
-                continue 
+                continue
             newslots .append (s )
-        cont ['value']['Slots']['value']['values']=newslots 
-    msg =t ('palclean.summary',removed =removed )
-    print (msg )
-    return removed 
+        cont ['value']['Slots']['value']['values']=newslots
+    return removed
 def fix_missions (parent =None ):
     if not constants .current_save_path :
         return {'total':0 ,'fixed':0 ,'skipped':0 }
@@ -724,22 +689,16 @@ def fix_missions (parent =None ):
             try :
                 player_json =sav_to_json (file_path )
             except Exception as e :
-                skipped +=1 
-                print (t ('missions.unreadable',file =filename ,err =e ))
-                continue 
+                skipped +=1
+                continue
             if deep_delete_completed_quest_array (player_json ):
                 try :
                     json_to_sav (player_json ,file_path )
-                    fixed +=1 
-                    print (t ('missions.reset',file =filename ))
+                    fixed +=1
                 except Exception as e :
-                    skipped +=1 
-                    print (t ('missions.save_failed',file =filename ,err =e ))
+                    skipped +=1
             else :
-                skipped +=1 
-                print (t ('missions.no_array',file =filename ))
-    result_msg =t ('missions.summary',total =total ,fixed =fixed ,skipped =skipped )
-    print (result_msg )
+                skipped +=1
     return {'total':total ,'fixed':fixed ,'skipped':skipped }
 def reset_anti_air_turrets (parent =None ):
     if not constants .loaded_level_json :
@@ -805,11 +764,10 @@ def unlock_viewing_cage_for_player (player_uid ,parent =None ):
         inject_viewing_cage (p_json )
         if changed :
             json_to_sav (p_json ,file_path )
-            return True 
-        return False 
+            return True
+        return False
     except Exception as e :
-        print (f'Error unlocking viewing cage: {e }')
-        return False 
+        return False
 def fix_all_negative_timestamps (parent =None ):
     if not constants .loaded_level_json :
         return 0 
@@ -853,9 +811,8 @@ def fix_all_negative_timestamps (parent =None ):
                 except :
                     continue 
     except Exception as e :
-        print (f'Error fixing timestamps: {e }')
-    print (f"Fixed {fixed_count } player timestamps to current tick.")
-    return fixed_count 
+        pass
+    return fixed_count
 def reset_selected_player_timestamp (player_uid ,parent =None ):
     if not constants .loaded_level_json :
         return False 
@@ -882,7 +839,6 @@ def reset_selected_player_timestamp (player_uid ,parent =None ):
                     if str (p_info .get ('player_uid','')).replace ('-','').lower ()==uid_clean :
                         if 'player_info'in p_info :
                             p_info ['player_info']['last_online_real_time']=current_tick 
-        return True 
+        return True
     except Exception as e :
-        print (f'Error resetting player timestamp: {e }')
-        return False 
+        return False

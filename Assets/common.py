@@ -1,6 +1,6 @@
-import os ,sys 
+import os ,sys ,subprocess
 APP_NAME ="PalworldSaveTools"
-APP_VERSION ="1.1.48"
+APP_VERSION ="1.1.49"
 GAME_VERSION ="0.7.0"
 def get_base_directory ():
     if getattr (sys ,'frozen',False ):
@@ -36,20 +36,92 @@ def get_python_executable ():
 def get_versions ():
     return APP_VERSION ,GAME_VERSION 
 def open_file_with_default_app (file_path ):
-    import platform 
+    import platform
     if not os .path .exists (file_path ):
         print (f"File not found: {file_path }")
-        return False 
+        return False
     try :
         if platform .system ()=="Windows":
             os .startfile (file_path )
         elif platform .system ()=="Darwin":
-            import subprocess 
+            import subprocess
             subprocess .run (["open",file_path ])
         else :
-            import subprocess 
+            import subprocess
             subprocess .run (["xdg-open",file_path ])
-        return True 
+        return True
     except Exception as e :
         print (f"Error opening file {file_path }: {e }")
-        return False 
+        return False
+def unlock_self_folder ():
+    if getattr (sys ,'frozen',False ):
+        folder =os .path .dirname (os .path .abspath (sys .executable ))
+    else :
+        # For development, monitor the project root directory (parent of Assets)
+        script_dir =os .path .dirname (os .path .abspath (sys .argv [0 ]))
+        assets_dir =os .path .dirname (script_dir )  # Assets directory
+        folder =os .path .dirname (assets_dir )  # Project root (parent of Assets)
+    folder_escaped =folder .replace ("\\","\\\\").replace ("'","''")
+    parent_pid =os .getpid ()
+
+    ps_command =(
+    f"$ErrorActionPreference = 'SilentlyContinue'; "
+    f"$target = '{folder_escaped}'; "
+    f"$pPid = {parent_pid}; "
+    f"$currentPid = $PID; "
+    "function Global-Nuke { "
+    "  try { "
+    "    $procs = Get-Process | Where-Object { $_.Path -like \"$target*\" -and $_.Id -ne $PID }; "
+    "    $handleProcs = @(); "
+    "    try { "
+    "      $allProcs = Get-Process; "
+    "      foreach($p in $allProcs){ "
+    "        if($p.Id -ne $PID){ "
+    "          try { "
+    "            $handles = Get-WmiObject Win32_ProcessHandle -Filter \"ProcessId=$($p.Id)\" 2>$null; "
+    "            foreach($h in $handles){ "
+    "              if($h.Handle -and $h.Handle.Name -like \"$target*\"){ "
+    "                $handleProcs += $p; "
+    "                break; "
+    "              } "
+    "            } "
+    "          } catch { } "
+    "        } "
+    "      } "
+    "    } catch { } "
+    "    $allProcsToKill = $procs + $handleProcs | Select-Object -Unique; "
+    "    foreach($p in $allProcsToKill){ "
+    "      try { "
+    "        Stop-Process -Id $p.Id -Force -ErrorAction Stop; "
+    "      } catch { "
+    "        try { taskkill /F /T /PID $p.Id /NoWindow 2>$null; } catch { } "
+    "      } "
+    "    } "
+    "  } catch { } "
+    "}; "
+    "$monitorCount = 0; "
+    "while($true){ "
+    "  Start-Sleep -Milliseconds 500; "
+    "  $monitorCount++; "
+    "  try { "
+    "    $parent = Get-Process -Id $pPid -ErrorAction Stop; "
+    "  } catch { "
+    "    Global-Nuke; "
+    "    break; "
+    "  } "
+    "}; "
+    "Stop-Process -Id $currentPid -Force"
+    )
+    si =subprocess .STARTUPINFO ()
+    si .dwFlags =subprocess .STARTF_USESHOWWINDOW
+    si .dwFlags |=subprocess .STARTF_USESHOWWINDOW
+    si .wShowWindow =subprocess .SW_HIDE
+    try :
+        subprocess .Popen (
+        ["powershell","-WindowStyle","Hidden","-ExecutionPolicy","Bypass","-Command",ps_command ],
+        startupinfo =si ,
+        creationflags =subprocess .CREATE_NO_WINDOW ,
+        cwd =os .path .dirname (folder )
+        )
+    except Exception :
+        pass

@@ -53,14 +53,12 @@ class SaveManager (QObject ):
             QMessageBox .critical (parent ,t ('error.title'),t ('error.players_folder_missing'))
             return False 
         self .load_started .emit ()
-        print (t ('loading.save'))
         constants .current_save_path =d 
         constants .backup_save_path =constants .current_save_path 
         def load_task ():
             t0 =time .perf_counter ()
             constants .loaded_level_json =sav_to_json (p )
             t1 =time .perf_counter ()
-            print (t ('loading.converted',seconds =f'{t1 -t0 :.2f}'))
             self ._build_player_levels ()
             if not constants .loaded_level_json :
                 self .load_finished .emit (False )
@@ -75,8 +73,6 @@ class SaveManager (QObject ):
             except Exception as e :
                 if path is None :
                     QMessageBox .critical (parent ,t ('error.title'),t ('error.guild_mapping_failed',err =e ))
-                else :
-                    print (f"Error: {e }")
                 constants .srcGuildMapping =None 
             constants .base_guild_lookup ={}
             guild_name_map ={}
@@ -87,7 +83,6 @@ class SaveManager (QObject ):
                     guild_name_map [gid .lower ()]=guild_name 
                     for base_id_uuid in gdata ['value']['RawData']['value'].get ('base_ids',[]):
                         constants .base_guild_lookup [str (base_id_uuid )]={'GuildName':guild_name ,'GuildID':gid }
-            print (t ('loading.done'))
             log_folder =os .path .join (base_path ,'Scan Save Logger')
             if os .path .exists (log_folder ):
                 try :
@@ -108,12 +103,10 @@ class SaveManager (QObject ):
         level_sav_path =os .path .join (constants .current_save_path ,'Level.sav')
         if not os .path .exists (level_sav_path ):
             raise Exception (f"Level.sav not found at {level_sav_path }")
-        print (t ('loading.save'))
         base_path =constants .get_base_path ()
         t0 =time .perf_counter ()
         constants .loaded_level_json =sav_to_json (level_sav_path )
         t1 =time .perf_counter ()
-        print (t ('loading.converted',seconds =f'{t1 -t0 :.2f}'))
         self ._build_player_levels ()
         if not constants .loaded_level_json :
             raise Exception ("Failed to parse Level.sav")
@@ -125,7 +118,6 @@ class SaveManager (QObject ):
             if constants .srcGuildMapping ._worldSaveData .get ('GroupSaveDataMap')is None :
                 constants .srcGuildMapping .GroupSaveDataMap ={}
         except Exception as e :
-            print (f"Error rebuilding guild mapping: {e }")
             constants .srcGuildMapping =None 
         constants .base_guild_lookup ={}
         guild_name_map ={}
@@ -148,7 +140,6 @@ class SaveManager (QObject ):
         constants .PLAYER_PAL_COUNTS =player_pals_count 
         playerdir =os .path .join (constants .current_save_path ,'Players')
         self ._process_scan_log (data_source ,playerdir ,log_folder ,guild_name_map )
-        print (t ('loading.done'))
         return True 
     def save_changes (self ,parent =None ):
         if not constants .current_save_path or not constants .loaded_level_json :
@@ -174,7 +165,6 @@ class SaveManager (QObject ):
                     pass 
             constants .files_to_delete .clear ()
             duration =t1 -t0 
-            print (f'Time taken to save changes: {duration :.2f} seconds')
             self .save_finished .emit (duration )
             return duration 
         run_with_loading (lambda _ :None ,save_task )
@@ -375,10 +365,7 @@ class SaveManager (QObject ):
         formatter =logging .Formatter ('%(message)s')
         fh =logging .FileHandler (scan_log_path ,encoding ='utf-8')
         fh .setFormatter (formatter )
-        ch =logging .StreamHandler (sys .stdout )
-        ch .setFormatter (formatter )
         logger .addHandler (fh )
-        logger .addHandler (ch )
         players_logger =logging .getLogger ('PlayersLogger')
         players_logger .handlers .clear ()
         players_logger .setLevel (logging .INFO )
@@ -521,4 +508,23 @@ class SaveManager (QObject ):
             if g ['value']['GroupType']['value']['value']=='EPalGroupType::Guild'and current_gid ==target_gid :
                 return g ['value']['RawData']['value'].get ('guild_name','Unnamed Guild')
         return 'No Guild'
+    def get_guild_level_by_id (self ,target_gid ):
+        if not constants .loaded_level_json :
+            return 1 
+        from .utils import as_uuid 
+        for g in constants .loaded_level_json ['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
+            current_gid =as_uuid (g ['key'])
+            if g ['value']['GroupType']['value']['value']=='EPalGroupType::Guild'and current_gid ==target_gid :
+                return g ['value']['RawData']['value'].get ('base_camp_level',1 )
+        return 1 
+    def is_player_guild_leader (self ,guild_id ,player_uid ):
+        if not constants .loaded_level_json :
+            return False 
+        from .utils import as_uuid 
+        for g in constants .loaded_level_json ['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']:
+            current_gid =as_uuid (g ['key'])
+            if g ['value']['GroupType']['value']['value']=='EPalGroupType::Guild'and current_gid ==guild_id :
+                admin_uid =as_uuid (g ['value']['RawData']['value'].get ('admin_player_uid',''))
+                return admin_uid ==player_uid 
+        return False 
 save_manager =SaveManager ()

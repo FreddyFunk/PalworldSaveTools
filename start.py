@@ -1,17 +1,19 @@
-from __future__ import annotations 
-import os 
-import sys 
-import subprocess 
-import threading 
-import queue 
-import time 
-import traceback 
-import tempfile 
-import json 
-from pathlib import Path 
-from packaging .requirements import Requirement 
-from importlib .metadata import version ,PackageNotFoundError 
-from typing import Optional ,Tuple 
+from __future__ import annotations
+import os
+import sys
+import subprocess
+import threading
+import queue
+import time
+import traceback
+import tempfile
+import json
+import signal
+import atexit
+from pathlib import Path
+from packaging .requirements import Requirement
+from importlib .metadata import version ,PackageNotFoundError
+from typing import Optional ,Tuple
 PROJECT_DIR =Path (__file__ ).resolve ().parent 
 if os .environ .get ("PST_NO_GUI","")in ("1","true","True"):
     GUI_AVAILABLE =False 
@@ -83,6 +85,7 @@ def run_and_watch (cmd ,cwd =None ,env =None ,filter_keys =None ,update_callback
     cwd =cwd ,
     env =env ,
     )
+    child_procs .append (proc )
     q :queue .Queue =queue .Queue ()
     t =threading .Thread (target =reader_thread ,args =(proc ,q ),daemon =True )
     t .start ()
@@ -137,6 +140,8 @@ def run_and_watch (cmd ,cwd =None ,env =None ,filter_keys =None ,update_callback
         if not update_callback :
             sys .stdout .write ("\r"+" "*120 +"\r")
             sys .stdout .flush ()
+        if proc .poll ()is not None and proc in child_procs :
+            child_procs .remove (proc )
     return proc .wait ()
 VENV_DIR =PROJECT_DIR /"pst_venv"
 REQ_FILE =PROJECT_DIR /"requirements.txt"
@@ -179,20 +184,34 @@ QProgressBar::chunk {
     border-radius: 8px;
 }
 """
-app =None 
-splash_window =None 
-short_label :Optional ["QLabel"]=None 
-tiny_label :Optional ["QLabel"]=None 
-gui_progress_bar :Optional ["QProgressBar"]=None 
-_logo_original_pixmap :Optional ["QPixmap"]=None 
-_target_pct =0 
-_displayed_pct =0 
-_tick_timer =None 
-_install_timer =None 
-_joke_timer =None 
-_last_real_pct :Optional [int ]=None 
-_current_step =0 
-_worker_thread :Optional [threading .Thread ]=None 
+app =None
+splash_window =None
+short_label :Optional ["QLabel"]=None
+tiny_label :Optional ["QLabel"]=None
+gui_progress_bar :Optional ["QProgressBar"]=None
+_logo_original_pixmap :Optional ["QPixmap"]=None
+_target_pct =0
+_displayed_pct =0
+_tick_timer =None
+_install_timer =None
+_joke_timer =None
+_last_real_pct :Optional [int ]=None
+_current_step =0
+_worker_thread :Optional [threading .Thread ]=None
+child_procs =[]
+def cleanup_children ():
+    for p in child_procs [:]:
+        if p .poll ()is None :
+            try :
+                p .terminate ()
+                p .wait (timeout =1 )
+            except :
+                try :
+                    p .kill ()
+                except :
+                    pass 
+        if p in child_procs :
+            child_procs .remove (p )
 def get_config_value (key :str ,default =None ):
     config_path =PROJECT_DIR /"Assets"/"data"/"configs"/"config.json"
     try :
@@ -647,6 +666,10 @@ def main ():
         print (f"{BOLD }#      Palworld Save Tools       #{RESET }")
         print (f"{BOLD }##################################{RESET }")
         print ()
+    signal .signal (signal .SIGINT ,lambda s ,f :(cleanup_children (),sys .exit (1 ))[1 ])
+    if hasattr (signal ,'SIGTERM'):
+        signal .signal (signal .SIGTERM ,lambda s ,f :(cleanup_children (),sys .exit (1 ))[1 ])
+    atexit .register (cleanup_children )
     def start_worker ():
         global _worker_thread ,_signals 
         if GUI_AVAILABLE :

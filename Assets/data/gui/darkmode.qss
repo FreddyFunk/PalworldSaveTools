@@ -199,8 +199,9 @@ QToolButton#hdrBtn:hover {
 
 /* Footer */
 QStatusBar {
-    background: transparent;
-    color: rgba(255,255,255,0.6);
+    background: qlineargradient(spread:pad, x1:0.0, y1:0.0, x2:1.0, y2:1.0,
+                stop:0 #07080a, stop:0.5 #08101a, stop:1 #05060a);
+    color: #dfeefc;
     border-top: 1px solid rgba(255,255,255,0.02);
 }
 
@@ -460,6 +461,7 @@ QStackedWidget {
     color: #dfeefc;
     padding: 10px;
     margin: 10px;
+    border: 2px solid rgba(125,211,252,0.2);
 }
 
 /* Ensure all tab content widgets inherit theme colors */
@@ -642,7 +644,7 @@ QPushButton#detachButton {
     border-radius: 6px;
     padding: 4px 8px;
     color: #7DD3FC;
-    font-size: 14px;
+    font-size: 10px;
 }
 
 QPushButton#detachButton:hover {
@@ -813,4 +815,67 @@ QLabel#timerLabel {
     font-weight: bold;
     background: transparent;
     border: none;
+}
+
+/* ===== Detached Console Window Styles ===== */
+
+/* Console close button */
+QPushButton#consoleCloseBtn {
+    background: transparent;
+    color: #dfeefc;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    padding: 5px;
+}
+
+QPushButton#consoleCloseBtn:hover {
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #ffffff;
+}
+
+/* Console text edit */
+QTextEdit#consoleTextEdit {
+    background: rgba(18,20,24,0.95);
+    color: #dfeefc;
+    border: 2px solid rgba(125,211,252,0.3);
+    border-radius: 6px;
+    padding: 8px;
+    selection-background-color: rgba(125,211,252,0.3);
+}
+
+/* Console scrollbar */
+QTextEdit#consoleTextEdit QScrollBar:vertical {
+    background: rgba(18,20,24,0.8);
+    width: 12px;
+    border-radius: 6px;
+    margin: 2px;
+}
+
+QTextEdit#consoleTextEdit QScrollBar::handle:vertical {
+    background: rgba(125,211,252,0.4);
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+QTextEdit#consoleTextEdit QScrollBar::handle:vertical:hover {
+    background: rgba(125,211,252,0.6);
+}
+
+QTextEdit#consoleTextEdit QScrollBar::add-line:vertical,
+QTextEdit#consoleTextEdit QScrollBar::sub-line:vertical {
+    background: none;
+    border: none;
+}
+
+QTextEdit#consoleTextEdit QScrollBar::up-arrow:vertical,
+QTextEdit#consoleTextEdit QScrollBar::down-arrow:vertical {
+    background: none;
+    border: none;
+}
+
+QTextEdit#consoleTextEdit QScrollBar::add-page:vertical,
+QTextEdit#consoleTextEdit QScrollBar::sub-page:vertical {
+    background: none;
 }

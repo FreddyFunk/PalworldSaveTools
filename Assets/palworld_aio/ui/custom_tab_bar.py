@@ -12,13 +12,11 @@ except :
 from i18n import t 
 from .custom_floating_tab import FloatingTabBar 
 class TabBarContainer (QWidget ):
-
     sidebar_toggle_clicked =Signal ()
     def __init__ (self ,parent =None ):
         super ().__init__ (parent )
         self ._setup_ui ()
     def _setup_ui (self ):
-
         self .setObjectName ("tabBarContainer")
         layout =QHBoxLayout (self )
         layout .setContentsMargins (0 ,0 ,10 ,0 )
@@ -37,7 +35,6 @@ class TabBarContainer (QWidget ):
         self .set_sidebar_collapsed (False )
         layout .addWidget (self .collapse_btn )
     def set_sidebar_collapsed (self ,collapsed ):
-
         if collapsed :
             icon =nf .icons ['nf-cod-triangle_left']
             text =t ('sidebar.open')if t else 'Open'
@@ -49,10 +46,8 @@ class TabBarContainer (QWidget ):
         self .collapse_btn .setText (f"{icon } {text }")
         self .collapse_btn .setToolTip (tooltip )
     def refresh_labels (self ):
-
         collapsed =self .collapse_btn .text ().startswith (nf .icons ['nf-cod-triangle_left'])
         self .set_sidebar_collapsed (collapsed )
     def set_theme (self ,is_dark ):
-
         if hasattr (self .tab_bar ,'set_theme'):
             self .tab_bar .set_theme (is_dark )

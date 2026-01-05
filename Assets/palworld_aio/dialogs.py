@@ -37,7 +37,6 @@ class InputDialog (QDialog ):
         self .result_value =self .input_field .text ()
         super ().accept ()
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :
@@ -81,7 +80,6 @@ class DaysInputDialog (QDialog ):
         self .result_value =self .spin_box .value ()
         super ().accept ()
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :
@@ -157,7 +155,6 @@ class KillNearestBaseDialog (QDialog ):
         clipboard =QApplication .clipboard ()
         clipboard .setText (self .output_text .toPlainText ())
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :
@@ -187,7 +184,6 @@ class ConfirmDialog (QDialog ):
         button_layout .addWidget (no_btn )
         layout .addLayout (button_layout )
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :
@@ -203,7 +199,7 @@ class ConfirmDialog (QDialog ):
 class PalDefenderDialog (QDialog ):
     def __init__ (self ,parent =None ):
         super ().__init__ (parent )
-        self .setWindowTitle ('Generate PalDefender killnearestbase Commands')
+        self .setWindowTitle (t ('paldefender.title')if t else 'Generate PalDefender killnearestbase Commands')
         self .setMinimumSize (800 ,600 )
         if os .path .exists (constants .ICON_PATH ):
             self .setWindowIcon (QIcon (constants .ICON_PATH ))
@@ -278,7 +274,6 @@ class PalDefenderDialog (QDialog ):
         self .output_text .setStyleSheet (f"background-color: {constants .GLASS }; color: {constants .TEXT };")
         layout .addWidget (self .output_text )
     def showEvent (self ,event ):
-
         super ().showEvent (event )
         if not event .spontaneous ():
             try :
@@ -436,4 +431,4 @@ class PalDefenderDialog (QDialog ):
             self ._append_output (f'Level filter applied: <= {max_level }.')
         self ._append_output (f'Excluded guilds: {excluded_guilds }')
         self ._append_output (f'Excluded bases: {excluded_bases }')
-        return guild_count >0 
+        return guild_count >0

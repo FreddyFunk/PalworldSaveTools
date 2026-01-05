@@ -126,7 +126,7 @@ QWidget#contentWidget {
 QFrame#glass {
     background: rgba(240,245,255,1.0);
     border-radius: 10px;
-    border: 1px solid rgba(180,200,220,0.5);
+    border: 1px solid rgba(0,0,0,0.08);
     padding: 10px;
 }
 
@@ -202,7 +202,8 @@ QToolButton#hdrBtn:hover {
 
 /* Footer */
 QStatusBar {
-    background: transparent;
+    background: qlineargradient(spread:pad, x1:0.0, y1:0.0, x2:1.0, y2:1.0,
+                stop:0 #e6ecef, stop:0.5 #bdd5df, stop:1 #a7c9da);
     color: #000000;
     border-top: 1px solid rgba(220,220,220,0.5);
 }
@@ -211,7 +212,7 @@ QStatusBar {
 QMenu {
     background: qlineargradient(spread:pad, x1:0.0, y1:0.0, x2:1.0, y2:1.0,
                 stop:0 rgba(230,236,239,0.95), stop:0.5 rgba(189,213,223,0.95), stop:1 rgba(167,201,218,0.95));
-    border: 1px solid rgba(180,200,220,0.5);
+    border: 1px solid rgba(0,0,0,0.1);
     border-radius: 8px;
     font-size: 16px;
     color: #000000;
@@ -371,7 +372,7 @@ QPushButton#dialogCancel:hover {
 /* Results widget container */
 QWidget#resultsWidget {
     background: rgba(240,245,255,1.0);
-    border-left: 1px solid rgba(180,200,220,0.5);
+    border-left: 2px solid rgba(0,0,0,0.04);
 }
 
 /* Splitter handle */
@@ -418,14 +419,14 @@ QMenu::separator {
 /* Tab Widget Styling */
 QTabWidget::pane {
     background: rgba(240,245,255,0.95);
-    border: 1px solid rgba(180,200,220,0.3);
+    border: 1px solid rgba(0,0,0,0.08);
     border-radius: 10px;
     padding: 12px;
 }
 
 QTabBar::tab {
     background: rgba(200,215,235,0.5);
-    border: 1px solid rgba(180,200,220,0.3);
+    border: 1px solid rgba(0,0,0,0.08);
     border-bottom: none;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
@@ -437,7 +438,7 @@ QTabBar::tab {
 
 /* Custom tab bar styling for separate tab bar */
 QWidget#tabBarContainer {
-    border-bottom: 1px solid rgba(180,200,220,0.4);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 
 QTabBar#customTabBar {
@@ -467,6 +468,7 @@ QStackedWidget {
     color: #000000;
     padding: 10px;
     margin: 10px;
+    border: 2px solid rgba(0,0,0,0.15);
 }
 
 /* Ensure all tab content widgets inherit theme colors */
@@ -543,7 +545,7 @@ QLabel#statsValue {
 QFrame#glassPanel {
     background: rgba(240,245,255,0.75);
     border-radius: 10px;
-    border: 1px solid rgba(180,200,220,0.3);
+    border: 1px solid rgba(100,100,100,0.8);
     padding: 12px;
     margin: 4px 0px;
 }
@@ -551,7 +553,7 @@ QFrame#glassPanel {
 /* Section Headers (Chip Style) */
 QLabel#sectionHeader {
     background: rgba(37,150,190,0.1);
-    border: 1px solid rgba(37,150,190,0.2);
+    border: 1px solid rgba(100,100,100,0.8);
     padding: 8px 12px;
     border-radius: 8px;
     color: #1A365D;
@@ -560,7 +562,7 @@ QLabel#sectionHeader {
 /* Value Cards */
 QFrame#valueCard {
     background: rgba(255,255,255,0.6);
-    border: 1px solid rgba(180,200,220,0.4);
+    border: 1px solid rgba(100,100,100,0.8);
     border-radius: 6px;
     padding: 8px 10px;
     margin: 2px 0px;
@@ -655,7 +657,7 @@ QPushButton#detachButton {
     border-radius: 6px;
     padding: 4px 8px;
     color: #1A5F8D;
-    font-size: 14px;
+    font-size: 10px;
 }
 
 QPushButton#detachButton:hover {
@@ -891,4 +893,67 @@ QLabel#timerLabel {
     font-weight: bold;
     background: transparent;
     border: none;
+}
+
+/* ===== Detached Console Window Styles ===== */
+
+/* Console close button */
+QPushButton#consoleCloseBtn {
+    background: transparent;
+    color: #000000;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    padding: 5px;
+}
+
+QPushButton#consoleCloseBtn:hover {
+    background: rgba(0,0,0,0.1);
+    border-radius: 4px;
+    color: #333333;
+}
+
+/* Console text edit */
+QTextEdit#consoleTextEdit {
+    background: rgba(255,255,255,0.95);
+    color: #000000;
+    border: 2px solid rgba(37,150,190,0.8);
+    border-radius: 6px;
+    padding: 8px;
+    selection-background-color: rgba(37,150,190,0.3);
+}
+
+/* Console scrollbar */
+QTextEdit#consoleTextEdit QScrollBar:vertical {
+    background: rgba(255,255,255,0.8);
+    width: 12px;
+    border-radius: 6px;
+    margin: 2px;
+}
+
+QTextEdit#consoleTextEdit QScrollBar::handle:vertical {
+    background: rgba(37,150,190,0.4);
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+QTextEdit#consoleTextEdit QScrollBar::handle:vertical:hover {
+    background: rgba(37,150,190,0.6);
+}
+
+QTextEdit#consoleTextEdit QScrollBar::add-line:vertical,
+QTextEdit#consoleTextEdit QScrollBar::sub-line:vertical {
+    background: none;
+    border: none;
+}
+
+QTextEdit#consoleTextEdit QScrollBar::up-arrow:vertical,
+QTextEdit#consoleTextEdit QScrollBar::down-arrow:vertical {
+    background: none;
+    border: none;
+}
+
+QTextEdit#consoleTextEdit QScrollBar::add-page:vertical,
+QTextEdit#consoleTextEdit QScrollBar::sub-page:vertical {
+    background: none;
 }

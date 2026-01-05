@@ -51,8 +51,12 @@ MANAGEMENT_TOOL_KEYS =[
 "tool.fix_host_save",
 "tool.restore_map",
 ]
+def center_window (win ):
+    screen =QApplication .primaryScreen ().availableGeometry ()
+    geo =win .frameGeometry ()
+    geo .moveCenter (screen .center ())
+    win .move (geo .topLeft ())
 def center_on_parent (dialog ):
-
     parent =dialog .parent ()
     size =dialog .sizeHint ()
     if not size .isValid ():
@@ -293,7 +297,7 @@ class ToolsTab (QWidget ):
             dialog =None 
             if index ==0 :
                 options_dialog =ConversionOptionsDialog (self )
-                self ._animate_dialog_slide_in (options_dialog )
+                center_window (options_dialog )
                 if options_dialog .exec ()==QDialog .Accepted and options_dialog .selected_option is not None :
                     if options_dialog .selected_option ==0 :
                         self ._import_and_call ("convert_level_location_finder","convert_level_location_finder","json")
@@ -352,4 +356,4 @@ class ToolsTab (QWidget ):
             btn .text_label .setText (t (key )if t else key )
             btn .text_label .setToolTip (t (key )if t else key )
     def refresh (self ):
-        pass 
+        pass

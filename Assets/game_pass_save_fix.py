@@ -91,9 +91,19 @@ class GamePassSaveFixWidget (QWidget ):
         return valid 
     def handle_message (self ,message_type :str ,title :str ,text :str ):
         if message_type =="info":
-            QMessageBox .information (self ,title ,text )
+            msg_box =QMessageBox (self )
+            msg_box .setWindowTitle (title )
+            msg_box .setText (text )
+            msg_box .setIcon (QMessageBox .Information )
+            msg_box .addButton (t ('button.ok')if t else 'OK',QMessageBox .AcceptRole )
+            msg_box .exec ()
         elif message_type =="critical":
-            QMessageBox .critical (self ,title ,text )
+            msg_box =QMessageBox (self )
+            msg_box .setWindowTitle (title )
+            msg_box .setText (text )
+            msg_box .setIcon (QMessageBox .Critical )
+            msg_box .addButton (t ('button.ok')if t else 'OK',QMessageBox .AcceptRole )
+            msg_box .exec ()
     def start_conversion (self ):
         print ("Extraction complete. Converting save files...")
         threading .Thread (target =self .convert_save_files ,daemon =True ).start ()
@@ -170,13 +180,25 @@ class GamePassSaveFixWidget (QWidget ):
         saveFolders =self .list_folders_in_directory ("./saves")
         if not saveFolders :
             print ("No save files found")
-            return 
+            return
         saveList =[]
+        successful =0
         for saveName in saveFolders :
             name =self .convert_sav_JSON (saveName )
-            if name :saveList .append (name )
+            if name :
+                saveList .append (name )
+                successful +=1
         self .update_combobox_signal .emit (saveList )
         print ("Choose a save to convert:")
+        total =len (saveFolders )
+        if successful >0 :
+            if successful ==total :
+                message =f"All {total } save files converted successfully."
+            else :
+                message =f"Successfully converted {successful } out of {total } save files."
+            self .message_signal .emit ("info","Conversion Done",message )
+        else :
+            self .message_signal .emit ("critical","Conversion Failed","No save files were converted successfully.")
     def run_save_extractor (self ):
         import gc 
         try :
@@ -212,6 +234,14 @@ class GamePassSaveFixWidget (QWidget ):
         if not os .path .exists (save_path ):return None 
         def task ():
             try :
+                import logging 
+                logging .disable (logging .CRITICAL )
+                try :
+                    from loguru import logger 
+                    logger .remove ()
+                    logger .add (lambda msg :None ,level ="CRITICAL",enqueue =True )
+                except :
+                    pass 
                 from palworld_save_tools .commands import convert 
                 old_argv =sys .argv 
                 sys .argv =["convert",save_path ]
@@ -219,16 +249,27 @@ class GamePassSaveFixWidget (QWidget ):
                 sys .argv =old_argv 
                 return saveName 
             except Exception as e :
-                print (f"Error: {e }")
-                return None 
+                return str (e )
+            finally :
+                logging .disable (logging .NOTSET )
         run_with_loading (self .update_combobox_signal .emit ,task )
     def convert_JSON_sav (self ,saveName ):
         source_base =getattr (self ,"direct_saves_map",{}).get (saveName ,os .path .join (root_dir ,"saves",saveName ))
         json_path =os .path .join (source_base ,"Level","01.sav.json")
         sav_path =os .path .join (source_base ,"Level","01.sav")
         out_level =os .path .join (source_base ,"Level.sav")
+        if os .path .exists (out_level ):
+            all_saves =list (getattr (self ,"direct_saves_map",{}).keys ())
+            if len (all_saves )==1 :
+                self .message_signal .emit ("info",t ("Success"),t ("xgp.msg.all_converted"))
+                return 
+            else :
+                self .message_signal .emit ("info",t ("Info"),t ("xgp.msg.already_converted",save =saveName ))
+                return 
         def run_conversion ():
             try :
+                import logging 
+                logging .disable (logging .CRITICAL )
                 from palworld_save_tools .commands import convert 
                 if os .path .exists (sav_path )and not os .path .exists (json_path ):
                     old =sys .argv 
@@ -243,9 +284,14 @@ class GamePassSaveFixWidget (QWidget ):
                 if os .path .exists (json_path ):os .remove (json_path )
                 return "success"
             except Exception as e :
-                return str (e )
+                error_str =str (e )
+                if "Cannot log to objects of type"in error_str :
+                    return "Conversion completed (logging error suppressed)"
+                return error_str 
+            finally :
+                logging .disable (logging .NOTSET )
         def on_conversion_finished (result ):
-            if result =="success":
+            if result =="success"or "Conversion completed (logging error suppressed)"in result :
                 self .move_save_steam (saveName )
             elif result =="err_no_json":
                 self .message_signal .emit ("critical",t ("Error"),t ("xgp.err.no_valid_saves"))
@@ -312,7 +358,7 @@ class GamePassSaveFixWidget (QWidget ):
                 sys .argv =["main.py",source_folder ]
                 xgp_main .main ()
                 time .sleep (2 )
-                self .message_signal .emit ("info","Success","Steam save imported successfully.")
+                self .message_signal .emit ("info",t ("Success"),t ("xgp.msg.steam_import_success"))
             finally :
                 sys .argv =old_argv 
                 self .start_gaming_services ()

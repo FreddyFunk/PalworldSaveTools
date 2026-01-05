@@ -2,28 +2,23 @@ from PySide6 .QtWidgets import QTabBar
 from PySide6 .QtCore import Qt ,QSize ,QRectF 
 from PySide6 .QtGui import QPainter ,QPainterPath ,QColor ,QFont ,QPen ,QBrush ,QFontMetrics 
 class FloatingTabBar (QTabBar ):
-
     def __init__ (self ,parent =None ):
         super ().__init__ (parent )
         self .setDrawBase (False )
         self .is_dark_mode =True 
         self ._hovered_tab =-1 
     def set_theme (self ,is_dark ):
-
         self .is_dark_mode =is_dark 
         self .update ()
     def tabSizeHint (self ,index ):
-
         size =super ().tabSizeHint (index )
         return QSize (size .width ()+20 ,size .height ()+12 )
     def paintEvent (self ,event ):
-
         painter =QPainter (self )
         painter .setRenderHint (QPainter .Antialiasing )
         for i in range (self .count ()):
             self ._draw_custom_tab (painter ,i )
     def _draw_custom_tab (self ,painter ,index ):
-
         rect =self .tabRect (index )
         is_selected =(index ==self .currentIndex ())
         is_hovered =(index ==self ._hovered_tab )
@@ -39,7 +34,6 @@ class FloatingTabBar (QTabBar ):
         painter .setFont (font )
         painter .drawText (rect ,Qt .AlignCenter ,self .tabText (index ))
     def _create_tab_path (self ,rect ):
-
         path =QPainterPath ()
         radius =10 
         slant =15 
@@ -54,7 +48,6 @@ class FloatingTabBar (QTabBar ):
         path .closeSubpath ()
         return path 
     def _draw_shadow (self ,painter ,path ):
-
         shadow_color =QColor (125 ,211 ,252 ,25 )if self .is_dark_mode else QColor (37 ,150 ,190 ,25 )
         painter .setPen (Qt .NoPen )
         painter .setBrush (QBrush (shadow_color ))
@@ -63,7 +56,6 @@ class FloatingTabBar (QTabBar ):
         painter .fillPath (path ,shadow_color )
         painter .restore ()
     def _get_colors (self ,is_selected ,is_hovered ):
-
         if self .is_dark_mode :
             if is_selected :
                 bg =QColor (125 ,211 ,252 ,31 )
@@ -92,14 +84,12 @@ class FloatingTabBar (QTabBar ):
                 text =QColor ("#2C3E50")
         return bg ,border ,text 
     def mouseMoveEvent (self ,event ):
-
         old_hovered =self ._hovered_tab 
         self ._hovered_tab =self .tabAt (event .pos ())
         if old_hovered !=self ._hovered_tab :
             self .update ()
         super ().mouseMoveEvent (event )
     def leaveEvent (self ,event ):
-
         self ._hovered_tab =-1 
         self .update ()
         super ().leaveEvent (event )
