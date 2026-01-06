@@ -451,7 +451,7 @@ def transfer_all_characters ():
             t_pals =time .perf_counter ()-t0 
             sync_player_timestamps (targ_uid ,targ_lvl )
             modified_target_players .add (selected_target_player )
-            modified_targets_data [selected_target_player ]=(fast_deepcopy (targ_json ),targ_json_gvas )
+            modified_targets_data [selected_target_player ]=(fast_deepcopy (targ_json ),targ_json_gvas ,selected_source_player )
             print (f"[{i +1 }/{total_players }] {player_uuid } | Char: {t_char :.3f}s | Inv: {t_inv :.3f}s | Pals: {t_pals :.3f}s | Total: {time .perf_counter ()-player_start :.3f}s")
         gather_and_update_dynamic_containers ()
         print (f"Bulk transfer completed in {time .perf_counter ()-total_start :.2f}s.")
@@ -529,7 +529,7 @@ def main (skip_msgbox =False ,skip_gui =False ):
     gather_and_update_dynamic_containers ()
     sync_player_timestamps (targ_uid ,targ_lvl )
     modified_target_players .add (selected_target_player )
-    modified_targets_data [selected_target_player ]=(fast_deepcopy (targ_json ),targ_json_gvas )
+    modified_targets_data [selected_target_player ]=(fast_deepcopy (targ_json ),targ_json_gvas ,selected_source_player )
     if not skip_gui :
         load_players (targ_lvl ,is_source =False )
     selected_source_player =None 
@@ -844,20 +844,24 @@ def save_and_backup ():
         os .replace (tmp_world ,t_level_sav_path )
         src_players_folder =os .path .join (os .path .dirname (level_sav_path ),"Players")
         tgt_players_folder =os .path .join (os .path .dirname (t_level_sav_path ),"Players")
-        for target_player ,(json_data ,gvas_obj )in modified_targets_data .items ():
+        for target_player ,(json_data ,gvas_obj ,source_guid )in modified_targets_data .items ():
             t_host_sav_path =os .path .join (tgt_players_folder ,target_player +'.sav')
             os .makedirs (os .path .dirname (t_host_sav_path ),exist_ok =True )
             gvas_obj .properties =json_data 
             tmp_player =t_host_sav_path +".tmp"
             gvas_to_sav (tmp_player ,gvas_obj .write ())
             os .replace (tmp_player ,t_host_sav_path )
-            src_dps_path =os .path .join (src_players_folder ,target_player +'_dps.sav')
+            src_dps_path =os .path .join (src_players_folder ,source_guid +'_dps.sav')
             tgt_dps_path =os .path .join (tgt_players_folder ,target_player +'_dps.sav')
             if os .path .exists (src_dps_path ):
-                tmp_dps =tgt_dps_path +".tmp"
-                shutil .copy2 (src_dps_path ,tmp_dps )
-                os .replace (tmp_dps ,tgt_dps_path )
-                print (f"DPS save copied from {src_dps_path } to {tgt_dps_path }")
+                pal_id =json_data ["SaveData"]["value"]["PalStorageContainerId"]["value"]["ID"]["value"]
+                raw_gvas ,_ =load_file (src_dps_path )
+                dps =SkipGvasFile .read (raw_gvas )
+                for pal in dps .properties .get ('value',[]):
+                    if 'SlotId'in pal and 'ContainerId'in pal ['SlotId']:
+                        pal ['SlotId']['ContainerId']['ID']['value']=pal_id 
+                gvas_to_sav (tgt_dps_path ,dps .write ())
+                print (f"DPS save updated from {src_dps_path } to {tgt_dps_path }")
             else :
                 print (f"DPS source file missing: {src_dps_path }")
         return True 
