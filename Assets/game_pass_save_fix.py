@@ -76,6 +76,11 @@ class GamePassSaveFixWidget (QWidget ):
         glass_layout .addWidget (self .save_frame )
         main_layout .addWidget (glass_frame )
         center_window (self )
+    def showEvent (self ,event ):
+        super ().showEvent (event )
+        if not event .spontaneous ():
+            self .activateWindow ()
+            self .raise_ ()
     def find_valid_saves (self ,base_path ):
         valid =[]
         if not os .path .isdir (base_path ):return valid 

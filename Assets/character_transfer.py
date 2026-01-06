@@ -306,6 +306,11 @@ class CharacterTransferWindow (QWidget ):
         tip_label .setFont (QFont ("Segoe UI",9 ))
         glass_layout .addWidget (tip_label )
         main_layout .addWidget (glass_frame )
+    def showEvent (self ,event ):
+        super ().showEvent (event )
+        if not event .spontaneous ():
+            self .activateWindow ()
+            self .raise_ ()
     def load_styles (self ):
         user_cfg_path =os .path .join (get_assets_directory (),"data","configs","user.cfg")
         theme ="dark"

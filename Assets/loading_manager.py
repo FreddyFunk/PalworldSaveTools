@@ -53,6 +53,11 @@ if "--spawn-loader"in sys .argv :
             self .listener =STDINListener ()
             self .listener .message_received .connect (self .handle_message )
             self .listener .start ()
+        def showEvent (self ,event ):
+            super ().showEvent (event )
+            if not event .spontaneous ():
+                self .activateWindow ()
+                self .raise_ ()
         def mousePressEvent (self ,event ):
             if event .button ()==Qt .LeftButton :
                 self ._drag_pos =event .globalPosition ().toPoint ()-self .frameGeometry ().topLeft ()
@@ -313,6 +318,11 @@ class ErrorDialog (QDialog ):
         self .is_dark =self ._load_theme_pref ()
         self ._load_theme ()
         self .setup_error_ui ()
+    def showEvent (self ,event ):
+        super ().showEvent (event )
+        if not event .spontaneous ():
+            self .activateWindow ()
+            self .raise_ ()
     def _load_theme_pref (self ):
         try :
             cfg =os .path .join (get_assets_directory (),"data","configs","user.cfg")

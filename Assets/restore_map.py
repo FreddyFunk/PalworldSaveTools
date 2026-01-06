@@ -113,6 +113,11 @@ def restore_map ():
             main_layout .addWidget (glass_frame )
             center_window (self )
             self .setModal (True )
+        def showEvent (self ,event ):
+            super ().showEvent (event )
+            if not event .spontaneous ():
+                self .activateWindow ()
+                self .raise_ ()
         def on_yes (self ):
             file_size =os .path .getsize (resources_file )
             copy_to_all_subfolders (resources_file ,file_size )

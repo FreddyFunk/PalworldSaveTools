@@ -45,6 +45,8 @@ class InputDialog (QDialog ):
             except ImportError :
                 from ..ui .tools_tab import center_on_parent 
                 center_on_parent (self )
+            self .activateWindow ()
+            self .raise_ ()
     @staticmethod 
     def get_text (title ,prompt ,parent =None ,mode ='text'):
         dialog =InputDialog (title ,prompt ,parent ,mode )
@@ -88,6 +90,8 @@ class DaysInputDialog (QDialog ):
             except ImportError :
                 from ..ui .tools_tab import center_on_parent 
                 center_on_parent (self )
+            self .activateWindow ()
+            self .raise_ ()
     @staticmethod 
     def get_days (title ,prompt ,parent =None ):
         dialog =DaysInputDialog (title ,prompt ,parent )
@@ -163,6 +167,8 @@ class KillNearestBaseDialog (QDialog ):
             except ImportError :
                 from ..ui .tools_tab import center_on_parent 
                 center_on_parent (self )
+            self .activateWindow ()
+            self .raise_ ()
 class ConfirmDialog (QDialog ):
     def __init__ (self ,title ,message ,parent =None ):
         super ().__init__ (parent )
@@ -192,6 +198,8 @@ class ConfirmDialog (QDialog ):
             except ImportError :
                 from ..ui .tools_tab import center_on_parent 
                 center_on_parent (self )
+            self .activateWindow ()
+            self .raise_ ()
     @staticmethod 
     def confirm (title ,message ,parent =None ):
         dialog =ConfirmDialog (title ,message ,parent )

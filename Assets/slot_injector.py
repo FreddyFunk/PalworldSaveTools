@@ -79,6 +79,11 @@ class SlotNumUpdaterApp (QDialog ):
         glass_layout .addWidget (self .apply_button ,alignment =Qt .AlignCenter )
         main_layout .addWidget (glass )
         QTimer .singleShot (0 ,lambda :center_window (self ))
+    def showEvent (self ,event ):
+        super ().showEvent (event )
+        if not event .spontaneous ():
+            self .activateWindow ()
+            self .raise_ ()
     def browse_file (self ):
         file ,_ =QFileDialog .getOpenFileName (self ,t ("slot.select_level_sav_title"),"","SAV Files (Level.sav)")
         if file :

@@ -197,6 +197,8 @@
   "deletion.menu.remove_invalid_items": "移除所有无效物品",
   "deletion.menu.remove_invalid_pals": "删除所有无效帕鲁",
   "deletion.menu.reset_missions": "重置任务",
+  "deletion.menu.trim_overfilled_inventories": "整理超载库存",
+  "deletion.trimmed_inventories": "已整理 {fixed} 个超载库存",
   "deletion.menu.view": "视图",
   "deletion.menu.show_map": "显示基地地图",
   "deletion.menu.generate_map": "生成地图",

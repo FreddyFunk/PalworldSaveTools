@@ -93,6 +93,11 @@ def ask_string_with_icon (title ,prompt ,icon_path ):
             button_layout .addWidget (cancel_button )
             layout .addLayout (button_layout )
             self .entry .setFocus ()
+        def showEvent (self ,event ):
+            super ().showEvent (event )
+            if not event .spontaneous ():
+                self .activateWindow ()
+                self .raise_ ()
     dialog =CustomDialog (None )
     result =dialog .exec ()
     return dialog .entry .text ()if result ==QDialog .Accepted else None 
@@ -323,6 +328,11 @@ class FixHostSaveWindow (QWidget ):
         self .old_tree .itemSelectionChanged .connect (self .update_source_selection )
         self .new_tree .itemSelectionChanged .connect (self .update_target_selection )
         QTimer .singleShot (0 ,lambda :center_window (self ))
+    def showEvent (self ,event ):
+        super ().showEvent (event )
+        if not event .spontaneous ():
+            self .activateWindow ()
+            self .raise_ ()
     def keyPressEvent (self ,event ):
         if event .key ()==Qt .Key_Escape :
             self .close ()

@@ -239,6 +239,8 @@
   "deletion.menu.remove_invalid_items": "Удалить все недопустимые предметы",
   "deletion.menu.remove_invalid_pals": "Удалить всех недействительных палов",
   "deletion.menu.reset_missions": "Сбросить миссии",
+  "deletion.menu.trim_overfilled_inventories": "Обрезать переполненные инвентари",
+  "deletion.trimmed_inventories": "{fixed} переполненных инвентарей обрезано",
   "deletion.menu.view": "Просмотр",
   "deletion.menu.show_map": "Показать карту базы",
   "deletion.menu.generate_map": "Сгенерировать карту",

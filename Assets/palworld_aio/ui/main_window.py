@@ -191,6 +191,8 @@ class StatusBarStream (QObject ):
             self .detach_window =DetachedStatusWindow (self .parent )
             self .detach_window .setWindowOpacity (0.0 )
             self .detach_window .show ()
+            self .detach_window .activateWindow ()
+            self .detach_window .raise_ ()
             self .detach_window .fade_animation =QPropertyAnimation (self .detach_window ,b"windowOpacity")
             self .detach_window .fade_animation .setDuration (300 )
             self .detach_window .fade_animation .setStartValue (0.0 )
