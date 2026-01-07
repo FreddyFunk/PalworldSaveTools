@@ -770,5 +770,8 @@
   "loading.import_bases": "Importing bases...",
   "tool.convert.done": "Conversion Done",
   "tool.convert.level_done": "{source} converted to {target}",
-  "tool.convert.players_done": "Converted {count} player files."
+  "tool.convert.players_done": "Converted {count} player files.",
+  "deletion.menu.remove_invalid_passives": "Remove All Invalid Passives",
+  "deletion.invalid_passives_removed": "Removed {count} invalid passives",
+  "loading.remove_invalid_passives": "Removing invalid passives..."
 }

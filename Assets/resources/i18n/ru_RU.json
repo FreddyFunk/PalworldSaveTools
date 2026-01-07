@@ -667,5 +667,8 @@
   "tool.convert.done": "Преобразование завершено",
   "tool.convert.level_done": "Преобразовано {source} в {target}",
   "tool.convert.players_done": "Преобразовано {count} файлов игроков.",
-  "console.title": "Консоль"
+  "console.title": "Консоль",
+  "deletion.menu.remove_invalid_passives": "Удалить все недействительные пассивы",
+  "deletion.invalid_passives_removed": "{count} недействительных пассивов удалено",
+  "loading.remove_invalid_passives": "Удаление недействительных пассивов..."
 }

@@ -903,3 +903,71 @@ def reset_selected_player_timestamp (player_uid ,parent =None ):
         return True 
     except Exception as e :
         return False 
+def remove_invalid_passives_from_save (parent =None ):
+    base_dir =os .path .dirname (os .path .dirname (os .path .abspath (__file__ )))
+    valid_passives =set ()
+    try :
+        fp =os .path .join (base_dir ,'resources','game_data','passivedata.json')
+        with open (fp ,'r',encoding ='utf-8')as f :
+            js =json .load (f )
+            for x in js .get ('passives',[]):
+                asset =x .get ('asset')
+                if isinstance (asset ,str ):
+                    valid_passives .add (asset .lower ())
+    except :
+        return 0 
+    if not constants .current_save_path or not constants .loaded_level_json :
+        return 0 
+    try :
+        wsd =constants .loaded_level_json ['properties']['worldSaveData']['value']
+    except :
+        return 0 
+    players_dir =os .path .join (constants .current_save_path ,'Players')
+    removed_count =0 
+    cmap =wsd .get ('CharacterSaveParameterMap',{}).get ('value',[])
+    for itm in cmap :
+        try :
+            raw =itm ['value']['RawData']['value']['object']['SaveParameter']['value']
+            if 'PassiveSkillList'in raw :
+                p_list =raw ['PassiveSkillList']['value']['values']
+                new_p_list =[s for s in p_list if s .lower ()in valid_passives ]
+                removed =len (p_list )-len (new_p_list )
+                if removed >0 :
+                    raw ['PassiveSkillList']['value']['values']=new_p_list 
+                    removed_count +=removed 
+        except :
+            pass 
+    if os .path .exists (players_dir ):
+        for filename in os .listdir (players_dir ):
+            if filename .endswith ('.sav')and '_dps'not in filename :
+                file_path =os .path .join (players_dir ,filename )
+                try :
+                    p_json =sav_to_json (file_path )
+                    changed =False 
+                    def remove_invalid_passives (data ):
+                        nonlocal changed ,removed_count 
+                        if isinstance (data ,dict ):
+                            if 'PassiveSkills'in data and isinstance (data ['PassiveSkills'],dict ):
+                                skills =data ['PassiveSkills'].get ('value',[])
+                                if isinstance (skills ,list ):
+                                    new_skills =[]
+                                    for skill in skills :
+                                        skill_name =skill .get ('value','').lower ()
+                                        if skill_name in valid_passives :
+                                            new_skills .append (skill )
+                                        else :
+                                            changed =True 
+                                            removed_count +=1 
+                                    if changed :
+                                        data ['PassiveSkills']['value']=new_skills 
+                            for v in data .values ():
+                                remove_invalid_passives (v )
+                        elif isinstance (data ,list ):
+                            for item in data :
+                                remove_invalid_passives (item )
+                    remove_invalid_passives (p_json )
+                    if changed :
+                        json_to_sav (p_json ,file_path )
+                except :
+                    pass 
+    return removed_count 

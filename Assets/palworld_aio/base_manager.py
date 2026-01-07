@@ -117,6 +117,9 @@ def export_base_json (loaded_level_json ,source_base_id ):
     _s (_get_model_raw (obj ).get ('base_camp_id_belong_to',''))==src_id_str ]
     for obj in base_map_objects :
         oid =str (obj .get ('MapObjectId',{}).get ('value',''))
+        if oid in ['PalBooth','ItemBooth']:
+            print (f"Skipping map object {oid } due to known issues")
+            continue 
         if oid .startswith ('PalEgg')and 'Hatching'not in oid and ('Incubator'not in oid ):
             continue 
         export_data ['map_objects'].append (_deep (obj ))
@@ -196,6 +199,8 @@ def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset 
             if mr :
                 palbox_model_id =_s (mr .get ('instance_id',''))
                 break 
+    exported_item_container_ids =set (_s (c ['key']['ID']['value'])for c in exported_data .get ('item_containers',[]))
+    exported_char_container_ids =set (_s (c ['key']['ID']['value'])for c in exported_data .get ('char_containers',[]))
     instance_id_map ={}
     concrete_id_map ={}
     for obj in exported_data .get ('map_objects',[]):
@@ -203,6 +208,8 @@ def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset 
         if not isinstance (mr ,dict ):
             continue 
         oid =str (obj .get ('MapObjectId',{}).get ('value',''))
+        if oid in ['ItemBooth','PalBooth']:
+            continue 
         if oid .startswith ('PalEgg')and 'Hatching'not in oid and ('Incubator'not in oid ):
             continue 
         old_inst =_s (mr .get ('instance_id',''))
@@ -369,10 +376,12 @@ def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset 
         mr =_get_model_raw (obj )
         if not isinstance (mr ,dict ):
             continue 
+        oid =str (obj .get ('MapObjectId',{}).get ('value',''))
+        if oid in ['ItemBooth','PalBooth']:
+            continue 
         old_inst =_s (mr .get ('instance_id',''))
         if old_inst not in instance_id_map :
             continue 
-        oid =str (obj .get ('MapObjectId',{}).get ('value',''))
         if oid .startswith ('PalEgg')and 'Hatching'not in oid and ('Incubator'not in oid ):
             continue 
         no =_deep (obj )
@@ -395,6 +404,27 @@ def import_base_json (loaded_level_json ,exported_data ,target_guild_id ,offset 
             cr ['base_camp_id']=new_base_id 
             if cr .get ('concrete_model_type')=='PalMapObjectBreedFarmModel':
                 cr ['spawned_egg_instance_ids']=[]
+            has_invalid =False 
+            try :
+                mm =no ['ConcreteModel']['value']['ModuleMap']['value']
+                for mod in mm :
+                    raw_mod =mod .get ('value',{}).get ('RawData',{}).get ('value',{})
+                    if 'work_ids'in raw_mod and isinstance (raw_mod ['work_ids'],list ):
+                        for wid in raw_mod ['work_ids']:
+                            if _s (wid )not in work_id_map :
+                                has_invalid =True 
+                    if 'target_work_id'in raw_mod :
+                        twid =_s (raw_mod ['target_work_id'])
+                        if twid and twid not in work_id_map :
+                            has_invalid =True 
+                    if 'target_container_id'in raw_mod :
+                        cid =_s (raw_mod ['target_container_id'])
+                        if cid and cid not in exported_item_container_ids and cid not in exported_char_container_ids :
+                            has_invalid =True 
+            except :
+                pass 
+            if has_invalid :
+                continue 
             try :
                 mm =no ['ConcreteModel']['value']['ModuleMap']['value']
                 for mod in mm :

@@ -661,5 +661,8 @@
   "console.reattach": "Volver a acoplar",
   "console.title": "Consola",
   "deletion.menu.trim_overfilled_inventories": "Recortar inventarios sobrecargados",
-  "deletion.trimmed_inventories": "{fixed} inventarios sobrecargados recortados"
+  "deletion.trimmed_inventories": "{fixed} inventarios sobrecargados recortados",
+  "deletion.menu.remove_invalid_passives": "Eliminar todos los pasivos inválidos",
+  "deletion.invalid_passives_removed": "{count} pasivos inválidos eliminados",
+  "loading.remove_invalid_passives": "Eliminando pasivos inválidos..."
 }

@@ -471,7 +471,7 @@ class MapTab (QWidget ):
         },
         "zoom":{
         "factor":1.15 ,"min":1.0 ,"max":20.0 ,
-        "double_click_target":6.5 ,"animation_speed":0.2 ,"animation_fps":60
+        "double_click_target":6.5 ,"animation_speed":0.2 ,"animation_fps":60 
         },
         "effects":{
         "delete":{"enabled":True ,"duration":1000 ,"max_radius":150 ,

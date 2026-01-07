@@ -650,5 +650,8 @@
   "console.reattach": "Rattacher",
   "console.title": "Console",
   "deletion.menu.trim_overfilled_inventories": "Rogner les inventaires surchargés",
-  "deletion.trimmed_inventories": "{fixed} inventaires surchargés rognés"
+  "deletion.trimmed_inventories": "{fixed} inventaires surchargés rognés",
+  "deletion.menu.remove_invalid_passives": "Supprimer toutes les passives invalides",
+  "deletion.invalid_passives_removed": "{count} passives invalides supprimées",
+  "loading.remove_invalid_passives": "Suppression des passives invalides..."
 }

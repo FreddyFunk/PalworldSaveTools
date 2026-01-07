@@ -50,6 +50,7 @@ try :
         from palworld_aio .func_manager import (
         remove_invalid_items_from_save ,
         remove_invalid_pals_from_save ,
+        remove_invalid_passives_from_save ,
         delete_invalid_structure_map_objects ,
         delete_unreferenced_data ,
         delete_non_base_map_objects 
@@ -165,6 +166,7 @@ def run_aio ():
         print ("Running cleanup operations...")
         remove_invalid_items_from_save ()
         remove_invalid_pals_from_save ()
+        remove_invalid_passives_from_save ()
         delete_invalid_structure_map_objects ()
         delete_unreferenced_data ()
         delete_non_base_map_objects ()

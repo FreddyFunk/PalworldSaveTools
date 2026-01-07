@@ -677,5 +677,8 @@
   "invalid_structures_removed": "删除了 {removed} 个无效结构",
   "tool.convert.done": "转换完成",
   "tool.convert.level_done": "已将 {source} 转换为 {target}",
-  "tool.convert.players_done": "已转换 {count} 个玩家文件"
+  "tool.convert.players_done": "已转换 {count} 个玩家文件",
+  "deletion.menu.remove_invalid_passives": "删除所有无效被动",
+  "deletion.invalid_passives_removed": "已删除 {count} 个无效被动",
+  "loading.remove_invalid_passives": "正在删除无效被动..."
 }

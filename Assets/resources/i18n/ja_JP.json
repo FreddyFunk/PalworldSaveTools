@@ -670,5 +670,8 @@
   "console.reattach": "再接続",
   "console.title": "コンソール",
   "deletion.menu.trim_overfilled_inventories": "オーバーフローしたインベントリをトリム",
-  "deletion.trimmed_inventories": "{fixed} オーバーフローしたインベントリをトリムしました"
+  "deletion.trimmed_inventories": "{fixed} オーバーフローしたインベントリをトリムしました",
+  "deletion.menu.remove_invalid_passives": "無効なパッシブをすべて削除",
+  "deletion.invalid_passives_removed": "{count} 個の無効なパッシブを削除しました",
+  "loading.remove_invalid_passives": "無効なパッシブを削除しています..."
 }

@@ -30,7 +30,7 @@ try :
     delete_empty_guilds ,delete_inactive_players ,delete_inactive_bases ,
     delete_duplicated_players ,delete_unreferenced_data ,delete_non_base_map_objects ,
     delete_invalid_structure_map_objects ,delete_all_skins ,unlock_all_private_chests ,
-    remove_invalid_items_from_save ,remove_invalid_pals_from_save ,fix_missions ,
+    remove_invalid_items_from_save ,remove_invalid_pals_from_save ,remove_invalid_passives_from_save ,fix_missions ,
     reset_anti_air_turrets ,reset_dungeons ,unlock_viewing_cage_for_player ,
     fix_all_negative_timestamps ,reset_selected_player_timestamp ,detect_and_trim_overfilled_inventories 
     )
@@ -49,7 +49,7 @@ except ImportError :
     delete_empty_guilds ,delete_inactive_players ,delete_inactive_bases ,
     delete_duplicated_players ,delete_unreferenced_data ,delete_non_base_map_objects ,
     delete_invalid_structure_map_objects ,delete_all_skins ,unlock_all_private_chests ,
-    remove_invalid_items_from_save ,remove_invalid_pals_from_save ,fix_missions ,
+    remove_invalid_items_from_save ,remove_invalid_pals_from_save ,remove_invalid_passives_from_save ,fix_missions ,
     reset_anti_air_turrets ,reset_dungeons ,unlock_viewing_cage_for_player ,
     fix_all_negative_timestamps ,reset_selected_player_timestamp ,detect_and_trim_overfilled_inventories 
     )
@@ -423,6 +423,7 @@ class MainWindow (QMainWindow ):
         (t ('deletion.menu.remove_invalid_items')if t else 'Remove Invalid Items',self ._remove_invalid_items ),
         (t ('deletion.menu.remove_invalid_structures')if t else 'Remove Invalid Structures',self ._remove_invalid_structures ),
         (t ('deletion.menu.remove_invalid_pals')if t else 'Remove Invalid Pals',self ._remove_invalid_pals ),
+        (t ('deletion.menu.remove_invalid_passives')if t else 'Remove Invalid Passives',self ._remove_invalid_passives ),
         (t ('deletion.menu.reset_missions')if t else 'Reset Missions',self ._reset_missions ),
         (t ('deletion.menu.reset_anti_air')if t else 'Reset Anti-Air Turrets',self ._reset_anti_air ),
         (t ('deletion.menu.reset_dungeons')if t else 'Reset Dungeons',self ._reset_dungeons ),
@@ -881,29 +882,6 @@ class MainWindow (QMainWindow ):
         menu .addAction (self ._create_action (t ('deletion.ctx.remove_exclusion'),lambda :self ._remove_exclusion (excl_type ,item .text (0 ))))
         menu .exec (panel .tree .viewport ().mapToGlobal (pos ))
     def _load_save (self ):
-        if constants .loaded_level_json is not None :
-            constants .loaded_level_json =None 
-            constants .current_save_path =None 
-            constants .backup_save_path =None 
-            constants .srcGuildMapping =None 
-            constants .base_guild_lookup ={}
-            constants .files_to_delete =set ()
-            constants .PLAYER_PAL_COUNTS ={}
-            constants .player_levels ={}
-            constants .PLAYER_DETAILS_CACHE ={}
-            constants .PLAYER_REMAPS ={}
-            constants .exclusions ={}
-            constants .selected_source_player =None 
-            constants .dps_executor =None 
-            constants .dps_futures =[]
-            constants .dps_tasks =[]
-            constants .original_loaded_level_json =None 
-            try :
-                from palobject import MappingCacheObject 
-                MappingCacheObject ._MappingCacheInstances .clear ()
-            except ImportError :
-                from ..palobject import MappingCacheObject 
-                MappingCacheObject ._MappingCacheInstances .clear ()
         save_manager .load_save (parent =self )
     def _restart_program (self ):
         import sys 
@@ -1090,6 +1068,26 @@ class MainWindow (QMainWindow ):
         def on_finished (removed ):
             self .refresh_all ()
             QMessageBox .information (self ,t ('Done'),t ('palclean.summary',removed =removed ))
+        run_with_loading (on_finished ,task )
+    def _remove_invalid_passives (self ):
+        if not constants .loaded_level_json :
+            QMessageBox .warning (self ,t ('Error'),t ('error.no_save_loaded'))
+            return 
+        def task ():
+            return remove_invalid_passives_from_save (self )
+        def on_finished (removed ):
+            self .refresh_all ()
+            QMessageBox .information (self ,t ('Done'),t ('deletion.invalid_passives_removed',count =removed ))
+        run_with_loading (on_finished ,task )
+    def _remove_invalid_passives (self ):
+        if not constants .loaded_level_json :
+            QMessageBox .warning (self ,t ('Error'),t ('error.no_save_loaded'))
+            return 
+        def task ():
+            return remove_invalid_passives_from_save (self )
+        def on_finished (removed ):
+            self .refresh_all ()
+            QMessageBox .information (self ,t ('Done'),t ('deletion.invalid_passives_removed',count =removed ))
         run_with_loading (on_finished ,task )
     def _reset_missions (self ):
         if not constants .loaded_level_json :

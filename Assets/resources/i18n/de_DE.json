@@ -691,5 +691,8 @@
   "console.reattach": "Erneut anhängen",
   "console.title": "Konsole",
   "deletion.menu.trim_overfilled_inventories": "Überfüllte Inventare beschneiden",
-  "deletion.trimmed_inventories": "{fixed} überfüllte Inventare beschnitten"
+  "deletion.trimmed_inventories": "{fixed} überfüllte Inventare beschnitten",
+  "deletion.menu.remove_invalid_passives": "Alle ungültigen Passives entfernen",
+  "deletion.invalid_passives_removed": "{count} ungültige Passives entfernt",
+  "loading.remove_invalid_passives": "Ungültige Passives werden entfernt..."
 }
