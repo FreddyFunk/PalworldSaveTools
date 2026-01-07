@@ -471,7 +471,7 @@ class MapTab (QWidget ):
         },
         "zoom":{
         "factor":1.15 ,"min":1.0 ,"max":20.0 ,
-        "double_click_target":2.5 ,"animation_speed":0.2 ,"animation_fps":60 
+        "double_click_target":5.0 ,"animation_speed":0.2 ,"animation_fps":60
         },
         "effects":{
         "delete":{"enabled":True ,"duration":1000 ,"max_radius":150 ,
@@ -819,7 +819,6 @@ class MapTab (QWidget ):
         if item_type =='base':
             self ._update_info (item_data )
             self ._highlight_base (item_data )
-            self ._zoom_to_base (item_data )
     def _on_tree_item_double_clicked (self ,item ,column ):
         data =item .data (0 ,Qt .UserRole )
         if not data :
@@ -880,9 +879,9 @@ class MapTab (QWidget ):
         self .info_label .setText (info .strip ())
     def _on_marker_clicked (self ,base_data ):
         self ._update_info (base_data )
-        self ._zoom_to_base (base_data )
     def _on_marker_double_clicked (self ,base_data ):
         self ._update_info (base_data )
+        self ._highlight_base (base_data )
     def _on_zoom_changed (self ,zoom_level ):
         for marker in self .base_markers :
             marker .scale_to_zoom (zoom_level )
