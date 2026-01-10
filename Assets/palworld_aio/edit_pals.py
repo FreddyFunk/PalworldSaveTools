@@ -466,6 +466,22 @@ class PalIcon (QFrame ):
                                 break
                 except Exception :
                     pass
+                # If not found in paldata.json, try npcdata.json
+                if not icon_path :
+                    try :
+                        npcdata_path =os .path .join (base_dir ,'resources','game_data','npcdata.json')
+                        with open (npcdata_path ,'r',encoding ='utf-8')as f :
+                            npcdata =json .load (f )
+                        for npc in npcdata .get ('npcs',[]):
+                            if npc .get ('asset','').lower ()==cid .lower ():
+                                icon_rel_path =npc .get ('icon','')
+                                if icon_rel_path :
+                                    # Remove leading / and construct full path
+                                    icon_rel_path =icon_rel_path .lstrip ('/')
+                                    icon_path =os .path .join (base_dir ,'resources','game_data',icon_rel_path )
+                                    break
+                    except Exception :
+                        pass
                 # Fallback to old method if icon not found in data
                 if not icon_path or not os .path .exists (icon_path ):
                     icon_path =os .path .join (base_dir ,'resources','game_data','icons','pals',f"{cid }.webp")
@@ -475,9 +491,7 @@ class PalIcon (QFrame ):
                         cid_no_boss =cid .lower ().replace ("boss_","").replace ("b_o_s_s_","")
                         icon_path =os .path .join (base_dir ,'resources','game_data','icons','pals',f"{cid_no_boss }.webp")
                     if not os .path .exists (icon_path ):
-                        icon_path =os .path .join (base_dir ,'resources','game_data','icons','pals','unknown.webp')
-                    if not os .path .exists (icon_path ):
-                        icon_path =os .path .join (base_dir ,'resources','baseicon.webp')
+                        icon_path =os .path .join (base_dir ,'resources','game_data','icons','pals','T_icon_unknown.webp')
                 _ICON_CACHE [cid ]=icon_path 
             else :
                 icon_path =_ICON_CACHE [cid ]
@@ -807,9 +821,7 @@ class PalCardWidget (QFrame ):
                     cid_no_boss =cid .lower ().replace ("boss_","").replace ("b_o_s_s_","")
                     icon_path =os .path .join (base_dir ,'resources','game_data','icons','pals',f"{cid_no_boss }.webp")
                 if not os .path .exists (icon_path ):
-                    icon_path =os .path .join (base_dir ,'resources','game_data','icons','pals','unknown.webp')
-                if not os .path .exists (icon_path ):
-                    icon_path =os .path .join (base_dir ,'resources','baseicon.webp')
+                    icon_path =os .path .join (base_dir ,'resources','game_data','icons','pals','T_icon_unknown.webp')
             if os .path .exists (icon_path ):
                 pixmap =QPixmap (icon_path )
                 if not pixmap .isNull ():
