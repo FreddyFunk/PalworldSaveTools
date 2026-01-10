@@ -10,7 +10,7 @@ from PySide6 .QtCore import Qt ,QTimer ,Signal ,QPoint ,QEvent
 from PySide6 .QtGui import QIcon ,QFont ,QPixmap ,QRegion ,QCursor 
 from i18n import t 
 from palworld_aio import constants 
-from palworld_aio .utils import sav_to_json ,extract_value ,format_character_key ,json_to_sav 
+from palworld_aio .utils import sav_to_json ,extract_value ,format_character_key ,json_to_sav ,calculate_max_hp ,get_pal_data 
 class FramelessDialog (QDialog ):
     def __init__ (self ,title_key ="edit_pals.title",parent =None ):
         super ().__init__ (parent )
@@ -2451,7 +2451,7 @@ class EditPalsDialog (FramelessDialog ):
         "value":{
         "Value":{
         "id":None ,
-        "value":545000 ,
+        "value":calculate_max_hp (get_pal_data (character_id ),1 ,100 ,0 ,character_id .upper ().startswith ("BOSS_"),False )*1000 ,
         "type":"Int64Property"
         }
         },
