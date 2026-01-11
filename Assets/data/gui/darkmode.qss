@@ -1289,6 +1289,14 @@ QLabel#genderIconLabel {
     border-radius: 4px;
 }
 
+QLabel#genderIconLabel[gender="male"] {
+    color: #7DD3FC;
+}
+
+QLabel#genderIconLabel[gender="female"] {
+    color: #FB7185;
+}
+
 /* ===== Skill Buttons ===== */
 
 QPushButton#skillButton {
@@ -1348,6 +1356,68 @@ QFrame#palIcon:hover {
     background-color: rgba(40,45,55,0.9);
 }
 
+QFrame#palIcon[selected="true"] {
+    border: 4px solid #7DD3FC;
+    background-color: rgba(40,45,55,0.9);
+}
+
+/* Pal Icon overlay labels */
+QLabel#palIconImageLabel {
+    border: none;
+    background: transparent;
+}
+
+QLabel#palIconErrorLabel {
+    color: #FB7185;
+    font-size: 8px;
+}
+
+QLabel#palIconLevelLabel {
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 2px;
+    padding: 1px 2px;
+}
+
+QLabel#palIconGenderLabel {
+    font-size: 14px;
+    font-weight: bold;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 7px;
+}
+
+QLabel#palIconGenderLabel[gender="male"] {
+    color: #7DD3FC;
+}
+
+QLabel#palIconGenderLabel[gender="female"] {
+    color: #FB7185;
+}
+
+QLabel#palIconBossLabel {
+    color: #F59E0B;
+    font-size: 12px;
+    font-weight: bold;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 6px;
+}
+
+QLabel#palIconPredatorLabel {
+    color: #EF4444;
+    font-size: 10px;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 6px;
+}
+
+QLabel#palIconLuckyLabel {
+    color: #F59E0B;
+    font-size: 10px;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 6px;
+}
+
 /* ===== Pal Card (Enhanced) ===== */
 
 QFrame#palCard {
@@ -1365,6 +1435,12 @@ QFrame#palCard:hover {
 QFrame#palCard[selected="true"] {
     background: rgba(125,211,252,0.15);
     border-color: rgba(125,211,252,0.4);
+}
+
+QLabel#palCardErrorLabel {
+    color: #FB7185;
+    font-weight: bold;
+    font-size: 12px;
 }
 
 /* ===== Skills Scroll Area ===== */
@@ -1552,5 +1628,39 @@ QScrollArea#editPalsScroll QScrollBar::sub-page:horizontal,
 QScrollArea#skillsScrollArea QScrollBar::add-page:horizontal,
 QScrollArea#skillsScrollArea QScrollBar::sub-page:horizontal {
     background: none;
+}
+
+/* ===== Skill Label Badges (for skills display) ===== */
+
+QLabel#skillLabelBadge {
+    background: rgba(125,211,252,0.12);
+    border: 1px solid rgba(125,211,252,0.2);
+    border-radius: 4px;
+    padding: 3px 8px;
+    color: #7DD3FC;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+QLabel#skillLabelBadge:hover {
+    background: rgba(125,211,252,0.2);
+    border-color: rgba(125,211,252,0.35);
+}
+
+/* ===== Passive Skill Label Badges ===== */
+
+QLabel#passiveSkillLabelBadge {
+    background: rgba(34,197,94,0.15);
+    border: 1px solid rgba(34,197,94,0.25);
+    border-radius: 4px;
+    padding: 3px 8px;
+    color: #22C55E;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+QLabel#passiveSkillLabelBadge:hover {
+    background: rgba(34,197,94,0.25);
+    border-color: rgba(34,197,94,0.4);
 }
 

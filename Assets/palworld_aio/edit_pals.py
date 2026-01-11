@@ -60,295 +60,7 @@ class FramelessDialog (QDialog ):
         self .content_layout =QVBoxLayout (self .content_widget )
         self .content_layout .setContentsMargins (16 ,12 ,16 ,16 )
         container_layout .addWidget (self .content_widget )
-        self ._apply_styles ()
         self .title_bar .installEventFilter (self )
-    def _apply_styles (self ):
-        self .setStyleSheet ("""
-            QWidget#editPalsContainer {
-                background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1,
-                            stop:0 rgba(12,14,18,0.98), stop:0.5 rgba(10,16,22,0.98), stop:1 rgba(8,12,18,0.98));
-                border: 1px solid rgba(125,211,252,0.2);
-                border-radius: 12px;
-            }
-
-            QWidget#editPalsTitleBar {
-                background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,
-                            stop:0 rgba(125,211,252,0.08), stop:1 rgba(167,139,250,0.08));
-                border: none;
-                border-top-left-radius: 12px;
-                border-top-right-radius: 12px;
-            }
-
-            QLabel#titleBarIcon {
-                font-size: 20px;
-                padding: 0px 4px;
-            }
-
-            QLabel#titleBarTitle {
-                font-size: 14px;
-                font-weight: 700;
-                color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,
-                            stop:0 #7DD3FC, stop:1 #A78BFA);
-                padding: 0px 8px;
-            }
-
-            QPushButton#titleBarMinimize, QPushButton#titleBarMaximize {
-                background: transparent;
-                border: none;
-                color: #A6B8C8;
-                font-size: 16px;
-                font-weight: bold;
-                border-radius: 4px;
-            }
-
-            QPushButton#titleBarMinimize:hover, QPushButton#titleBarMaximize:hover {
-                background: rgba(255,255,255,0.1);
-                color: #FFFFFF;
-            }
-
-            QPushButton#titleBarClose {
-                background: transparent;
-                border: none;
-                color: #FB7185;
-                font-size: 20px;
-                font-weight: bold;
-                border-radius: 4px;
-            }
-
-            QPushButton#titleBarClose:hover {
-                background: rgba(251,113,133,0.2);
-                color: #FFFFFF;
-            }
-
-            QWidget#editPalsContent {
-                background: transparent;
-            }
-
-            /* Section headers in edit pals */
-            QLabel#editPalsSection {
-                background: rgba(125,211,252,0.08);
-                border: 1px solid rgba(125,211,252,0.15);
-                border-radius: 8px;
-                padding: 8px 16px;
-                color: #7DD3FC;
-                font-weight: 700;
-                font-size: 12px;
-            }
-
-            /* Pal card widgets */
-            QFrame#palCard {
-                background: rgba(255,255,255,0.03);
-                border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 8px;
-                padding: 8px;
-            }
-
-            QFrame#palCard:hover {
-                background: rgba(125,211,252,0.08);
-                border-color: rgba(125,211,252,0.2);
-            }
-
-            QFrame#palCard[selected="true"] {
-                background: rgba(125,211,252,0.15);
-                border-color: rgba(125,211,252,0.4);
-            }
-
-            /* Skill badges */
-            QLabel#skillBadge {
-                background: rgba(34,197,94,0.15);
-                border: 1px solid rgba(34,197,94,0.25);
-                border-radius: 4px;
-                padding: 3px 8px;
-                color: #22C55E;
-                font-size: 10px;
-            }
-
-            QLabel#skillBadge:hover {
-                background: rgba(34,197,94,0.25);
-            }
-
-            /* Stats display */
-            QLabel#statsValue {
-                color: #FFFFFF;
-                font-weight: 700;
-            }
-
-            QLabel#statsLabel {
-                color: #A6B8C8;
-                font-size: 11px;
-            }
-
-            /* Input fields */
-            QLineEdit#editPalsInput {
-                background: rgba(255,255,255,0.06);
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 6px;
-                padding: 6px 10px;
-                color: #dfeefc;
-                font-size: 11px;
-            }
-
-            QLineEdit#editPalsInput:focus {
-                background: rgba(255,255,255,0.08);
-                border-color: rgba(125,211,252,0.3);
-            }
-
-            /* Spin boxes */
-            QSpinBox#editPalsSpin {
-                background: rgba(255,255,255,0.06);
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 6px;
-                padding: 4px;
-                color: #dfeefc;
-            }
-
-            QSpinBox#editPalsSpin:focus {
-                border-color: rgba(125,211,252,0.3);
-            }
-
-            /* Combo boxes */
-            QComboBox#editPalsCombo {
-                background: rgba(255,255,255,0.06);
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 6px;
-                padding: 4px 8px;
-                color: #dfeefc;
-            }
-
-            QComboBox#editPalsCombo:hover {
-                border-color: rgba(125,211,252,0.2);
-            }
-
-            QComboBox#editPalsCombo::drop-down {
-                border: none;
-                padding-right: 20px;
-            }
-
-            /* Action buttons */
-            QPushButton#editPalsActionButton {
-                background: rgba(125,211,252,0.12);
-                border: 1px solid rgba(125,211,252,0.2);
-                border-radius: 6px;
-                padding: 8px 16px;
-                color: #7DD3FC;
-                font-weight: 600;
-                font-size: 11px;
-            }
-
-            QPushButton#editPalsActionButton:hover {
-                background: rgba(125,211,252,0.2);
-                border-color: rgba(125,211,252,0.4);
-                color: #FFFFFF;
-            }
-
-            QPushButton#editPalsActionButton:pressed {
-                background: rgba(125,211,252,0.3);
-            }
-
-            /* Danger button */
-            QPushButton#editPalsDangerButton {
-                background: rgba(251,113,133,0.12);
-                border: 1px solid rgba(251,113,133,0.2);
-                border-radius: 6px;
-                padding: 8px 16px;
-                color: #FB7185;
-                font-weight: 600;
-                font-size: 11px;
-            }
-
-            QPushButton#editPalsDangerButton:hover {
-                background: rgba(251,113,133,0.2);
-                border-color: rgba(251,113,133,0.4);
-                color: #FFFFFF;
-            }
-
-            /* Success button */
-            QPushButton#editPalsSuccessButton {
-                background: rgba(34,197,94,0.12);
-                border: 1px solid rgba(34,197,94,0.2);
-                border-radius: 6px;
-                padding: 8px 16px;
-                color: #22C55E;
-                font-weight: 600;
-                font-size: 11px;
-            }
-
-            QPushButton#editPalsSuccessButton:hover {
-                background: rgba(34,197,94,0.2);
-                border-color: rgba(34,197,94,0.4);
-                color: #FFFFFF;
-            }
-
-            /* Group boxes */
-            QGroupBox#editPalsGroup {
-                background: rgba(255,255,255,0.02);
-                border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 8px;
-                margin-top: 8px;
-                padding: 12px;
-                font-size: 11px;
-                color: #A6B8C8;
-            }
-
-            QGroupBox#editPalsGroup::title {
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                padding: 2px 8px;
-                color: #7DD3FC;
-                font-weight: 600;
-            }
-
-            /* Scroll areas */
-            QScrollArea#editPalsScroll {
-                background: transparent;
-                border: none;
-            }
-
-            QScrollArea#editPalsScroll > QWidget > QWidget {
-                background: transparent;
-            }
-
-            /* Pal selector widget */
-            QFrame#palSelectorWidget {
-                background: rgba(255,255,255,0.03);
-                border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 8px;
-            }
-
-            QFrame#palSelectorWidget:hover {
-                border-color: rgba(125,211,252,0.2);
-            }
-
-            QFrame#palSelectorWidget[selected="true"] {
-                background: rgba(125,211,252,0.12);
-                border-color: rgba(125,211,252,0.4);
-            }
-
-            /* Context menu for edit pals */
-            QMenu#editPalsContextMenu {
-                background: rgba(12,14,18,0.98);
-                border: 1px solid rgba(125,211,252,0.2);
-                border-radius: 8px;
-                padding: 4px;
-            }
-
-            QMenu#editPalsContextMenu::item {
-                padding: 8px 20px;
-                border-radius: 4px;
-                color: #E6EEF6;
-            }
-
-            QMenu#editPalsContextMenu::item:selected {
-                background: rgba(125,211,252,0.15);
-                color: #FFFFFF;
-            }
-
-            QMenu#editPalsContextMenu::separator {
-                height: 1px;
-                background: rgba(255,255,255,0.1);
-                margin: 4px 10px;
-            }
-        """)
     def _toggle_maximize (self ):
         if self ._maximized :
             self .showNormal ()
@@ -398,17 +110,6 @@ class PalIcon (QFrame ):
         self .setFrameStyle (QFrame .Box )
         self .setFixedSize (80 ,80 )
         self .setObjectName ("palIcon")
-        self .setStyleSheet ("""
-            QFrame#palIcon {
-                border: 2px solid #666;
-                border-radius: 40px;
-                background-color: #333;
-            }
-            QFrame#palIcon:hover {
-                border: 2px solid #7DD3FC;
-                background-color: #444;
-            }
-        """)
         self ._setup_ui ()
     def _setup_ui (self ):
         self ._clear_ui ()
@@ -427,7 +128,7 @@ class PalIcon (QFrame ):
                 layout .setContentsMargins (0 ,0 ,0 ,0 )
                 empty_label =QLabel ("Invalid Data")
                 empty_label .setAlignment (Qt .AlignCenter )
-                empty_label .setStyleSheet ("color: red; font-size: 8px;")
+                empty_label .setObjectName ("palIconErrorLabel")
                 layout .addWidget (empty_label ,alignment =Qt .AlignCenter )
                 return 
             cid =extract_value (raw ,'CharacterID','')
@@ -446,7 +147,7 @@ class PalIcon (QFrame ):
             image_label =QLabel (self )
             image_label .setAlignment (Qt .AlignCenter )
             image_label .setFixedSize (64 ,64 )
-            image_label .setStyleSheet ("border: none; background: transparent;")
+            image_label .setObjectName ("palIconImageLabel")
             image_label .setAttribute (Qt .WA_TransparentForMouseEvents )
             base_dir =os .path .dirname (os .path .dirname (os .path .abspath (__file__ )))
             icon_path =os .path .join (base_dir ,'resources','game_data','icons','pals',f"{cid }.webp")
@@ -493,65 +194,39 @@ class PalIcon (QFrame ):
         self .update ()
     def _add_overlays (self ,level ,gender ,is_boss ,is_predator ,is_lucky ,image_label ,pal_name ):
         level_label =QLabel (f"{level }")
-        level_label .setStyleSheet ("""
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            background-color: rgba(0,0,0,0.7);
-            border-radius: 2px;
-            padding: 1px 2px;
-        """)
+        level_label .setObjectName ("palIconLevelLabel")
         level_label .setFixedSize (25 ,15 )
         level_label .move (2 ,self .height ()-17 )
         level_label .setAttribute (Qt .WA_TransparentForMouseEvents )
         gender_icon ="♂"if t ("edit_pals.male")in gender else "♀"
-        gender_color ="#7DD3FC"if t ("edit_pals.male")in gender else "#FB7185"
         gender_label =QLabel (gender_icon )
-        gender_label .setStyleSheet (f"""
-            color: {gender_color };
-            font-size: 14px;
-            font-weight: bold;
-            background-color: rgba(0,0,0,0.7);
-            border-radius: 7px;
-        """)
+        gender_label .setObjectName ("palIconGenderLabel")
+        if t ("edit_pals.male")in gender :
+            gender_label .setProperty ("gender","male")
+        else :
+            gender_label .setProperty ("gender","female")
         gender_label .setFixedSize (16 ,16 )
         gender_label .move (self .width ()-18 ,2 )
         gender_label .setAttribute (Qt .WA_TransparentForMouseEvents )
-        self .gender_label =gender_label 
-        badge_x =2 
+        self .gender_label =gender_label
+        badge_x =2
         if is_boss :
             boss_label =QLabel ("α")
-            boss_label .setStyleSheet ("""
-                color: #F59E0B;
-                font-size: 12px;
-                font-weight: bold;
-                background-color: rgba(0,0,0,0.7);
-                border-radius: 6px;
-            """)
+            boss_label .setObjectName ("palIconBossLabel")
             boss_label .setFixedSize (14 ,14 )
             boss_label .move (badge_x ,2 )
             boss_label .setAttribute (Qt .WA_TransparentForMouseEvents )
-            badge_x +=16 
+            badge_x +=16
         if is_predator :
             predator_label =QLabel ("🦹")
-            predator_label .setStyleSheet ("""
-                color: #EF4444;
-                font-size: 10px;
-                background-color: rgba(0,0,0,0.7);
-                border-radius: 6px;
-            """)
+            predator_label .setObjectName ("palIconPredatorLabel")
             predator_label .setFixedSize (14 ,14 )
             predator_label .move (badge_x ,2 )
             predator_label .setAttribute (Qt .WA_TransparentForMouseEvents )
-            badge_x +=16 
+            badge_x +=16
         if is_lucky :
             lucky_label =QLabel ("✨")
-            lucky_label .setStyleSheet ("""
-                color: #F59E0B;
-                font-size: 10px;
-                background-color: rgba(0,0,0,0.7);
-                border-radius: 6px;
-            """)
+            lucky_label .setObjectName ("palIconLuckyLabel")
             lucky_label .setFixedSize (14 ,14 )
             lucky_label .move (badge_x ,2 )
             lucky_label .setAttribute (Qt .WA_TransparentForMouseEvents )
@@ -596,27 +271,10 @@ class PalIcon (QFrame ):
             if action ==add_action :
                 self .rightClicked .emit (self .slot_index ,self .tab_name ,"add_new")
     def set_selected (self ,selected ):
-        self .selected =selected 
-        if selected :
-            self .setStyleSheet ("""
-                QFrame#palIcon {
-                    border: 4px solid #7DD3FC;
-                    border-radius: 40px;
-                    background-color: #444;
-                }
-            """)
-        else :
-            self .setStyleSheet ("""
-                QFrame#palIcon {
-                    border: 2px solid #666;
-                    border-radius: 40px;
-                    background-color: #333;
-                }
-                QFrame#palIcon:hover {
-                    border: 2px solid #7DD3FC;
-                    background-color: #444;
-                }
-            """)
+        self .selected =selected
+        self .setProperty ("selected",selected)
+        self .style ().unpolish (self)
+        self .style ().polish (self)
 class PalCardWidget (QFrame ):
     clicked =Signal ()
     def __init__ (self ,pal_data =None ,parent =None ):
@@ -626,16 +284,6 @@ class PalCardWidget (QFrame ):
         self .setFrameStyle (QFrame .Box )
         self .setFixedSize (350 ,80 )
         self .setObjectName ("palCard")
-        self .setStyleSheet ("""
-            QFrame#palCard {
-                border: 2px solid #666;
-                background-color: #333;
-            }
-            QFrame#palCard:hover {
-                border: 2px solid #7DD3FC;
-                background-color: #444;
-            }
-        """)
         self .setCursor (Qt .PointingHandCursor )
         self ._setup_ui ()
     def mousePressEvent (self ,event ):
@@ -661,7 +309,7 @@ class PalCardWidget (QFrame ):
                 left_layout =QVBoxLayout (left_widget )
                 left_layout .setContentsMargins (0 ,0 ,0 ,0 )
                 error_label =QLabel ("Invalid Data")
-                error_label .setStyleSheet ("font-weight: bold; font-size: 12px; color: red;")
+                error_label .setObjectName ("palCardErrorLabel")
                 left_layout .addWidget (error_label )
                 layout .addWidget (left_widget )
                 empty_label =QLabel ()
@@ -789,32 +437,17 @@ class PalCardWidget (QFrame ):
             left_layout =QVBoxLayout (left_widget )
             left_layout .setContentsMargins (0 ,0 ,0 ,0 )
             error_label =QLabel ("Error")
-            error_label .setStyleSheet ("font-weight: bold; font-size: 12px; color: red;")
+            error_label .setObjectName ("palCardErrorLabel")
             left_layout .addWidget (error_label )
             layout .addWidget (left_widget )
             empty_label =QLabel ()
             empty_label .setFixedSize (48 ,48 )
             layout .addWidget (empty_label ,alignment =Qt .AlignCenter )
     def set_selected (self ,selected ):
-        self .selected =selected 
-        if selected :
-            self .setStyleSheet ("""
-                QFrame#palCard {
-                    border: 4px solid #7DD3FC;
-                    background-color: #444;
-                }
-            """)
-        else :
-            self .setStyleSheet ("""
-                QFrame#palCard {
-                    border: 2px solid #666;
-                    background-color: #333;
-                }
-                QFrame#palCard:hover {
-                    border: 2px solid #7DD3FC;
-                    background-color: #444;
-                }
-            """)
+        self .selected =selected
+        self .setProperty ("selected",selected)
+        self .style ().unpolish (self)
+        self .style ().polish (self)
 class EditPalsDialog (FramelessDialog ):
     def __init__ (self ,player_uid ,player_name ,parent =None ):
         super ().__init__ ("edit_pals.title",parent )
@@ -2050,11 +1683,11 @@ class EditPalsDialog (FramelessDialog ):
                 widget .setParent (None )
         for move in moves [:3 ]:
             label =QLabel (move )
-            label .setStyleSheet ("font-size: 12px; padding: 2px; border: 1px solid #ccc; border-radius: 3px;")
+            label .setObjectName ("skillLabelBadge")
             self .active_skills_list .addWidget (label )
         for passive in passives [:4 ]:
             label =QLabel (passive )
-            label .setStyleSheet ("font-size: 12px; padding: 2px; border: 1px solid #ccc; border-radius: 3px;")
+            label .setObjectName ("passiveSkillLabelBadge")
             self .passive_skills_list .addWidget (label )
     def _update_talent (self ,tab ,talent_type ,value ):
         pal_index =getattr (tab ,'selected_pal_index',-1 )
@@ -2299,12 +1932,14 @@ class EditPalsDialog (FramelessDialog ):
         current_text =gender_icon_label .text ()
         if current_text =="♂":
             gender_icon_label .setText ("♀")
-            gender_icon_label .setStyleSheet ("font-size: 16px; color: #FB7185;")
+            gender_icon_label .setProperty ("gender","female")
             self ._set_gender ("EPalGenderType::Female")
         else :
             gender_icon_label .setText ("♂")
-            gender_icon_label .setStyleSheet ("font-size: 16px; color: #7DD3FC;")
+            gender_icon_label .setProperty ("gender","male")
             self ._set_gender ("EPalGenderType::Male")
+        gender_icon_label .style ().unpolish (gender_icon_label )
+        gender_icon_label .style ().polish (gender_icon_label )
         tab_index =self .tabs .currentIndex ()
         if tab_index ==0 :
             pal_index =getattr (tab ,'selected_pal_index',-1 )
@@ -2312,7 +1947,9 @@ class EditPalsDialog (FramelessDialog ):
                 widget =tab .pal_layout .itemAt (pal_index ).widget ()
                 if widget and hasattr (widget ,'gender_label'):
                     widget .gender_label .setText (gender_icon_label .text ())
-                    widget .gender_label .setStyleSheet (gender_icon_label .styleSheet ())
+                    widget .gender_label .setProperty ("gender",gender_icon_label .property ("gender"))
+                    widget .gender_label .style ().unpolish (widget .gender_label )
+                    widget .gender_label .style ().polish (widget .gender_label )
     def _max_stats (self ):
         self ._max_ivs ()
         self ._max_souls ()
@@ -2712,24 +2349,7 @@ class EditPalsDialog (FramelessDialog ):
         pal_layout .addWidget (QLabel (t ("edit_pals.pal_type")))
         pal_select_btn =QPushButton (t ("edit_pals.select_pal_btn"))
         pal_select_btn .setMinimumWidth (200 )
-        pal_select_btn .setStyleSheet ("""
-            QPushButton {
-                text-align: left;
-                padding: 5px;
-                border: 1px solid #666;
-                border-radius: 3px;
-                background-color: #333;
-                color: #fff;
-                font-weight: normal;
-            }
-            QPushButton:hover {
-                background-color: #555;
-                border: 1px solid #888;
-            }
-            QPushButton:pressed {
-                background-color: #222;
-            }
-        """)
+        pal_select_btn .setObjectName ("editPalsActionButton")
         pal_layout .addWidget (pal_select_btn )
         layout .addLayout (pal_layout )
         selected_pal ={"asset":None ,"name":None }
