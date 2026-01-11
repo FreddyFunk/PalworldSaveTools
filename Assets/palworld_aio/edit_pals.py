@@ -3798,7 +3798,7 @@ class PalFrame (QFrame ):
                 import traceback 
                 traceback .print_exc ()
                 return {}
-        cls ._PASSMAP =load_map ('passivedata.json','passives')
+        cls ._PASSMAP =load_map ('palpassivedata.json','passives')
         cls ._SKILLMAP =load_map ('skilldata.json','skills')
         PALMAP =load_map ('paldata.json','pals')
         NPCMAP =load_map ('npcdata.json','npcs')
@@ -3924,4 +3924,4 @@ class PalFrame (QFrame ):
             passives =[self ._PASSMAP .get (p .lower (),p )for p in p_list ]
             self .passives_label .setText (f"Passives: {', '.join (passives )if passives else 'None'}")
         except Exception as e :
-            pass 
+            pass
