@@ -201,17 +201,16 @@ def import_base_json(loaded_level_json, exported_data, target_guild_id, offset=(
         if oid.startswith('PalEgg') and 'Hatching' not in oid and ('Incubator' not in oid):
             continue
         old_inst = _s(mr.get('instance_id', ''))
-        if not old_inst or old_inst == _s(z):
-            continue
-        instance_id_map[old_inst] = _new_uuid()
-        old_conc = _s(mr.get('concrete_model_instance_id', ''))
-        if old_conc and old_conc != _s(z):
-            concrete_id_map[old_conc] = _new_uuid()
+        if old_inst and old_inst != _s(z):
+            instance_id_map[old_inst] = old_inst
+            old_conc = _s(mr.get('concrete_model_instance_id', ''))
+            if old_conc and old_conc != _s(z):
+                concrete_id_map[old_conc] = old_conc
     if palbox_model_id and palbox_model_id not in instance_id_map:
-        instance_id_map[palbox_model_id] = _new_uuid()
+        instance_id_map[palbox_model_id] = palbox_model_id
     new_base_id = _new_uuid()
     new_worker_container_id = _new_uuid()
-    new_palbox_inst_id = instance_id_map.get(palbox_model_id)
+    new_palbox_inst_id = palbox_model_id
     src_base_raw = exported_data['base_camp']['value']['RawData']['value']
     cur_pos = _deep(src_base_raw['transform']['translation'])
     total_offset = [0, 0, 0]
