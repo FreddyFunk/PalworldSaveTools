@@ -737,6 +737,9 @@
   "guild.unlock_lab_research.success": "Toutes les recherches de laboratoire ont été débloquées",
   "guild.unlock_lab_research.failed": "Échec du déblocage des recherches de laboratoire",
   "player.edit_pals.menu": "Modifier les pels du joueur",
-  "edit_pals.name": "Name",
-  "edit_pals.stats": "Stats"
+  "edit_pals.name": "Nom",
+  "edit_pals.stats": "Stats",
+  "edit_pals.swap_gender": "Changer de Genre",
+  "edit_pals.delete": "Supprimer",
+  "edit_pals.add_new_pal": "Ajouter Nouveau Pal"
 }

@@ -757,6 +757,9 @@
   "guild.unlock_lab_research.success": "すべての研究所研究がアンロックされました",
   "guild.unlock_lab_research.failed": "研究所研究のアンロックに失敗しました",
   "player.edit_pals.menu": "プレイヤーのパルを編集",
-  "edit_pals.name": "Name",
-  "edit_pals.stats": "Stats"
+  "edit_pals.name": "名前",
+  "edit_pals.stats": "統計",
+  "edit_pals.swap_gender": "Swap Gender",
+  "edit_pals.delete": "Delete",
+  "edit_pals.add_new_pal": "Add New Pal"
 }

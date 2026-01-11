@@ -748,6 +748,9 @@
   "guild.unlock_lab_research.success": "Todas las investigaciones de laboratorio han sido desbloqueadas",
   "guild.unlock_lab_research.failed": "Error al desbloquear las investigaciones de laboratorio",
   "player.edit_pals.menu": "Editar pals del jugador",
-  "edit_pals.name": "Name",
-  "edit_pals.stats": "Stats"
+  "edit_pals.name": "Nombre",
+  "edit_pals.stats": "Estadísticas",
+  "edit_pals.swap_gender": "Swap Gender",
+  "edit_pals.delete": "Delete",
+  "edit_pals.add_new_pal": "Add New Pal"
 }

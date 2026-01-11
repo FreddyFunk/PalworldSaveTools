@@ -754,6 +754,9 @@
   "guild.unlock_lab_research.success": "Все исследования лаборатории разблокированы",
   "guild.unlock_lab_research.failed": "Не удалось разблокировать исследования лаборатории",
   "player.edit_pals.menu": "Редактировать палов игрока",
-  "edit_pals.name": "Name",
-  "edit_pals.stats": "Stats"
+  "edit_pals.name": "Имя",
+  "edit_pals.stats": "Статистика",
+  "edit_pals.swap_gender": "Поменять пол",
+  "edit_pals.delete": "Удалить",
+  "edit_pals.add_new_pal": "Добавить нового Пала"
 }

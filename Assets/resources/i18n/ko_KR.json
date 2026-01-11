@@ -757,6 +757,9 @@
   "guild.unlock_lab_research.success": "모든 연구소 연구가 잠금 해제되었습니다",
   "guild.unlock_lab_research.failed": "연구소 연구 잠금 해제에 실패했습니다",
   "player.edit_pals.menu": "플레이어 팔 편집",
-  "edit_pals.name": "Name",
-  "edit_pals.stats": "Stats"
+  "edit_pals.name": "이름",
+  "edit_pals.stats": "통계",
+  "edit_pals.swap_gender": "성별 전환",
+  "edit_pals.delete": "삭제",
+  "edit_pals.add_new_pal": "새 팔 추가"
 }

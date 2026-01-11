@@ -779,5 +779,8 @@
   "guild.unlock_lab_research.failed": "Fehler beim Freischalten der Laborforschungen",
   "player.edit_pals.menu": "Spieler-Pals bearbeiten",
   "edit_pals.name": "Name",
-  "edit_pals.stats": "Stats"
+  "edit_pals.stats": "Statistiken",
+  "edit_pals.swap_gender": "Geschlecht wechseln",
+  "edit_pals.delete": "Löschen",
+  "edit_pals.add_new_pal": "Neues Pal hinzufügen"
 }

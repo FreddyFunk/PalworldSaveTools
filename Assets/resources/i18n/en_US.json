@@ -815,5 +815,8 @@
   "player.edit_pals.menu": "Edit Player Pals",
   "edit_pals.name": "Name",
   "edit_pals.stats": "Stats",
-  "edit_pals.slot_count": "Slot count: {current}/{max}"
+  "edit_pals.slot_count": "Slot count: {current}/{max}",
+  "edit_pals.swap_gender": "Swap Gender",
+  "edit_pals.delete": "Delete",
+  "edit_pals.add_new_pal": "Add New Pal"
 }
