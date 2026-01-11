@@ -113,6 +113,8 @@ class PalIcon(QFrame):
         self._setup_ui()
     def _setup_ui(self):
         self._clear_ui()
+        from PySide6.QtWidgets import QApplication
+        QApplication.processEvents()
         if not self.pal_data:
             return
         try:
@@ -141,7 +143,7 @@ class PalIcon(QFrame):
                 gender = gender_data
             else:
                 gender = 'EPalGenderType::Female'
-            is_boss = cid.upper().startswith('BOSS_') or extract_value(raw, 'IsRarePal', False)
+            is_boss = cid.upper().startswith('BOSS_')
             is_predator = extract_value(raw, 'IsRarePal', False)
             is_lucky = extract_value(raw, 'IsRarePal', False)
             image_label = QLabel(self)
@@ -150,14 +152,16 @@ class PalIcon(QFrame):
             image_label.setStyleSheet('border: none; background: transparent;')
             image_label.setAttribute(Qt.WA_TransparentForMouseEvents)
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            cid_lower = cid.lower()
+            cid_for_icon = cid_lower.replace('boss_', '').replace('b_o_s_s_', '')
             icon_path = None
-            if cid not in _ICON_CACHE:
+            if cid_for_icon not in _ICON_CACHE:
                 try:
                     paldata_path = os.path.join(base_dir, 'resources', 'game_data', 'paldata.json')
                     with open(paldata_path, 'r', encoding='utf-8') as f:
                         paldata = json.load(f)
                     for pal in paldata.get('pals', []):
-                        if pal.get('asset', '').lower() == cid.lower():
+                        if pal.get('asset', '').lower() == cid_for_icon:
                             icon_rel_path = pal.get('icon', '')
                             if icon_rel_path:
                                 icon_rel_path = icon_rel_path.lstrip('/')
@@ -171,7 +175,7 @@ class PalIcon(QFrame):
                         with open(npcdata_path, 'r', encoding='utf-8') as f:
                             npcdata = json.load(f)
                         for npc in npcdata.get('npcs', []):
-                            if npc.get('asset', '').lower() == cid.lower():
+                            if npc.get('asset', '').lower() == cid_for_icon:
                                 icon_rel_path = npc.get('icon', '')
                                 if icon_rel_path:
                                     icon_rel_path = icon_rel_path.lstrip('/')
@@ -180,17 +184,12 @@ class PalIcon(QFrame):
                     except Exception:
                         pass
                 if not icon_path or not os.path.exists(icon_path):
-                    icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', f'{cid}.webp')
-                    if not os.path.exists(icon_path):
-                        icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', f'{cid.lower()}.webp')
-                    if not os.path.exists(icon_path):
-                        cid_no_boss = cid.lower().replace('boss_', '').replace('b_o_s_s_', '')
-                        icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', f'{cid_no_boss}.webp')
+                    icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', f'{cid_for_icon}.webp')
                     if not os.path.exists(icon_path):
                         icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', 'T_icon_unknown.webp')
-                _ICON_CACHE[cid] = icon_path
+                _ICON_CACHE[cid_for_icon] = icon_path
             else:
-                icon_path = _ICON_CACHE[cid]
+                icon_path = _ICON_CACHE[cid_for_icon]
             if icon_path and os.path.exists(icon_path):
                 pixmap_key = f'{icon_path}_64x64'
                 if pixmap_key not in _PIXMAP_CACHE:
@@ -207,6 +206,7 @@ class PalIcon(QFrame):
                     except Exception as e:
                         pass
                     self.update()
+                    self.repaint()
             pal_name = PalFrame._NAMEMAP.get(cid.lower(), cid)
             if nick:
                 pal_name = f'{pal_name}({nick})'
@@ -234,13 +234,42 @@ class PalIcon(QFrame):
         gender_label.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.gender_label = gender_label
         badge_x = 2
-        if is_boss:
-            boss_label = QLabel('α')
-            boss_label.setStyleSheet('\n                color: #F59E0B;\n                font-size: 12px;\n                font-weight: bold;\n                background-color: rgba(0,0,0,0.7);\n                border-radius: 6px;\n            ')
-            boss_label.setFixedSize(14, 14)
-            boss_label.move(badge_x, 2)
-            boss_label.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.boss_label = QLabel(self)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        boss_icon_path = os.path.join(base_dir, 'resources', 'boss_alpha.webp')
+        pixmap = QPixmap(boss_icon_path)
+        if not pixmap.isNull():
+            scaled_pixmap = pixmap.scaled(28, 28, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.boss_label.setPixmap(scaled_pixmap)
+        else:
+            self.boss_label.setText('α')
+            self.boss_label.setStyleSheet('\n                color: #F59E0B;\n                font-size: 18px;\n                font-weight: bold;\n                background-color: rgba(0,0,0,0.7);\n                border-radius: 8px;\n            ')
+        self.boss_label.setFixedSize(28, 28)
+        self.boss_label.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.shiny_label = QLabel(self)
+        shiny_icon_path = os.path.join(base_dir, 'resources', 'boss_shiny.webp')
+        shiny_pixmap = QPixmap(shiny_icon_path)
+        if not shiny_pixmap.isNull():
+            scaled_shiny_pixmap = shiny_pixmap.scaled(28, 28, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.shiny_label.setPixmap(scaled_shiny_pixmap)
+        else:
+            self.shiny_label.setText('★')
+            self.shiny_label.setStyleSheet('\n                color: #A78BFA;\n                font-size: 18px;\n                font-weight: bold;\n                background-color: rgba(0,0,0,0.7);\n                border-radius: 8px;\n            ')
+        self.shiny_label.setFixedSize(28, 28)
+        self.shiny_label.setAttribute(Qt.WA_TransparentForMouseEvents)
+        if is_lucky:
+            self.shiny_label.move(badge_x, 2)
+            self.shiny_label.show()
+            self.boss_label.hide()
             badge_x += 16
+        elif is_boss:
+            self.boss_label.move(badge_x, 2)
+            self.boss_label.show()
+            self.shiny_label.hide()
+            badge_x += 16
+        else:
+            self.boss_label.hide()
+            self.shiny_label.hide()
         if is_predator:
             predator_label = QLabel('🦹')
             predator_label.setStyleSheet('\n                color: #EF4444;\n                font-size: 10px;\n                background-color: rgba(0,0,0,0.7);\n                border-radius: 6px;\n            ')
@@ -248,12 +277,6 @@ class PalIcon(QFrame):
             predator_label.move(badge_x, 2)
             predator_label.setAttribute(Qt.WA_TransparentForMouseEvents)
             badge_x += 16
-        if is_lucky:
-            lucky_label = QLabel('✨')
-            lucky_label.setStyleSheet('\n                color: #F59E0B;\n                font-size: 10px;\n                background-color: rgba(0,0,0,0.7);\n                border-radius: 6px;\n            ')
-            lucky_label.setFixedSize(14, 14)
-            lucky_label.move(badge_x, 2)
-            lucky_label.setAttribute(Qt.WA_TransparentForMouseEvents)
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.clicked.emit()
@@ -275,46 +298,66 @@ class PalIcon(QFrame):
                 gender = gender_data
             else:
                 gender = 'EPalGenderType::Female'
+            cid = extract_value(raw, 'CharacterID', '')
+            is_boss = cid.upper().startswith('BOSS_')
+            is_predator = extract_value(raw, 'IsRarePal', False)
+            is_lucky = extract_value(raw, 'IsRarePal', False)
             gender_icon = '♂' if gender.endswith('::Male') else '♀'
             gender_color = '#7DD3FC' if gender.endswith('::Male') else '#FB7185'
             if hasattr(self, 'gender_label'):
                 self.gender_label.setText(gender_icon)
                 self.gender_label.setStyleSheet(f'\n                    color: {gender_color};\n                    font-size: 14px;\n                    font-weight: bold;\n                    background-color: rgba(0,0,0,0.7);\n                    border-radius: 7px;\n                ')
+            badge_x = 2
+            if is_lucky:
+                self.shiny_label.move(badge_x, 2)
+                self.shiny_label.show()
+                self.boss_label.hide()
+                badge_x += 16
+            elif is_boss:
+                self.boss_label.move(badge_x, 2)
+                self.boss_label.show()
+                self.shiny_label.hide()
+                badge_x += 16
+            else:
+                self.boss_label.hide()
+                self.shiny_label.hide()
         except Exception as e:
             pass
     def contextMenuEvent(self, event):
         from PySide6.QtWidgets import QMenu
         menu = QMenu(self)
         if self.pal_data:
-            swap_gender_action = menu.addAction(t('edit_pals.swap_gender'))
             delete_action = menu.addAction(t('edit_pals.delete'))
-            menu.addSeparator()
-            rename_action = menu.addAction(t('edit_pals.rename_pal'))
-            increase_rank_action = menu.addAction(t('edit_pals.increase_rank'))
-            menu.addSeparator()
-            max_stats_action = menu.addAction(t('edit_pals.max_all'))
-            max_ivs_action = menu.addAction(t('edit_pals.max_ivs'))
-            max_souls_action = menu.addAction(t('edit_pals.max_souls'))
             action = menu.exec(event.globalPos())
             if action == delete_action:
                 self.rightClicked.emit(self.slot_index, self.tab_name, 'delete')
-            elif action == rename_action:
-                self.rightClicked.emit(self.slot_index, self.tab_name, 'rename')
-            elif action == swap_gender_action:
-                self.rightClicked.emit(self.slot_index, self.tab_name, 'swap_gender')
-            elif action == increase_rank_action:
-                self.rightClicked.emit(self.slot_index, self.tab_name, 'increase_rank')
-            elif action == max_stats_action:
-                self.rightClicked.emit(self.slot_index, self.tab_name, 'max_stats')
-            elif action == max_ivs_action:
-                self.rightClicked.emit(self.slot_index, self.tab_name, 'max_ivs')
-            elif action == max_souls_action:
-                self.rightClicked.emit(self.slot_index, self.tab_name, 'max_souls')
         else:
             add_action = menu.addAction(t('edit_pals.add_new_pal'))
             action = menu.exec(event.globalPos())
             if action == add_action:
                 self.rightClicked.emit(self.slot_index, self.tab_name, 'add_new')
+    def update_boss_status(self, is_boss):
+        self.update_display()
+    def update_rare_status(self, is_lucky):
+        self.update_display()
+    def update_character_id(self, new_cid):
+        if not self.pal_data:
+            return
+        try:
+            if 'data' in self.pal_data:
+                raw = self.pal_data['data']
+            elif 'value' in self.pal_data:
+                raw = self.pal_data['value']['RawData']['value']['object']['SaveParameter']['value']
+            else:
+                raw = self.pal_data
+            if not isinstance(raw, dict):
+                return
+            cid = new_cid
+            raw['CharacterID'] = {'id': None, 'type': 'NameProperty', 'value': cid}
+            is_boss = cid.upper().startswith('BOSS_')
+            self.update_boss_status(is_boss)
+        except Exception as e:
+            print(f'Error updating PalIcon: {e}')
     def set_selected(self, selected):
         self.selected = selected
         if selected:
@@ -376,6 +419,8 @@ class PalCardWidget(QFrame):
             hp = extract_value(raw, 'Hp', 0)
             max_hp = extract_value(raw, 'MaxHp', hp)
             stomach = extract_value(raw, 'FullStomach', 0)
+            cid_lower = cid.lower()
+            cid_for_icon = cid_lower.replace('boss_', '').replace('b_o_s_s_', '')
             pal_name = PalFrame._NAMEMAP.get(cid.lower(), cid)
             if nick:
                 pal_name = f'{pal_name}({nick})'
@@ -439,7 +484,7 @@ class PalCardWidget(QFrame):
                 with open(paldata_path, 'r', encoding='utf-8') as f:
                     paldata = json.load(f)
                 for pal in paldata.get('pals', []):
-                    if pal.get('asset', '').lower() == cid.lower():
+                    if pal.get('asset', '').lower() == cid_for_icon:
                         icon_rel_path = pal.get('icon', '')
                         if icon_rel_path:
                             icon_rel_path = icon_rel_path.lstrip('/')
@@ -448,12 +493,7 @@ class PalCardWidget(QFrame):
             except Exception:
                 pass
             if not icon_path or not os.path.exists(icon_path):
-                icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', f'{cid}.webp')
-                if not os.path.exists(icon_path):
-                    icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', f'{cid.lower()}.webp')
-                if not os.path.exists(icon_path):
-                    cid_no_boss = cid.lower().replace('boss_', '').replace('b_o_s_s_', '')
-                    icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', f'{cid_no_boss}.webp')
+                icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', f'{cid_for_icon}.webp')
                 if not os.path.exists(icon_path):
                     icon_path = os.path.join(base_dir, 'resources', 'game_data', 'icons', 'pals', 'T_icon_unknown.webp')
             if os.path.exists(icon_path):
@@ -461,6 +501,7 @@ class PalCardWidget(QFrame):
                 if not pixmap.isNull():
                     image_label.setPixmap(pixmap.scaled(image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
                     self.update()
+                    self.repaint()
             layout.addWidget(image_label, alignment=Qt.AlignCenter)
         except Exception as e:
             print(f'Error setting up PalCardWidget: {e}')
@@ -704,6 +745,7 @@ class EditPalsDialog(FramelessDialog):
         layout.addStretch()
         return panel
     def _create_tab_right_panel(self, tab, tab_name):
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         panel = QWidget()
         panel.setMinimumWidth(375)
         scroll_area = QScrollArea()
@@ -723,6 +765,16 @@ class EditPalsDialog(FramelessDialog):
         rename_btn.setObjectName('editPalsActionButton')
         rename_btn.clicked.connect(self._rename_pal)
         name_layout.addWidget(rename_btn)
+        boss_toggle_btn = QPushButton()
+        boss_toggle_btn.setIcon(QIcon(os.path.join(base_dir, 'resources', 'boss_alpha.webp')))
+        boss_toggle_btn.setCheckable(True)
+        boss_toggle_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; } QPushButton:checked { background-color: #555; }')
+        name_layout.addWidget(boss_toggle_btn)
+        rare_toggle_btn = QPushButton()
+        rare_toggle_btn.setIcon(QIcon(os.path.join(base_dir, 'resources', 'boss_shiny.webp')))
+        rare_toggle_btn.setCheckable(True)
+        rare_toggle_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; } QPushButton:checked { background-color: #555; }')
+        name_layout.addWidget(rare_toggle_btn)
         name_layout.addStretch()
         layout.addLayout(name_layout)
         main_stats_layout = QHBoxLayout()
@@ -748,13 +800,14 @@ class EditPalsDialog(FramelessDialog):
         rank_layout = QHBoxLayout()
         rank_layout.addWidget(QLabel(t('edit_pals.rank')))
         tab.rank_star_buttons = []
+        from functools import partial
         for i in range(4):
             btn = StarButton('☆')
             btn.setObjectName('starButton')
-            btn.setStyleSheet('\n                QPushButton {\n                    font-size: 14px;\n                    color: #FFD700;\n                    border: none;\n                    background: transparent;\n                    padding: 0px;\n                    min-width: 20px;\n                    max-width: 20px;\n                }\n                QPushButton:hover {\n                    color: #FFA500;\n                }\n            ')
-            btn.clicked.connect(lambda checked, rank=i + 2, t=tab: self._set_rank_from_star(t, rank))
+            btn.setStyleSheet('QPushButton{font-size:20px;color:#FFFFFF;border:none;background:transparent;padding:2px 4px;min-width:28px;max-width:28px;}QPushButton:hover{color:#CCCCCC;background:rgba(255,255,255,0.1);border-radius:4px;}')
+            btn.clicked.connect(partial(self._set_rank_from_star, tab, i + 2))
             btn.setContextMenuPolicy(Qt.CustomContextMenu)
-            btn.customContextMenuRequested.connect(lambda pos, t=tab: self._reset_rank_to_zero(t))
+            btn.customContextMenuRequested.connect(partial(self._reset_rank_to_zero, tab))
             rank_layout.addWidget(btn)
             tab.rank_star_buttons.append(btn)
         main_stats_layout.addLayout(rank_layout)
@@ -858,6 +911,10 @@ class EditPalsDialog(FramelessDialog):
         souls_layout_outer.addLayout(souls_layout)
         layout.addWidget(souls_group)
         layout.addStretch()
+        tab.boss_toggle_btn = boss_toggle_btn
+        boss_toggle_btn.clicked.connect(lambda: self._toggle_boss(tab))
+        tab.rare_toggle_btn = rare_toggle_btn
+        rare_toggle_btn.clicked.connect(lambda: self._toggle_rare(tab))
         scroll_area.setWidget(scroll_widget)
         panel_layout = QVBoxLayout(panel)
         panel_layout.addWidget(scroll_area)
@@ -913,6 +970,14 @@ class EditPalsDialog(FramelessDialog):
                 widget.pal_data = pal_item
                 widget._setup_ui()
         else:
+            pal_dict = {}
+            for pal_item in pals:
+                try:
+                    raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
+                    slot_index = raw.get('SlotId', {}).get('value', {}).get('SlotIndex', {}).get('value', 0)
+                    pal_dict[slot_index] = pal_item
+                except:
+                    pass
             if hasattr(tab.pal_layout, 'count'):
                 for i in reversed(range(tab.pal_layout.count())):
                     widget = tab.pal_layout.itemAt(i).widget()
@@ -1019,56 +1084,6 @@ class EditPalsDialog(FramelessDialog):
                     tab.selected_pal_index = -1
                     self._update_tab_pal_display(tab, -1)
                     tab.pal_name_label.setText(t('edit_pals.no_pal_selected'))
-            elif action == 'rename':
-                current_nick = extract_value(raw, 'NickName', '')
-                new_nick, ok = QInputDialog.getText(self, t('edit_pals.rename_pal'), 'Enter new nickname:', text=current_nick)
-                if ok and new_nick != current_nick:
-                    raw['NickName'] = {'id': None, 'type': 'StrProperty', 'value': new_nick}
-                    index = tab.pal_data.index(pal_item)
-                    self._update_tab_pal_display(tab, index)
-                    slot_idx = raw.get('SlotId', {}).get('value', {}).get('SlotIndex', {}).get('value', 0)
-                    for i in range(tab.pal_layout.count()):
-                        widget = tab.pal_layout.itemAt(i).widget()
-                        if widget and hasattr(widget, 'slot_index') and (widget.slot_index == slot_idx):
-                            if hasattr(widget, 'pal_data') and widget.pal_data is pal_item:
-                                widget._setup_ui()
-                                widget.update()
-                                widget.repaint()
-                                break
-            elif action == 'swap_gender':
-                gender_data = extract_value(raw, 'Gender', {})
-                if isinstance(gender_data, dict) and 'value' in gender_data:
-                    current_gender = gender_data['value']
-                    is_male = current_gender == 'EPalGenderType::Male'
-                    new_gender = 'EPalGenderType::Female' if is_male else 'EPalGenderType::Male'
-                    self._set_gender(new_gender)
-            elif action == 'increase_rank':
-                current_rank = extract_value(raw, 'Rank', 1)
-                new_rank = min(current_rank + 1, 5)
-                raw['Rank'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': new_rank}}
-                self._update_tab_pal_display(tab, index)
-            elif action == 'max_stats':
-                raw['Level'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 65}}
-                raw['Rank'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 5}}
-                raw['Talent_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
-                raw['Talent_Shot'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
-                raw['Talent_Defense'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
-                raw['Rank_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                raw['Rank_Attack'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                raw['Rank_Defence'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                raw['Rank_CraftSpeed'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                self._update_tab_pal_display(tab, index)
-            elif action == 'max_ivs':
-                raw['Talent_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
-                raw['Talent_Shot'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
-                raw['Talent_Defense'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
-                self._update_tab_pal_display(tab, index)
-            elif action == 'max_souls':
-                raw['Rank_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                raw['Rank_Attack'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                raw['Rank_Defence'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                raw['Rank_CraftSpeed'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                self._update_tab_pal_display(tab, index)
         elif action == 'add_new':
             pal_data = self._show_create_pal_dialog(slot_index, tab_name)
             if pal_data:
@@ -1139,7 +1154,7 @@ class EditPalsDialog(FramelessDialog):
             rank_hp = extract_value(raw, 'Rank_HP', 0)
             rank_attack = extract_value(raw, 'Rank_Attack', 0)
             rank_defense = extract_value(raw, 'Rank_Defence', 0)
-            is_boss = cid.upper().startswith('BOSS_') or extract_value(raw, 'IsRarePal', False)
+            is_boss = cid.upper().startswith('BOSS_')
             is_lucky = extract_value(raw, 'IsRarePal', False)
             passive_skill_data = raw.get('PassiveSkillList', {})
             if isinstance(passive_skill_data, dict):
@@ -1178,7 +1193,7 @@ class EditPalsDialog(FramelessDialog):
                 tab.rank_craftspeed_spin.setValue(extract_value(raw, 'Rank_CraftSpeed', 0))
             if hasattr(tab, 'rank_star_buttons'):
                 for i in range(4):
-                    if i < rank - 1:
+                    if rank >= i + 2:
                         tab.rank_star_buttons[i].setText('★')
                     else:
                         tab.rank_star_buttons[i].setText('☆')
@@ -1194,6 +1209,10 @@ class EditPalsDialog(FramelessDialog):
                 else:
                     tab.gender_icon_label.setText('♀')
                     tab.gender_icon_label.setStyleSheet('font-size: 16px; color: #FB7185;')
+            if hasattr(tab, 'boss_toggle_btn'):
+                tab.boss_toggle_btn.setChecked(is_boss)
+            if hasattr(tab, 'rare_toggle_btn'):
+                tab.rare_toggle_btn.setChecked(is_lucky)
             moves = [None] * 3
             for i in range(min(3, len(e_list))):
                 if e_list[i]:
@@ -1616,7 +1635,7 @@ class EditPalsDialog(FramelessDialog):
             rank_hp = extract_value(raw, 'Rank_HP', 0)
             rank_attack = extract_value(raw, 'Rank_Attack', 0)
             rank_defense = extract_value(raw, 'Rank_Defence', 0)
-            is_boss = cid.upper().startswith('BOSS_') or extract_value(raw, 'IsRarePal', False)
+            is_boss = cid.upper().startswith('BOSS_')
             is_lucky = extract_value(raw, 'IsRarePal', False)
             hp = extract_value(raw, 'Hp', 0)
             atk = extract_value(raw, 'Attack', 0)
@@ -1844,15 +1863,27 @@ class EditPalsDialog(FramelessDialog):
             return
         pal_item = tab.pal_data[pal_index]
         try:
-            if 'data' in pal_item:
-                raw = pal_item['data']
-            else:
-                raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
-            raw['Rank'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': rank}}
+            raw = pal_item['data'] if 'data' in pal_item else pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
+            rv = extract_value(raw, 'Rank', 1)
+            current_rank = rv['value']['value'] if isinstance(rv, dict) else rv
+            if current_rank < 1:
+                current_rank = 1
+            current_stars = current_rank - 1
+            clicked_stars = rank - 1
+            new_stars = clicked_stars - 1 if clicked_stars == current_stars else clicked_stars
+            if new_stars < 0:
+                new_stars = 0
+            raw['Rank'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': new_stars + 1}}
             self._update_tab_pal_display(tab, pal_index)
+            cid_display = extract_value(raw, 'CharacterID', '')
+            nick_display = extract_value(raw, 'NickName', '')
+            pal_name = PalFrame._NAMEMAP.get(cid_display.lower(), cid_display)
+            if nick_display:
+                pal_name = f'{pal_name}({nick_display})'
+            tab.pal_name_label.setText(pal_name)
         except Exception as e:
             print(f'Error setting rank: {e}')
-    def _reset_rank_to_zero(self, tab):
+    def _reset_rank_to_zero(self, tab, position):
         pal_index = getattr(tab, 'selected_pal_index', -1)
         if pal_index < 0 or pal_index >= len(tab.pal_data):
             return
@@ -1864,6 +1895,12 @@ class EditPalsDialog(FramelessDialog):
                 raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
             raw['Rank'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 1}}
             self._update_tab_pal_display(tab, pal_index)
+            cid_display = extract_value(raw, 'CharacterID', '')
+            nick_display = extract_value(raw, 'NickName', '')
+            pal_name = PalFrame._NAMEMAP.get(cid_display.lower(), cid_display)
+            if nick_display:
+                pal_name = f'{pal_name}({nick_display})'
+            tab.pal_name_label.setText(pal_name)
         except Exception as e:
             print(f'Error resetting rank: {e}')
     def _set_gender(self, gender_value):
@@ -1915,6 +1952,100 @@ class EditPalsDialog(FramelessDialog):
                 if widget and hasattr(widget, 'gender_label'):
                     widget.gender_label.setText(gender_icon_label.text())
                     widget.gender_label.setStyleSheet(gender_icon_label.styleSheet())
+    def _find_widget_by_slot(self, tab, slot_index):
+        row = slot_index // 6
+        col = slot_index % 6
+        item = tab.pal_layout.itemAtPosition(row, col)
+        if item:
+            return item.widget()
+        return None
+    def _toggle_boss(self, tab):
+        pal_index = getattr(tab, 'selected_pal_index', -1)
+        if pal_index < 0 or pal_index >= len(tab.pal_data):
+            return
+        pal_item = tab.pal_data[pal_index]
+        try:
+            if 'data' in pal_item:
+                raw = pal_item['data']
+            else:
+                raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
+            cid = extract_value(raw, 'CharacterID', '')
+            is_boss = cid.upper().startswith('BOSS_')
+            raw['IsRarePal'] = {'value': False, 'id': None, 'type': 'BoolProperty'}
+            if not is_boss:
+                if tab.rare_toggle_btn.isChecked():
+                    tab.rare_toggle_btn.setChecked(False)
+                new_cid = f'BOSS_{cid}'
+            else:
+                new_cid = cid[5:] if cid.upper().startswith('BOSS_') else cid
+            raw['CharacterID'] = {'id': None, 'type': 'NameProperty', 'value': new_cid}
+            self._update_tab_pal_display(tab, pal_index)
+            slot_index = None
+            for i in range(tab.pal_layout.count()):
+                widget = tab.pal_layout.itemAt(i).widget()
+                if widget and hasattr(widget, 'pal_data') and (widget.pal_data is pal_item):
+                    slot_index = widget.slot_index
+                    break
+            if slot_index is not None:
+                widget = self._find_widget_by_slot(tab, slot_index)
+                if widget and hasattr(widget, 'update_character_id'):
+                    widget.update_character_id(new_cid)
+                if widget and hasattr(widget, 'update_boss_status'):
+                    widget.update_boss_status(not is_boss)
+                if widget and hasattr(widget, 'update_rare_status'):
+                    widget.update_rare_status(False)
+            cid_display = extract_value(raw, 'CharacterID', '')
+            nick_display = extract_value(raw, 'NickName', '')
+            pal_name = PalFrame._NAMEMAP.get(cid_display.lower(), cid_display)
+            if nick_display:
+                pal_name = f'{pal_name}({nick_display})'
+            tab.pal_name_label.setText(pal_name)
+        except Exception as e:
+            print(f'Error toggling boss: {e}')
+    def _toggle_rare(self, tab):
+        pal_index = getattr(tab, 'selected_pal_index', -1)
+        if pal_index < 0 or pal_index >= len(tab.pal_data):
+            return
+        pal_item = tab.pal_data[pal_index]
+        try:
+            if 'data' in pal_item:
+                raw = pal_item['data']
+            else:
+                raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
+            current_rare = extract_value(raw, 'IsRarePal', False)
+            current_nick = extract_value(raw, 'NickName', '')
+            raw['NickName'] = {'id': None, 'type': 'StrProperty', 'value': current_nick}
+            raw['IsRarePal'] = {'id': None, 'type': 'BoolProperty', 'value': not current_rare}
+            cid = extract_value(raw, 'CharacterID', '')
+            is_boss = cid.upper().startswith('BOSS_')
+            if not current_rare and (not is_boss):
+                new_cid = f'BOSS_{cid}'
+                raw['CharacterID'] = {'id': None, 'type': 'NameProperty', 'value': new_cid}
+            self._update_tab_pal_display(tab, pal_index)
+            nick_display = extract_value(raw, 'NickName', '')
+            cid = extract_value(raw, 'CharacterID', '')
+            pal_name = PalFrame._NAMEMAP.get(cid.lower(), cid)
+            if nick_display:
+                pal_name = f'{pal_name}({nick_display})'
+            tab.pal_name_label.setText(pal_name)
+            slot_index = None
+            for i in range(tab.pal_layout.count()):
+                widget = tab.pal_layout.itemAt(i).widget()
+                if widget and hasattr(widget, 'pal_data') and (widget.pal_data is pal_item):
+                    slot_index = widget.slot_index
+                    break
+            if slot_index is not None:
+                widget = self._find_widget_by_slot(tab, slot_index)
+                if widget:
+                    widget.update_display()
+            cid_display = extract_value(raw, 'CharacterID', '')
+            nick_display = extract_value(raw, 'NickName', '')
+            pal_name = PalFrame._NAMEMAP.get(cid_display.lower(), cid_display)
+            if nick_display:
+                pal_name = f'{pal_name}({nick_display})'
+            tab.pal_name_label.setText(pal_name)
+        except Exception as e:
+            print(f'Error toggling rare status: {e}')
     def _max_stats(self):
         self._max_ivs()
         self._max_souls()
@@ -2934,7 +3065,7 @@ class PalFrame(QFrame):
             rank_hp = extract_value(raw, 'Rank_HP', 0)
             rank_attack = extract_value(raw, 'Rank_Attack', 0)
             rank_defense = extract_value(raw, 'Rank_Defence', 0)
-            is_boss = cid.upper().startswith('BOSS_') or extract_value(raw, 'IsRarePal', False)
+            is_boss = cid.upper().startswith('BOSS_')
             is_lucky = extract_value(raw, 'IsRarePal', False)
             hp = extract_value(raw, 'Hp', 0)
             atk = extract_value(raw, 'Attack', 0)

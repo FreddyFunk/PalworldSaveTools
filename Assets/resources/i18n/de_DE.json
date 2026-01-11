@@ -782,5 +782,6 @@
   "edit_pals.stats": "Statistiken",
   "edit_pals.swap_gender": "Geschlecht wechseln",
   "edit_pals.delete": "Löschen",
-  "edit_pals.add_new_pal": "Neues Pal hinzufügen"
+  "edit_pals.add_new_pal": "Neues Pal hinzufügen",
+  "edit_pals.boss_toggle": "Boss-Umschaltung"
 }
