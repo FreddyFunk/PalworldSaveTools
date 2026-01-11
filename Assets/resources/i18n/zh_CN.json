@@ -757,6 +757,9 @@
   "guild.unlock_lab_research.success": "所有实验室研究已解锁",
   "guild.unlock_lab_research.failed": "解锁实验室研究失败",
   "player.edit_pals.menu": "编辑玩家帕鲁",
-  "edit_pals.name": "Name",
-  "edit_pals.stats": "Stats"
+  "edit_pals.name": "名称",
+  "edit_pals.stats": "统计",
+  "edit_pals.swap_gender": "交换性别",
+  "edit_pals.delete": "删除",
+  "edit_pals.add_new_pal": "添加新帕鲁"
 }
