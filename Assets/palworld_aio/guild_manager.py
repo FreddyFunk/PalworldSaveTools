@@ -386,3 +386,34 @@ def debug_check_duplicate_handles():
         except:
             pass
     return duplicates if duplicates else None
+def level_up_guild_member(guild_id, player_uid):
+    from .player_manager import adjust_player_level, get_level_from_exp
+    if not is_player_in_guild(guild_id, player_uid):
+        return False
+    current_level = constants.player_levels.get(str(player_uid).replace('-', ''), 1)
+    return adjust_player_level(player_uid, current_level + 1)
+def level_down_guild_member(guild_id, player_uid):
+    from .player_manager import adjust_player_level, get_level_from_exp
+    if not is_player_in_guild(guild_id, player_uid):
+        return False
+    current_level = constants.player_levels.get(str(player_uid).replace('-', ''), 1)
+    return adjust_player_level(player_uid, current_level - 1)
+def set_guild_member_level(guild_id, player_uid, target_level):
+    from .player_manager import adjust_player_level, get_level_from_exp
+    if not is_player_in_guild(guild_id, player_uid):
+        return False
+    return adjust_player_level(player_uid, target_level)
+def is_player_in_guild(guild_id, player_uid):
+    if not constants.loaded_level_json:
+        return False
+    uid_clean = str(player_uid).replace('-', '').lower()
+    gid_clean = str(guild_id).replace('-', '').lower()
+    wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+    for g in wsd['GroupSaveDataMap']['value']:
+        if g['value']['GroupType']['value']['value'] != 'EPalGroupType::Guild':
+            continue
+        if str(g['key']).replace('-', '').lower() == gid_clean:
+            for p in g['value']['RawData']['value'].get('players', []):
+                if str(p.get('player_uid', '')).replace('-', '').lower() == uid_clean:
+                    return True
+    return False

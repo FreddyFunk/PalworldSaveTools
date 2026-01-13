@@ -750,8 +750,13 @@
   "player.edit_pals.menu": "Editar pals del jugador",
   "edit_pals.name": "Nombre",
   "edit_pals.stats": "Estadísticas",
-  "edit_pals.swap_gender": "Swap Gender",
-  "edit_pals.delete": "Delete",
-  "edit_pals.add_new_pal": "Add New Pal"
+  "edit_pals.swap_gender": "Cambiar género",
+  "edit_pals.delete": "Eliminar",
+  "edit_pals.add_new_pal": "Agregar nuevo Pal",
+  "player.level_up": "Subir nivel del jugador",
+  "player.level_down": "Bajar nivel del jugador",
+  "player.set_level": "Establecer nivel del jugador",
+  "player.set_level.title": "Establecer nivel del jugador",
+  "player.set_level.prompt": "Nivel actual: {current_level}\nIntroduce el nuevo nivel (1-65):",
+  "player.level.set_success": "El nivel del jugador se ha establecido en {level}"
 }
-

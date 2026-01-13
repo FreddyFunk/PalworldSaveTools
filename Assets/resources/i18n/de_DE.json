@@ -783,5 +783,10 @@
   "edit_pals.swap_gender": "Geschlecht wechseln",
   "edit_pals.delete": "Löschen",
   "edit_pals.add_new_pal": "Neues Pal hinzufügen",
-  "edit_pals.boss_toggle": "Boss-Umschaltung"
+  "edit_pals.boss_toggle": "Boss-Umschaltung",
+  "player.level_up": "Spieler aufsteigen",
+  "player.level_down": "Spieler absteigen",
+  "player.set_level": "Spielerlevel setzen",
+  "player.set_level.title": "Spielerlevel setzen",
+  "player.set_level.prompt": "Aktuelles Level: {current_level}\nNeues Level eingeben (1-65):"
 }

@@ -759,8 +759,13 @@
   "player.edit_pals.menu": "プレイヤーのパルを編集",
   "edit_pals.name": "名前",
   "edit_pals.stats": "統計",
-  "edit_pals.swap_gender": "Swap Gender",
-  "edit_pals.delete": "Delete",
-  "edit_pals.add_new_pal": "Add New Pal"
+  "edit_pals.swap_gender": "性別を交換",
+  "edit_pals.delete": "削除",
+  "edit_pals.add_new_pal": "新しいパルを追加",
+  "player.level_up": "プレイヤーレベルアップ",
+  "player.level_down": "プレイヤーレベルダウン",
+  "player.set_level": "プレイヤーレベル設定",
+  "player.set_level.title": "プレイヤーレベル設定",
+  "player.set_level.prompt": "現在のレベル: {current_level}\n新しいレベルを入力してください (1-65):",
+  "player.level.set_success": "プレイヤーレベルを {level} に設定しました"
 }
-

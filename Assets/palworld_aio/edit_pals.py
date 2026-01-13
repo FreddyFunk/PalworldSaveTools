@@ -768,13 +768,22 @@ class EditPalsDialog(FramelessDialog):
         boss_toggle_btn = QPushButton()
         boss_toggle_btn.setIcon(QIcon(os.path.join(base_dir, 'resources', 'boss_alpha.webp')))
         boss_toggle_btn.setCheckable(True)
-        boss_toggle_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; } QPushButton:checked { background-color: #555; }')
+        boss_toggle_btn.setFixedSize(40, 34)
+        boss_toggle_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; } QPushButton:checked { background-color: #555; } QPushButton:hover { background-color: #555; }')
         name_layout.addWidget(boss_toggle_btn)
         rare_toggle_btn = QPushButton()
         rare_toggle_btn.setIcon(QIcon(os.path.join(base_dir, 'resources', 'boss_shiny.webp')))
         rare_toggle_btn.setCheckable(True)
-        rare_toggle_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; } QPushButton:checked { background-color: #555; }')
+        rare_toggle_btn.setFixedSize(40, 34)
+        rare_toggle_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; } QPushButton:checked { background-color: #555; } QPushButton:hover { background-color: #555; }')
         name_layout.addWidget(rare_toggle_btn)
+        gender_icon_btn = QPushButton('♀')
+        gender_icon_btn.setCheckable(False)
+        gender_icon_btn.setFixedSize(40, 34)
+        gender_icon_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 14px; color: #FB7185; padding: 0; } QPushButton:hover { background-color: #555; }')
+        tab.gender_icon_label = gender_icon_btn
+        name_layout.addWidget(gender_icon_btn)
+        gender_icon_btn.clicked.connect(lambda: self._toggle_gender_button(tab, gender_icon_btn))
         name_layout.addStretch()
         layout.addLayout(name_layout)
         main_stats_layout = QHBoxLayout()
@@ -785,18 +794,6 @@ class EditPalsDialog(FramelessDialog):
         max_stats_btn.clicked.connect(self._max_stats)
         stats_layout.addWidget(max_stats_btn)
         main_stats_layout.addLayout(stats_layout)
-        gender_layout = QHBoxLayout()
-        gender_layout.addWidget(QLabel(t('edit_pals.gender')))
-        gender_icon_label = QLabel('♀')
-        gender_icon_label.setObjectName('genderIconLabel')
-        gender_icon_label.setStyleSheet('font-size: 16px; color: #FB7185;')
-        tab.gender_icon_label = gender_icon_label
-        gender_layout.addWidget(gender_icon_label)
-        swap_gender_btn = QPushButton(t('edit_pals.gender'))
-        swap_gender_btn.setObjectName('editPalsActionButton')
-        swap_gender_btn.clicked.connect(lambda: self._swap_gender_icon(tab, gender_icon_label))
-        gender_layout.addWidget(swap_gender_btn)
-        main_stats_layout.addLayout(gender_layout)
         rank_layout = QHBoxLayout()
         rank_layout.addWidget(QLabel(t('edit_pals.rank')))
         tab.rank_star_buttons = []
@@ -1133,7 +1130,7 @@ class EditPalsDialog(FramelessDialog):
                     btn.setText('☆')
             if hasattr(tab, 'gender_icon_label'):
                 tab.gender_icon_label.setText('♀')
-                tab.gender_icon_label.setStyleSheet('font-size: 16px; color: #FB7185;')
+                tab.gender_icon_label.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 16px; color: #FB7185; padding: 4px; min-width: 28px; } QPushButton:hover { background-color: #555; border: 1px solid #888; } QPushButton:pressed { background-color: #222; border: 1px solid #666; }')
             tab.current_active_skills = []
             tab.current_passive_skills = []
             self._update_tab_skills_display(tab, [], [])
@@ -1170,7 +1167,7 @@ class EditPalsDialog(FramelessDialog):
                 e_list = equip_waza_data
             else:
                 e_list = []
-            hp = extract_value(raw, 'Hp', 0)
+            hp = raw.get('Hp', {}).get('value', {}).get('Value', {}).get('value', 0)
             atk = extract_value(raw, 'Attack', 0)
             defense_val = extract_value(raw, 'Defense', 0)
             gender_data = extract_value(raw, 'Gender', {})
@@ -1205,10 +1202,10 @@ class EditPalsDialog(FramelessDialog):
             if hasattr(tab, 'gender_icon_label'):
                 if gender == 'EPalGenderType::Male':
                     tab.gender_icon_label.setText('♂')
-                    tab.gender_icon_label.setStyleSheet('font-size: 16px; color: #7DD3FC;')
+                    tab.gender_icon_label.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 16px; color: #7DD3FC; padding: 4px; min-width: 28px; } QPushButton:hover { background-color: #555; border: 1px solid #888; } QPushButton:pressed { background-color: #222; border: 1px solid #666; }')
                 else:
                     tab.gender_icon_label.setText('♀')
-                    tab.gender_icon_label.setStyleSheet('font-size: 16px; color: #FB7185;')
+                    tab.gender_icon_label.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 16px; color: #FB7185; padding: 4px; min-width: 28px; } QPushButton:hover { background-color: #555; border: 1px solid #888; } QPushButton:pressed { background-color: #222; border: 1px solid #666; }')
             if hasattr(tab, 'boss_toggle_btn'):
                 tab.boss_toggle_btn.setChecked(is_boss)
             if hasattr(tab, 'rare_toggle_btn'):
@@ -1694,12 +1691,23 @@ class EditPalsDialog(FramelessDialog):
                 raw = pal_item['data']
             else:
                 raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
+            cid = extract_value(raw, 'CharacterID', '')
+            is_boss = cid.upper().startswith('BOSS_')
+            is_lucky = extract_value(raw, 'IsRarePal', False)
+            level = extract_value(raw, 'Level', 1)
             if talent_type == 'hp':
                 raw['Talent_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': value}}
             elif talent_type == 'shot':
                 raw['Talent_Shot'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': value}}
             elif talent_type == 'defense':
                 raw['Talent_Defense'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': value}}
+            talent_hp = extract_value(raw, 'Talent_HP', 0)
+            talent_shot = extract_value(raw, 'Talent_Shot', 0)
+            talent_defense = extract_value(raw, 'Talent_Defense', 0)
+            rank_hp = extract_value(raw, 'Rank_HP', 0)
+            pal_data_info = get_pal_data(cid)
+            new_max_hp = calculate_max_hp(pal_data_info, level, talent_hp, rank_hp, is_boss, is_lucky) * 1000
+            raw['Hp'] = {'struct_type': 'FixedPoint64', 'struct_id': '00000000-0000-0000-0000-000000000000', 'id': None, 'value': {'Value': {'id': None, 'value': int(new_max_hp), 'type': 'Int64Property'}}, 'type': 'StructProperty'}
             self._update_tab_pal_display(tab, pal_index)
         except Exception as e:
             print(f'Error updating talent: {e}')
@@ -1718,8 +1726,13 @@ class EditPalsDialog(FramelessDialog):
             if not isinstance(raw, dict):
                 print(f'Warning: Cannot update level - pal data is not a dict(type: {type(raw)})')
                 return
-            raw['Level'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': value}}
-            import json
+            cid = extract_value(raw, 'CharacterID', '')
+            talent_hp = extract_value(raw, 'Talent_HP', 0)
+            talent_shot = extract_value(raw, 'Talent_Shot', 0)
+            talent_defense = extract_value(raw, 'Talent_Defense', 0)
+            rank_hp = extract_value(raw, 'Rank_HP', 0)
+            is_boss = cid.upper().startswith('BOSS_')
+            is_lucky = extract_value(raw, 'IsRarePal', False)
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             exp_table_path = os.path.join(base_dir, 'resources', 'game_data', 'pal_exp_table.json')
             with open(exp_table_path, 'r', encoding='utf-8') as f:
@@ -1728,7 +1741,11 @@ class EditPalsDialog(FramelessDialog):
                 exp = PAL_EXP_TABLE[str(value)]['PalTotalEXP']
             except Exception:
                 exp = 0
+            raw['Level'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': value}}
             raw['Exp'] = {'id': None, 'type': 'Int64Property', 'value': exp}
+            pal_data_info = get_pal_data(cid)
+            new_max_hp = calculate_max_hp(pal_data_info, value, talent_hp, rank_hp, is_boss, is_lucky) * 1000
+            raw['Hp'] = {'struct_type': 'FixedPoint64', 'struct_id': '00000000-0000-0000-0000-000000000000', 'id': None, 'value': {'Value': {'id': None, 'value': int(new_max_hp), 'type': 'Int64Property'}}, 'type': 'StructProperty'}
             self._update_tab_pal_display(tab, pal_index)
         except Exception as e:
             print(f'Error updating level: {e}')
@@ -1934,15 +1951,15 @@ class EditPalsDialog(FramelessDialog):
         else:
             gender_combo.setCurrentText(t('edit_pals.male'))
             self._set_gender('EPalGenderType::Male')
-    def _swap_gender_icon(self, tab, gender_icon_label):
-        current_text = gender_icon_label.text()
+    def _toggle_gender_button(self, tab, gender_icon_btn):
+        current_text = gender_icon_btn.text()
         if current_text == '♂':
-            gender_icon_label.setText('♀')
-            gender_icon_label.setStyleSheet('font-size: 16px; color: #FB7185;')
+            gender_icon_btn.setText('♀')
+            gender_icon_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 16px; color: #FB7185; padding: 4px; min-width: 28px; } QPushButton:hover { background-color: #555; }')
             self._set_gender('EPalGenderType::Female')
         else:
-            gender_icon_label.setText('♂')
-            gender_icon_label.setStyleSheet('font-size: 16px; color: #7DD3FC;')
+            gender_icon_btn.setText('♂')
+            gender_icon_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 16px; color: #7DD3FC; padding: 4px; min-width: 28px; } QPushButton:hover { background-color: #555; }')
             self._set_gender('EPalGenderType::Male')
         tab_index = self.tabs.currentIndex()
         if tab_index == 0:
@@ -1950,8 +1967,8 @@ class EditPalsDialog(FramelessDialog):
             if pal_index >= 0:
                 widget = tab.pal_layout.itemAt(pal_index).widget()
                 if widget and hasattr(widget, 'gender_label'):
-                    widget.gender_label.setText(gender_icon_label.text())
-                    widget.gender_label.setStyleSheet(gender_icon_label.styleSheet())
+                    widget.gender_label.setText(gender_icon_btn.text())
+                    widget.gender_label.setStyleSheet(f"\n                    color: {(gender_icon_btn.styleSheet().split('color: ')[1].split(';')[0] if 'color:' in gender_icon_btn.styleSheet() else '#FB7185')};\n                    font-size: 14px;\n                    font-weight: bold;\n                    background-color: rgba(0,0,0,0.7);\n                    border-radius: 7px;\n                ")
     def _find_widget_by_slot(self, tab, slot_index):
         row = slot_index // 6
         col = slot_index % 6
@@ -2987,7 +3004,7 @@ class PalFrame(QFrame):
         cls._SKILLMAP = {k: v for k, v in cls._SKILLMAP.items() if not any((exc in v.lower() for exc in skill_exclusions))}
         cls._PASSMAP = {k: v for k, v in cls._PASSMAP.items() if not any((exc in v.lower() for exc in skill_exclusions))}
         pal_exclusions = ['en_text', 'en text', 'blackfurdragon', 'eleclion', 'darkmutant', 'gym']
-        cls._NAMEMAP = {k: v for k, v in cls._NAMEMAP.items() if v.lower() != k.lower() and (not any((exc in v.lower() for exc in pal_exclusions))) and (not k.lower().startswith('raid_')) and (not (k.lower().startswith('boss_') and k.lower() in v.lower())) and (not k.lower() in ['blackfurdragon', 'eleclion', 'darkmutant', 'boss_blackfurdragon', 'boss_eleclion', 'boss_darkmutant'])}
+        cls._NAMEMAP = {k: v for k, v in cls._NAMEMAP.items() if not any((exc in v.lower() for exc in pal_exclusions)) and (not k.lower().startswith('raid_')) and (not '_oilrig' in k.lower()) and (not 'summon_' in k.lower()) and (not (k.lower().startswith('boss_') and k.lower() in v.lower())) and (not k.lower() in ['blackfurdragon', 'eleclion', 'darkmutant', 'boss_blackfurdragon', 'boss_eleclion', 'boss_darkmutant'])}
         cls._maps_loaded = True
     def __init__(self, pal_item, parent=None):
         super().__init__(parent)

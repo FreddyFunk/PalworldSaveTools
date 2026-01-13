@@ -26,7 +26,7 @@ try:
     from palworld_aio.base_manager import export_base_json, import_base_json, clone_base_complete
     from palworld_aio.player_manager import rename_player
     from palworld_aio.map_generator import generate_world_map
-    from palworld_aio.dialogs import InputDialog, DaysInputDialog, PalDefenderDialog
+    from palworld_aio.dialogs import InputDialog, DaysInputDialog, LevelInputDialog, PalDefenderDialog
     from palworld_aio.widgets import SearchPanel, StatsPanel
 except ImportError:
     from .. import constants
@@ -38,7 +38,7 @@ except ImportError:
     from ..base_manager import export_base_json, import_base_json, clone_base_complete
     from ..player_manager import rename_player
     from ..map_generator import generate_world_map
-    from ..dialogs import InputDialog, DaysInputDialog, PalDefenderDialog
+    from ..dialogs import InputDialog, DaysInputDialog, LevelInputDialog, PalDefenderDialog
 from ..widgets import SearchPanel, StatsPanel
 class DetachedStatusWindow(QWidget):
     def __init__(self, parent=None):
@@ -502,7 +502,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage(f"{(t('status.saved') if t else 'Save completed')}({duration:.2f}s)", 5000)
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle(t('success.title'))
-        msg_box.setText(t('save.complete'))
+        msg_box.setText(t('Changes saved successfully.'))
         msg_box.setIcon(QMessageBox.Information)
         msg_box.addButton(t('button.ok'), QMessageBox.AcceptRole)
         msg_box.exec()
@@ -631,6 +631,8 @@ class MainWindow(QMainWindow):
         menu.addAction(self._create_action(t('player.edit_pals.menu') if t else 'Edit Pals', lambda: self._edit_player_pals(item.text(4), item.text(0))))
         menu.addAction(self._create_action(t('player.unlock_technologies.menu') if t else 'Unlock All Technologies', lambda: self._unlock_all_technologies_for_player(item.text(4))))
         menu.addSeparator()
+        menu.addAction(self._create_action('Set Player Level' if not t else t('player.set_level'), lambda: self._set_player_level(item.text(4))))
+        menu.addSeparator()
         menu.addAction(self._create_action(t('guild.ctx.make_leader'), lambda: self._make_leader(item.text(6), item.text(4))))
         menu.addAction(self._create_action(t('deletion.ctx.delete_guild'), lambda: self._delete_guild(item.text(6))))
         menu.addAction(self._create_action(t('guild.rename.menu'), lambda: self._rename_guild_action(item.text(6), item.text(5))))
@@ -671,6 +673,8 @@ class MainWindow(QMainWindow):
         menu.addAction(self._create_action(t('player.rename.menu'), lambda: self._rename_player(item.text(4), item.text(0).replace('[L]', ''))))
         menu.addAction(self._create_action(t('player.reset_timestamp.menu') if t else 'Reset Timestamp', lambda: self._reset_player_timestamp(item.text(4))))
         menu.addAction(self._create_action(t('player.edit_pals.menu') if t else 'Edit Pals', lambda: self._edit_player_pals(item.text(4), item.text(0).replace('[L]', ''))))
+        menu.addSeparator()
+        menu.addAction(self._create_action('Set Player Level' if not t else t('player.set_level'), lambda: self._set_player_level(item.text(4))))
         menu.exec(self.guild_members_panel.tree.viewport().mapToGlobal(pos))
     def _show_base_context_menu(self, pos):
         item = self.bases_panel.tree.itemAt(pos)
@@ -1291,6 +1295,32 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, t('Done') if t else 'Done', t('guild.unlock_lab_research.success') if t else 'Unlock All Lab Research completed')
         else:
             QMessageBox.warning(self, t('Error') if t else 'Error', t('guild.unlock_lab_research.failed') if t else 'Unlock All Lab Research failed')
+    def _level_up_player(self, uid):
+        from ..player_manager import adjust_player_level, get_level_from_exp
+        current_level = constants.player_levels.get(str(uid).replace('-', ''), 1)
+        if adjust_player_level(uid, current_level + 1):
+            self.refresh_all()
+            QMessageBox.information(self, t('Done') if t else 'Done', 'Player leveled up successfully')
+        else:
+            QMessageBox.warning(self, t('Error') if t else 'Error', 'Failed to level up player (already max level?)')
+    def _level_down_player(self, uid):
+        from ..player_manager import adjust_player_level, get_level_from_exp
+        current_level = constants.player_levels.get(str(uid).replace('-', ''), 1)
+        if adjust_player_level(uid, current_level - 1):
+            self.refresh_all()
+            QMessageBox.information(self, t('Done') if t else 'Done', 'Player leveled down successfully')
+        else:
+            QMessageBox.warning(self, t('Error') if t else 'Error', 'Failed to level down player (already min level?)')
+    def _set_player_level(self, uid):
+        from ..player_manager import adjust_player_level, get_level_from_exp
+        current_level = constants.player_levels.get(str(uid).replace('-', ''), 1)
+        new_level = LevelInputDialog.get_level(t('player.set_level.title') if t else 'Set Player Level', t('player.set_level.prompt', current_level=current_level) if t else f'Current level: {current_level}\nEnter new level (1-65):', current_level, self)
+        if new_level is not None and new_level != current_level:
+            if adjust_player_level(uid, new_level):
+                self.refresh_all()
+                QMessageBox.information(self, t('Done') if t else 'Done', t('player.level.set_success', level=new_level) if t else f'Player level set to {new_level}')
+            else:
+                QMessageBox.warning(self, t('Error') if t else 'Error', 'Failed to set player level')
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_F5:
             if constants.current_save_path:

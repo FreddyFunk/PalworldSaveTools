@@ -758,6 +758,11 @@
   "edit_pals.stats": "Статистика",
   "edit_pals.swap_gender": "Поменять пол",
   "edit_pals.delete": "Удалить",
-  "edit_pals.add_new_pal": "Добавить нового Пала"
+  "edit_pals.add_new_pal": "Добавить нового Пала",
+  "player.level_up": "Повысить уровень игрока",
+  "player.level_down": "Понизить уровень игрока",
+  "player.set_level": "Установить уровень игрока",
+  "player.set_level.title": "Установить уровень игрока",
+  "player.set_level.prompt": "Текущий уровень: {current_level}\nВведите новый уровень (1-65):",
+  "player.level.set_success": "Уровень игрока установлен на {level}"
 }
-

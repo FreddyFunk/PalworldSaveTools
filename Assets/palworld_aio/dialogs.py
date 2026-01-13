@@ -93,6 +93,51 @@ class DaysInputDialog(QDialog):
         if dialog.exec() == QDialog.Accepted:
             return dialog.result_value
         return None
+class LevelInputDialog(QDialog):
+    def __init__(self, title, prompt, current_level, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setModal(True)
+        self.setMinimumWidth(300)
+        if os.path.exists(constants.ICON_PATH):
+            self.setWindowIcon(QIcon(constants.ICON_PATH))
+        layout = QVBoxLayout(self)
+        label = QLabel(prompt)
+        layout.addWidget(label)
+        self.spin_box = QSpinBox()
+        self.spin_box.setMinimum(1)
+        self.spin_box.setMaximum(65)
+        self.spin_box.setValue(current_level)
+        layout.addWidget(self.spin_box)
+        button_layout = QHBoxLayout()
+        ok_btn = QPushButton(t('button.ok') if t else 'OK')
+        ok_btn.clicked.connect(self.accept)
+        cancel_btn = QPushButton(t('button.cancel') if t else 'Cancel')
+        cancel_btn.clicked.connect(self.reject)
+        button_layout.addWidget(ok_btn)
+        button_layout.addWidget(cancel_btn)
+        layout.addLayout(button_layout)
+        self.result_value = None
+    def accept(self):
+        self.result_value = self.spin_box.value()
+        super().accept()
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not event.spontaneous():
+            try:
+                from palworld_aio.ui.tools_tab import center_on_parent
+                center_on_parent(self)
+            except ImportError:
+                from ..ui.tools_tab import center_on_parent
+                center_on_parent(self)
+            self.activateWindow()
+            self.raise_()
+    @staticmethod
+    def get_level(title, prompt, current_level, parent=None):
+        dialog = LevelInputDialog(title, prompt, current_level, parent)
+        if dialog.exec() == QDialog.Accepted:
+            return dialog.result_value
+        return None
 class KillNearestBaseDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)

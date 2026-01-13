@@ -761,6 +761,11 @@
   "edit_pals.stats": "统计",
   "edit_pals.swap_gender": "交换性别",
   "edit_pals.delete": "删除",
-  "edit_pals.add_new_pal": "添加新帕鲁"
+  "edit_pals.add_new_pal": "添加新帕鲁",
+  "player.level_up": "升级玩家",
+  "player.level_down": "降级玩家",
+  "player.set_level": "设置玩家等级",
+  "player.set_level.title": "设置玩家等级",
+  "player.set_level.prompt": "当前等级：{current_level}\n输入新等级（1-65）：",
+  "player.level.set_success": "玩家等级已设置为 {level}"
 }
-
