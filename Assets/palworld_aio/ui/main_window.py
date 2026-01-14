@@ -451,7 +451,7 @@ class MainWindow(QMainWindow):
         try:
             r = urllib.request.urlopen(GITHUB_RAW_URL, timeout=5)
             content = r.read().decode('utf-8')
-            match = re.search('APP_VERSION\\s*=\\s*"([^"]+)"', content)
+            match = re.search('APP_VERSION\\s*=\\s*[\\\'"]([^\\\'"]+)[\\\'"]', content)
             latest = match.group(1) if match else None
             local, _ = get_versions()
             if force_test:
@@ -477,6 +477,8 @@ class MainWindow(QMainWindow):
                 self.header_widget.start_pulse_animation(latest)
                 self.header_widget.update_version_text(tools_version, latest)
                 self.status_bar.showMessage(f"{(t('update.current') if t else 'Current')}: {tools_version} | {(t('update.latest') if t else 'Latest')}: {latest} - Click version chip to update", 0)
+            else:
+                self.header_widget.stop_pulse_animation()
         except Exception:
             pass
     def _on_load_finished(self, success):
