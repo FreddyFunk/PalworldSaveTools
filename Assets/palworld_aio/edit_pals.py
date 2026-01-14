@@ -3,7 +3,7 @@ import json
 import uuid
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox, QComboBox, QTextEdit, QFileDialog, QMessageBox, QGroupBox, QFormLayout, QCheckBox, QFrame, QTabWidget, QScrollArea, QWidget, QGridLayout, QListWidget, QInputDialog, QTableWidget, QApplication
 from PySide6.QtCore import Qt, QTimer, Signal, QPoint, QEvent
-from PySide6.QtGui import QIcon, QFont, QPixmap, QRegion, QCursor
+from PySide6.QtGui import QIcon, QFont, QPixmap, QRegion, QCursor, QPainter, QPainterPath, QPen, QBrush, QFontMetrics, QPalette, QColor
 from i18n import t
 from palworld_aio import constants
 from palworld_aio.utils import sav_to_json, extract_value, format_character_key, json_to_sav, calculate_max_hp, get_pal_data
@@ -95,6 +95,38 @@ class StarButton(QPushButton):
             super().mouseReleaseEvent(event)
         else:
             event.ignore()
+class StrokedLabel(QLabel):
+    def __init__(self, text='', parent=None):
+        super().__init__(text, parent)
+        self._text_color = Qt.white
+    def setStyleSheet(self, style):
+        super().setStyleSheet(style)
+        if 'color:' in style:
+            try:
+                import re
+                color_match = re.search('color:\\s*([^;]+)', style)
+                if color_match:
+                    color_str = color_match.group(1).strip()
+                    if color_str.startswith('#'):
+                        self._text_color = QColor(color_str)
+                    elif color_str in ['white', 'black', 'red', 'blue', 'green', 'yellow', 'purple', 'pink']:
+                        color_map = {'white': Qt.white, 'black': Qt.black, 'red': Qt.red, 'blue': Qt.blue, 'green': Qt.green, 'yellow': Qt.yellow, 'purple': QColor('#7DD3FC'), 'pink': QColor('#FB7185')}
+                        self._text_color = color_map.get(color_str, Qt.white)
+            except:
+                pass
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        font = self.font()
+        pen = QPen(Qt.black, 2)
+        pen.setJoinStyle(Qt.RoundJoin)
+        metrics = QFontMetrics(font)
+        x = self.contentsRect().x() + 3
+        y = (self.height() + metrics.ascent() - metrics.descent()) // 2
+        path.addText(x, y, font, self.text())
+        painter.strokePath(path, pen)
+        painter.fillPath(path, QBrush(self._text_color))
 _ICON_CACHE = {}
 _PIXMAP_CACHE = {}
 class PalIcon(QFrame):
@@ -220,63 +252,66 @@ class PalIcon(QFrame):
             child.deleteLater()
         self.update()
     def _add_overlays(self, level, gender, is_boss, is_predator, is_lucky, image_label, pal_name):
-        level_label = QLabel(f'{level}')
-        level_label.setStyleSheet('\n            color: white;\n            font-size: 10px;\n            font-weight: bold;\n            background-color: rgba(0,0,0,0.7);\n            border-radius: 2px;\n            padding: 1px 2px;\n        ')
-        level_label.setFixedSize(25, 15)
-        level_label.move(2, self.height() - 17)
+        level_label = StrokedLabel(f'Lvl {level}')
+        level_label.setStyleSheet('font-size: 9px; font-weight: bold; background-color: transparent;')
+        level_label.setFixedSize(35, 15)
+        level_label.move(-4, self.height() - 13)
+        level_label.setParent(self)
         level_label.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.level_label = level_label
         gender_icon = '♂' if gender.endswith('::Male') else '♀'
         gender_color = '#7DD3FC' if gender.endswith('::Male') else '#FB7185'
-        gender_label = QLabel(gender_icon)
-        gender_label.setStyleSheet(f'\n            color: {gender_color};\n            font-size: 14px;\n            font-weight: bold;\n            background-color: rgba(0,0,0,0.7);\n            border-radius: 7px;\n        ')
-        gender_label.setFixedSize(16, 16)
-        gender_label.move(self.width() - 18, 2)
+        gender_label = StrokedLabel(gender_icon)
+        gender_label.setStyleSheet(f'color: {gender_color}; font-size: 16px; font-weight: bold; background-color: transparent;')
+        gender_label.setFixedSize(20, 20)
+        gender_label.move(60, 2)
+        gender_label.setParent(self)
         gender_label.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.gender_label = gender_label
-        badge_x = 2
+        badge_x = 0
         self.boss_label = QLabel(self)
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         boss_icon_path = os.path.join(base_dir, 'resources', 'boss_alpha.webp')
         pixmap = QPixmap(boss_icon_path)
         if not pixmap.isNull():
-            scaled_pixmap = pixmap.scaled(28, 28, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            scaled_pixmap = pixmap.scaled(36, 36, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self.boss_label.setPixmap(scaled_pixmap)
         else:
             self.boss_label.setText('α')
-            self.boss_label.setStyleSheet('\n                color: #F59E0B;\n                font-size: 18px;\n                font-weight: bold;\n                background-color: rgba(0,0,0,0.7);\n                border-radius: 8px;\n            ')
-        self.boss_label.setFixedSize(28, 28)
+            self.boss_label.setStyleSheet('\n                color: #F59E0B;\n                font-size: 20px;\n                font-weight: bold;\n                background-color: rgba(0,0,0,0.8);\n                border-radius: 10px;\n            ')
+        self.boss_label.setFixedSize(36, 36)
+        self.boss_label.setParent(self)
         self.boss_label.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.shiny_label = QLabel(self)
         shiny_icon_path = os.path.join(base_dir, 'resources', 'boss_shiny.webp')
         shiny_pixmap = QPixmap(shiny_icon_path)
         if not shiny_pixmap.isNull():
-            scaled_shiny_pixmap = shiny_pixmap.scaled(28, 28, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            scaled_shiny_pixmap = shiny_pixmap.scaled(36, 36, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self.shiny_label.setPixmap(scaled_shiny_pixmap)
         else:
             self.shiny_label.setText('★')
-            self.shiny_label.setStyleSheet('\n                color: #A78BFA;\n                font-size: 18px;\n                font-weight: bold;\n                background-color: rgba(0,0,0,0.7);\n                border-radius: 8px;\n            ')
-        self.shiny_label.setFixedSize(28, 28)
+            self.shiny_label.setStyleSheet('\n                color: #A78BFA;\n                font-size: 20px;\n font-weight: bold;\n                background-color: rgba(0,0,0,0.8);\n                border-radius: 10px;\n            ')
+        self.shiny_label.setFixedSize(36, 36)
+        self.shiny_label.setParent(self)
         self.shiny_label.setAttribute(Qt.WA_TransparentForMouseEvents)
         if is_lucky:
-            self.shiny_label.move(badge_x, 2)
+            self.shiny_label.move(-6, -6)
             self.shiny_label.show()
             self.boss_label.hide()
-            badge_x += 16
         elif is_boss:
-            self.boss_label.move(badge_x, 2)
+            self.boss_label.move(-6, -6)
             self.boss_label.show()
             self.shiny_label.hide()
-            badge_x += 16
         else:
             self.boss_label.hide()
             self.shiny_label.hide()
         if is_predator:
             predator_label = QLabel('🦹')
-            predator_label.setStyleSheet('\n                color: #EF4444;\n                font-size: 10px;\n                background-color: rgba(0,0,0,0.7);\n                border-radius: 6px;\n            ')
-            predator_label.setFixedSize(14, 14)
-            predator_label.move(badge_x, 2)
+            predator_label.setStyleSheet('\n                color: #EF4444;\n                font-size: 14px;\n                background-color: rgba(0,0,0,0.8);\n                border-radius: 10px;\n            ')
+            predator_label.setFixedSize(20, 20)
+            predator_label.move(badge_x, 8)
             predator_label.setAttribute(Qt.WA_TransparentForMouseEvents)
-            badge_x += 16
+            badge_x += 20
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.clicked.emit()
@@ -291,6 +326,7 @@ class PalIcon(QFrame):
                 raw = self.pal_data['value']['RawData']['value']['object']['SaveParameter']['value']
             else:
                 raw = self.pal_data
+            level = extract_value(raw, 'Level', 1)
             gender_data = extract_value(raw, 'Gender', {})
             if isinstance(gender_data, dict) and 'value' in gender_data:
                 gender = gender_data['value']
@@ -302,22 +338,21 @@ class PalIcon(QFrame):
             is_boss = cid.upper().startswith('BOSS_')
             is_predator = extract_value(raw, 'IsRarePal', False)
             is_lucky = extract_value(raw, 'IsRarePal', False)
+            if hasattr(self, 'level_label'):
+                self.level_label.setText(f'Lvl {level}')
             gender_icon = '♂' if gender.endswith('::Male') else '♀'
             gender_color = '#7DD3FC' if gender.endswith('::Male') else '#FB7185'
             if hasattr(self, 'gender_label'):
                 self.gender_label.setText(gender_icon)
-                self.gender_label.setStyleSheet(f'\n                    color: {gender_color};\n                    font-size: 14px;\n                    font-weight: bold;\n                    background-color: rgba(0,0,0,0.7);\n                    border-radius: 7px;\n                ')
-            badge_x = 2
+                self.gender_label.setStyleSheet(f'\n                    color: {gender_color};\n                    font-size: 16px;\n                    font-weight: bold;\n                    background-color: transparent;\n                ')
             if is_lucky:
-                self.shiny_label.move(badge_x, 2)
+                self.shiny_label.move(-6, -6)
                 self.shiny_label.show()
                 self.boss_label.hide()
-                badge_x += 16
             elif is_boss:
-                self.boss_label.move(badge_x, 2)
+                self.boss_label.move(-6, -6)
                 self.boss_label.show()
                 self.shiny_label.hide()
-                badge_x += 16
             else:
                 self.boss_label.hide()
                 self.shiny_label.hide()
@@ -780,7 +815,7 @@ class EditPalsDialog(FramelessDialog):
         gender_icon_btn = QPushButton('♀')
         gender_icon_btn.setCheckable(False)
         gender_icon_btn.setFixedSize(40, 34)
-        gender_icon_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 14px; color: #FB7185; padding: 0; } QPushButton:hover { background-color: #555; }')
+        gender_icon_btn.setStyleSheet('QPushButton { background: transparent; border: 1px solid #666; font-size: 14px; color: #FB7185; padding: 0; } QPushButton:hover { background: transparent; } QPushButton:pressed { background: transparent; }')
         tab.gender_icon_label = gender_icon_btn
         name_layout.addWidget(gender_icon_btn)
         gender_icon_btn.clicked.connect(lambda: self._toggle_gender_button(tab, gender_icon_btn))
@@ -1747,6 +1782,16 @@ class EditPalsDialog(FramelessDialog):
             new_max_hp = calculate_max_hp(pal_data_info, value, talent_hp, rank_hp, is_boss, is_lucky) * 1000
             raw['Hp'] = {'struct_type': 'FixedPoint64', 'struct_id': '00000000-0000-0000-0000-000000000000', 'id': None, 'value': {'Value': {'id': None, 'value': int(new_max_hp), 'type': 'Int64Property'}}, 'type': 'StructProperty'}
             self._update_tab_pal_display(tab, pal_index)
+            slot_index = None
+            for i in range(tab.pal_layout.count()):
+                widget = tab.pal_layout.itemAt(i).widget()
+                if widget and hasattr(widget, 'pal_data') and (widget.pal_data is pal_item):
+                    slot_index = widget.slot_index
+                    break
+            if slot_index is not None:
+                widget = self._find_widget_by_slot(tab, slot_index)
+                if widget and hasattr(widget, 'update_display'):
+                    widget.update_display()
         except Exception as e:
             print(f'Error updating level: {e}')
     def _update_soul(self, tab, soul_type, value):
@@ -1955,20 +2000,30 @@ class EditPalsDialog(FramelessDialog):
         current_text = gender_icon_btn.text()
         if current_text == '♂':
             gender_icon_btn.setText('♀')
-            gender_icon_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 16px; color: #FB7185; padding: 4px; min-width: 28px; } QPushButton:hover { background-color: #555; }')
+            gender_icon_btn.setStyleSheet('QPushButton { background: transparent; border: 1px solid #666; font-size: 16px; color: #FB7185; padding: 4px; min-width: 28px; } QPushButton:hover { background: transparent; } QPushButton:pressed { background: transparent; }')
             self._set_gender('EPalGenderType::Female')
         else:
             gender_icon_btn.setText('♂')
-            gender_icon_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 16px; color: #7DD3FC; padding: 4px; min-width: 28px; } QPushButton:hover { background-color: #555; }')
+            gender_icon_btn.setStyleSheet('QPushButton { background: transparent; border: 1px solid #666; font-size: 16px; color: #7DD3FC; padding: 4px; min-width: 28px; } QPushButton:hover { background: transparent; } QPushButton:pressed { background: transparent; }')
             self._set_gender('EPalGenderType::Male')
         tab_index = self.tabs.currentIndex()
-        if tab_index == 0:
-            pal_index = getattr(tab, 'selected_pal_index', -1)
-            if pal_index >= 0:
-                widget = tab.pal_layout.itemAt(pal_index).widget()
+        current_tab = self.tabs.widget(tab_index)
+        pal_index = getattr(current_tab, 'selected_pal_index', -1)
+        if pal_index >= 0 and pal_index < len(current_tab.pal_data):
+            pal_item = current_tab.pal_data[pal_index]
+            try:
+                widget = None
+                for i in range(current_tab.pal_layout.count()):
+                    w = current_tab.pal_layout.itemAt(i).widget()
+                    if w and hasattr(w, 'pal_data') and (w.pal_data is pal_item):
+                        widget = w
+                        break
                 if widget and hasattr(widget, 'gender_label'):
                     widget.gender_label.setText(gender_icon_btn.text())
-                    widget.gender_label.setStyleSheet(f"\n                    color: {(gender_icon_btn.styleSheet().split('color: ')[1].split(';')[0] if 'color:' in gender_icon_btn.styleSheet() else '#FB7185')};\n                    font-size: 14px;\n                    font-weight: bold;\n                    background-color: rgba(0,0,0,0.7);\n                    border-radius: 7px;\n                ")
+                    widget.gender_label.setStyleSheet(f"\n                        color: {(gender_icon_btn.property('color') if gender_icon_btn.property('color') else '#FB7185' if gender_icon_btn.text() == '♀' else '#7DD3FC')};\n                        font-size: 16px;\n                        font-weight: bold;\n                        background-color: rgba(0,0,0,0.15);\n                        border-radius: 10px;\n                    ")
+                    widget.update_display()
+            except Exception as e:
+                print(f'Error updating widget: {e}')
     def _find_widget_by_slot(self, tab, slot_index):
         row = slot_index // 6
         col = slot_index % 6

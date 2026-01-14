@@ -9,7 +9,7 @@ def create_venv():
         print('Virtual environment already exists.')
 def install_deps():
     print('Installing dependencies in venv...')
-    subprocess.check_call([PYTHON_EXE, '-m', 'pip', 'install', 'pip==24.3.1', 'setuptools==75.6.0', 'wheel'])
+    subprocess.check_call([PYTHON_EXE, '-m', 'pip', 'install', 'pip==25.3', 'setuptools>=78.1.1,<81', 'wheel'])
     subprocess.check_call([PYTHON_EXE, '-m', 'pip', 'install', 'numpy==2.1.3'])
     subprocess.check_call([PYTHON_EXE, '-m', 'pip', 'install', 'PySide6-Essentials', 'cx_Freeze==8.5.1'])
     if os.path.exists('requirements.txt'):
