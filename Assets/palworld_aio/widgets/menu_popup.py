@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QGraphicsDropShadowEffect, QMenu, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QGraphicsDropShadowEffect, QMenu, QLabel, QScrollArea
 from PySide6.QtCore import Qt, QPoint, Signal, QTimer, QEvent, QRect
 from PySide6.QtGui import QFont, QColor, QCursor, QEnterEvent, QGuiApplication, QIcon
 class nf:
@@ -8,8 +8,65 @@ try:
     from palworld_aio import constants
 except ImportError:
     from .. import constants
+class ScrollableMenu(QWidget):
+    def __init__(self, parent=None, is_dark=True):
+        super().__init__(parent)
+        self.is_dark = is_dark
+        self.setWindowFlags(Qt.Popup | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setMaximumHeight(600)
+        self.setMinimumWidth(220)
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll_area.setWidgetResizable(True)
+        self.content_widget = QWidget()
+        self.layout = QVBoxLayout(self.content_widget)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        self.scroll_area.setWidget(self.content_widget)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.scroll_area)
+        self._update_theme()
+    def _update_theme(self):
+        if self.is_dark:
+            bg = 'rgba(18,20,24,0.95)'
+            border = 'rgba(125,211,252,0.2)'
+            text_color = '#A6B8C8'
+            hover_bg = 'rgba(125,211,252,0.1)'
+            hover_color = '#7DD3FC'
+        else:
+            bg = 'rgba(240,245,255,1.0)'
+            border = 'rgba(180,200,220,0.5)'
+            text_color = '#000000'
+            hover_bg = 'rgba(180,200,220,0.2)'
+            hover_color = '#1e3a8a'
+        self.setStyleSheet(f'QWidget {{ background: {bg}; border: 1px solid {border}; border-radius: 10px; }} QPushButton {{ background: transparent; border: none; padding: 8px 12px; text-align: left; color: {text_color}; }} QPushButton:hover {{ background: {hover_bg}; color: {hover_color}; }}')
+    def add_item(self, item):
+        if isinstance(item, str) and item == 'separator_after':
+            sep = QFrame()
+            sep.setFrameShape(QFrame.HLine)
+            sep.setFrameShadow(QFrame.Sunken)
+            self.layout.addWidget(sep)
+        elif len(item) >= 3 and item[2] == 'separator':
+            sep = QFrame()
+            sep.setFrameShape(QFrame.HLine)
+            sep.setFrameShadow(QFrame.Sunken)
+            self.layout.addWidget(sep)
+        else:
+            text, callback = (item[0], item[1])
+            btn = QPushButton(text)
+            btn.clicked.connect(lambda checked, cb=callback: self._on_menu_action(cb))
+            self.layout.addWidget(btn)
+    def _on_menu_action(self, callback):
+        self.parent().close()
+        callback()
+    def hideEvent(self, event):
+        self.parent()._on_menu_hidden()
+        super().hideEvent(event)
 class HoverMenuButton(QPushButton):
-    def __init__(self, category, icon_key, label, parent=None):
+    def __init__(self, category, icon_key, label, parent=None, is_dark=True):
         try:
             icon = nf.icons.get(icon_key, '')
         except:
@@ -17,6 +74,7 @@ class HoverMenuButton(QPushButton):
         chevron = '▶'
         super().__init__(f'  {icon}  {label}  {chevron}', parent)
         self.category = category
+        self.is_dark = is_dark
         self.setObjectName('menuPopupButton')
         self.setFlat(True)
         self.setCursor(QCursor(Qt.PointingHandCursor))
@@ -24,7 +82,25 @@ class HoverMenuButton(QPushButton):
         self.setMinimumWidth(180)
         self.setMinimumHeight(36)
         self.clicked.connect(self._on_clicked)
-        self.setStyleSheet('\n            QPushButton#menuPopupButton {\n                background: transparent;\n                border: none;\n                padding: 8px 12px;\n                border-radius: 6px;\n                text-align: left;\n                color: #A6B8C8;\n            }\n            QPushButton#menuPopupButton[hovered="true"]{\n                background: rgba(125,211,252,0.1);\n                color: #7DD3FC;\n            }\n            QPushButton#menuPopupButton[active="true"]{\n                background: rgba(125,211,252,0.15);\n                color: #7DD3FC;\n                border-left: 3px solid #7DD3FC;\n            }\n            QPushButton#menuPopupButton:pressed {\n                background: rgba(125,211,252,0.2);\n            }\n        ')
+        self._update_theme()
+    def _update_theme(self):
+        if self.is_dark:
+            color = '#A6B8C8'
+            hover_bg = 'rgba(125,211,252,0.1)'
+            hover_color = '#7DD3FC'
+            active_bg = 'rgba(125,211,252,0.15)'
+            active_color = '#7DD3FC'
+            active_border = '#7DD3FC'
+            pressed_bg = 'rgba(125,211,252,0.2)'
+        else:
+            color = '#000000'
+            hover_bg = 'rgba(180,200,220,0.2)'
+            hover_color = '#1e3a8a'
+            active_bg = 'rgba(180,200,220,0.3)'
+            active_color = '#1e3a8a'
+            active_border = '#1e3a8a'
+            pressed_bg = 'rgba(180,200,220,0.4)'
+        self.setStyleSheet(f'\n            QPushButton#menuPopupButton {{\n                background: transparent;\n                border: none;\n                padding: 8px 12px;\n                border-radius: 6px;\n                text-align: left;\n                color: {color};\n            }}\n            QPushButton#menuPopupButton[hovered="true"]{{\n                background: {hover_bg};\n                color: {hover_color};\n            }}\n            QPushButton#menuPopupButton[active="true"]{{\n                background: {active_bg};\n                color: {active_color};\n                border-left: 3px solid {active_border};\n            }}\n            QPushButton#menuPopupButton:pressed {{\n                background: {pressed_bg};\n            }}\n        ')
     def _on_clicked(self):
         self._show_submenu()
     def _show_submenu(self):
@@ -37,6 +113,7 @@ class MenuPopup(QWidget):
     popup_closed = Signal()
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.is_dark = True
         self.setObjectName('menuPopup')
         self.setWindowFlags(Qt.Popup | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -98,9 +175,9 @@ class MenuPopup(QWidget):
         shadow.setOffset(3, 3)
         shadow.setColor(QColor(0, 0, 0, 120))
         self.container.setGraphicsEffect(shadow)
-        self.container.setStyleSheet('\n            QFrame#menuPopupContainer {\n                background: rgba(18,20,24,0.95);\n                border: 1px solid rgba(125,211,252,0.2);\n                border-radius: 10px;\n            }\n        ')
+        self._update_theme()
     def _create_menu_button(self, key, icon_key, label):
-        btn = HoverMenuButton(key, icon_key, label, self.container)
+        btn = HoverMenuButton(key, icon_key, label, self.container, self.is_dark)
         return btn
     def set_menu_actions(self, actions_dict):
         self._menu_actions = actions_dict
@@ -112,25 +189,37 @@ class MenuPopup(QWidget):
         if not actions:
             return
         self._clear_all_highlights()
-        menu = QMenu(self)
-        menu.setWindowFlags(Qt.Popup | Qt.FramelessWindowHint)
-        menu.setAttribute(Qt.WA_TranslucentBackground)
-        for item in actions:
-            if len(item) >= 3 and item[2] == 'separator':
-                menu.addSeparator()
-            text, callback = (item[0], item[1])
-            action = menu.addAction(text)
-            if len(item) >= 3 and item[2] != 'separator':
-                action.setIcon(QIcon(item[2]))
-            action.triggered.connect(lambda checked, cb=callback: self._on_menu_action(cb))
-        btn_pos = button.mapToGlobal(QPoint(button.width(), 0))
-        self._current_menu = menu
-        self._current_category = category
-        self._update_button_highlight(category, True)
-        menu.aboutToHide.connect(self._on_menu_hidden)
-        menu.show()
-        menu.move(btn_pos)
-        menu.raise_()
+        if category == 'functions':
+            menu = ScrollableMenu(self, self.is_dark)
+            for item in actions:
+                menu.add_item(item)
+            btn_pos = button.mapToGlobal(QPoint(button.width(), 0))
+            self._current_menu = menu
+            self._current_category = category
+            self._update_button_highlight(category, True)
+            menu.show()
+            menu.move(btn_pos)
+            menu.raise_()
+        else:
+            menu = QMenu(self)
+            menu.setWindowFlags(Qt.Popup | Qt.FramelessWindowHint)
+            menu.setAttribute(Qt.WA_TranslucentBackground)
+            for item in actions:
+                if len(item) >= 3 and item[2] == 'separator':
+                    menu.addSeparator()
+                text, callback = (item[0], item[1])
+                action = menu.addAction(text)
+                if len(item) >= 3 and item[2] != 'separator':
+                    action.setIcon(QIcon(item[2]))
+                action.triggered.connect(lambda checked, cb=callback: self._on_menu_action(cb))
+            btn_pos = button.mapToGlobal(QPoint(button.width(), 0))
+            self._current_menu = menu
+            self._current_category = category
+            self._update_button_highlight(category, True)
+            menu.aboutToHide.connect(self._on_menu_hidden)
+            menu.show()
+            menu.move(btn_pos)
+            menu.raise_()
     def _clear_all_highlights(self):
         for category, btn in self.menu_buttons.items():
             btn.setProperty('active', False)
@@ -163,6 +252,23 @@ class MenuPopup(QWidget):
                     icon = ''
                 chevron = '▶'
                 btn.setText(f'  {icon}  {labels[category]}  {chevron}')
+    def update_theme(self, is_dark):
+        self.is_dark = is_dark
+        self._update_theme()
+        for btn in self.menu_buttons.values():
+            btn.is_dark = is_dark
+            btn._update_theme()
+        if self._current_menu and hasattr(self._current_menu, '_update_theme'):
+            self._current_menu.is_dark = is_dark
+            self._current_menu._update_theme()
+    def _update_theme(self):
+        if self.is_dark:
+            bg = 'rgba(18,20,24,0.95)'
+            border = 'rgba(125,211,252,0.2)'
+        else:
+            bg = 'rgba(240,245,255,1.0)'
+            border = 'rgba(180,200,220,0.5)'
+        self.container.setStyleSheet(f'\n            QFrame#menuPopupContainer {{\n                background: {bg};\n                border: 1px solid {border};\n                border-radius: 10px;\n            }}\n        ')
     def show_at(self, global_pos):
         self.adjustSize()
         self.move(global_pos)

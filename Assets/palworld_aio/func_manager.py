@@ -1007,3 +1007,76 @@ def unlock_all_lab_research_for_guild(guild_id, parent=None):
         return True
     except Exception as e:
         return False
+def modify_container_slots(new_slot_num, parent=None):
+    if not constants.loaded_level_json:
+        return 0
+    try:
+        wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+        modified = 0
+        import copy
+        map_objects = wsd.get('MapObjectSaveData', {}).get('value', {}).get('values', [])
+        valid_container_ids = set()
+        for obj in map_objects:
+            map_object_id = obj.get('MapObjectId', {}).get('value')
+            if map_object_id and ('ItemChest' in map_object_id or 'GuildChest' in map_object_id):
+                bp = obj.get('Model', {}).get('value', {}).get('BuildProcess', {}).get('value', {}).get('RawData', {}).get('value', {})
+                if bp.get('state') == 1:
+                    raw_data = obj.get('Model', {}).get('value', {}).get('RawData', {}).get('value', {})
+                    base_camp_id = raw_data.get('base_camp_id_belong_to')
+                    group_id = raw_data.get('group_id_belong_to')
+                    if base_camp_id and base_camp_id != '00000000-0000-0000-0000-000000000000' and group_id and (group_id != '00000000-0000-0000-0000-000000000000'):
+                        module_map = obj.get('ConcreteModel', {}).get('value', {}).get('ModuleMap', {}).get('value', [])
+                        for module in module_map:
+                            if module.get('key') == 'EPalMapObjectConcreteModelModuleType::ItemContainer':
+                                module_raw = module.get('value', {}).get('RawData', {}).get('value', {})
+                                target_id = module_raw.get('target_container_id')
+                                if target_id:
+                                    valid_container_ids.add(str(target_id))
+                                break
+        item_containers = wsd.get('ItemContainerSaveData', {}).get('value', [])
+        for cont in item_containers:
+            try:
+                container_id = str(cont['key']['ID']['value'])
+                if container_id not in valid_container_ids:
+                    continue
+                value = cont['value']
+                current_slot_num = value.get('SlotNum', {}).get('value', 0)
+                linked = False
+                map_object_id = 'Unknown'
+                for obj in map_objects:
+                    module_map = obj.get('ConcreteModel', {}).get('value', {}).get('ModuleMap', {}).get('value', [])
+                    for module in module_map:
+                        if module.get('key') == 'EPalMapObjectConcreteModelModuleType::ItemContainer':
+                            module_raw = module.get('value', {}).get('RawData', {}).get('value', {})
+                            if str(module_raw.get('target_container_id')) == container_id:
+                                map_object_id = obj.get('MapObjectId', {}).get('value', 'Unknown')
+                                linked = True
+                                break
+                    if linked:
+                        break
+                if not linked:
+                    continue
+                slots = value.get('Slots', {}).get('value', {}).get('values', [])
+                if current_slot_num == new_slot_num:
+                    continue
+                if len(slots) < new_slot_num:
+                    if slots:
+                        template = copy.deepcopy(slots[0])
+                        template['RawData']['value']['item']['static_id'] = ''
+                        template['RawData']['value']['item']['dynamic_id']['created_world_id'] = '00000000-0000-0000-0000-000000000000'
+                        template['RawData']['value']['item']['dynamic_id']['local_id'] = '00000000-0000-0000-0000-000000000000'
+                        template['RawData']['value']['count'] = 0
+                        while len(slots) < new_slot_num:
+                            slots.append(copy.deepcopy(template))
+                    else:
+                        pass
+                elif len(slots) > new_slot_num:
+                    slots[:] = slots[:new_slot_num]
+                if 'SlotNum' in value:
+                    value['SlotNum']['value'] = new_slot_num
+                    modified += 1
+            except:
+                pass
+        return modified
+    except:
+        return 0

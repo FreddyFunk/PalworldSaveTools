@@ -1,5 +1,6 @@
 import os
 import json
+from PySide6.QtWidgets import QMessageBox
 from i18n import t
 try:
     from palworld_aio import constants
@@ -109,8 +110,15 @@ def set_player_level(player_uid, new_level):
             uid_obj = entry.get('key', {}).get('PlayerUId', {})
             uid = str(uid_obj.get('value', '')).replace('-', '') if isinstance(uid_obj, dict) else ''
             if uid == uid_clean:
+                if 'Level' not in sp_val:
+                    from i18n import t
+                    QMessageBox.warning(None, t('player.level.set_no_level_title') if t else 'Cannot Set Level', t('player.level.set_no_level_data') if t else 'This player has not leveled up yet. Please have them level up in-game first before using this tool.')
+                    return False
                 sp_val['Level']['value']['value'] = new_level
-                sp_val['Exp']['value'] = EXP_DATA[str(new_level)]['TotalEXP']
+                if 'Exp' not in sp_val:
+                    sp_val['Exp'] = {'value': EXP_DATA[str(new_level)]['TotalEXP']}
+                else:
+                    sp_val['Exp']['value'] = EXP_DATA[str(new_level)]['TotalEXP']
                 constants.player_levels[uid] = new_level
                 return True
     return False
