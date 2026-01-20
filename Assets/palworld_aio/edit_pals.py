@@ -1179,6 +1179,8 @@ class EditPalsDialog(FramelessDialog):
                 raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
             level = extract_value(raw, 'Level', 1)
             cid = extract_value(raw, 'CharacterID', '')
+            base_cid = cid.lower().replace('boss_', '')
+            has_boss_variant = f'boss_{base_cid}' in PalFrame._NAMEMAP
             character_key = format_character_key(cid)
             talent_hp = extract_value(raw, 'Talent_HP', 0)
             talent_shot = extract_value(raw, 'Talent_Shot', 0)
@@ -1242,8 +1244,10 @@ class EditPalsDialog(FramelessDialog):
                     tab.gender_icon_label.setText('♀')
                     tab.gender_icon_label.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 16px; color: #FB7185; padding: 4px; min-width: 28px; } QPushButton:hover { background-color: #555; border: 1px solid #888; } QPushButton:pressed { background-color: #222; border: 1px solid #666; }')
             if hasattr(tab, 'boss_toggle_btn'):
+                tab.boss_toggle_btn.setEnabled(has_boss_variant)
                 tab.boss_toggle_btn.setChecked(is_boss)
             if hasattr(tab, 'rare_toggle_btn'):
+                tab.rare_toggle_btn.setEnabled(has_boss_variant)
                 tab.rare_toggle_btn.setChecked(is_lucky)
             moves = [None] * 3
             for i in range(min(3, len(e_list))):
