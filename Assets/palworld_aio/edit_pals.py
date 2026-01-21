@@ -263,7 +263,7 @@ class PalIcon(QFrame):
         level_label.setParent(self)
         level_label.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.level_label = level_label
-        gender_icon = (nf.icons['nf-md-gender_male'] if nf else '\U000F0202') if gender.endswith('::Male') else (nf.icons['nf-md-gender_female'] if nf else '\U000F0203')
+        gender_icon = (nf.icons['nf-md-gender_male'] if nf else '\U000f0202') if gender.endswith('::Male') else nf.icons['nf-md-gender_female'] if nf else '\U000f0203'
         gender_color = '#7DD3FC' if gender.endswith('::Male') else '#FB7185'
         gender_label = StrokedLabel(gender_icon)
         gender_label.setStyleSheet(f'color: {gender_color}; font-size: 16px; font-weight: bold; background-color: transparent; font-family: "Material Design Icons", sans-serif;')
@@ -346,7 +346,7 @@ class PalIcon(QFrame):
             is_lucky = extract_value(raw, 'IsRarePal', False)
             if hasattr(self, 'level_label'):
                 self.level_label.setText(f'Lvl {level}')
-            gender_icon = (nf.icons['nf-md-gender_male'] if nf else '\U000F0202') if gender.endswith('::Male') else (nf.icons['nf-md-gender_female'] if nf else '\U000F0203')
+            gender_icon = (nf.icons['nf-md-gender_male'] if nf else '\U000f0202') if gender.endswith('::Male') else nf.icons['nf-md-gender_female'] if nf else '\U000f0203'
             gender_color = '#7DD3FC' if gender.endswith('::Male') else '#FB7185'
             if hasattr(self, 'gender_label'):
                 self.gender_label.setText(gender_icon)
@@ -482,7 +482,7 @@ class PalCardWidget(QFrame):
             level_label = QLabel(f'LV {level}')
             level_label.setStyleSheet('font-size: 10px; color: #7DD3FC;')
             level_gender_layout.addWidget(level_label)
-            gender_icon = (nf.icons['nf-md-gender_male'] if nf else '\U000F0202') if t('edit_pals.male') in gender else (nf.icons['nf-md-gender_female'] if nf else '\U000F0203')
+            gender_icon = (nf.icons['nf-md-gender_male'] if nf else '\U000f0202') if t('edit_pals.male') in gender else nf.icons['nf-md-gender_female'] if nf else '\U000f0203'
             gender_color = '#7DD3FC' if t('edit_pals.male') in gender else '#FB7185'
             gender_label = QLabel(gender_icon)
             gender_label.setStyleSheet(f'font-size: 16px; color: {gender_color}; font-weight: bold; font-family: "Material Design Icons", sans-serif;')
@@ -820,7 +820,7 @@ class EditPalsDialog(FramelessDialog):
         rare_toggle_btn.setFixedSize(40, 34)
         rare_toggle_btn.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; } QPushButton:checked { background-color: #555; } QPushButton:hover { background-color: #555; }')
         name_layout.addWidget(rare_toggle_btn)
-        gender_icon_btn = QPushButton(nf.icons['nf-md-gender_female'] if nf else '\U000F0203')
+        gender_icon_btn = QPushButton(nf.icons['nf-md-gender_female'] if nf else '\U000f0203')
         gender_icon_btn.setCheckable(False)
         gender_icon_btn.setFixedSize(40, 34)
         gender_icon_btn.setStyleSheet('QPushButton { background: transparent; border: 1px solid #666; font-size: 20px; color: #FB7185; padding: 0; font-family: "Material Design Icons", sans-serif; } QPushButton:hover { background: transparent; } QPushButton:pressed { background: transparent; }')
@@ -1172,7 +1172,7 @@ class EditPalsDialog(FramelessDialog):
                 for btn in tab.rank_star_buttons:
                     btn.setText('☆')
             if hasattr(tab, 'gender_icon_label'):
-                tab.gender_icon_label.setText(nf.icons['nf-md-gender_female'] if nf else '\U000F0203')
+                tab.gender_icon_label.setText(nf.icons['nf-md-gender_female'] if nf else '\U000f0203')
                 tab.gender_icon_label.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 20px; color: #FB7185; padding: 4px; min-width: 28px; font-family: "Material Design Icons", sans-serif; } QPushButton:hover { background-color: #555; border: 1px solid #888; } QPushButton:pressed { background-color: #222; border: 1px solid #666; }')
             tab.current_active_skills = []
             tab.current_passive_skills = []
@@ -1246,10 +1246,10 @@ class EditPalsDialog(FramelessDialog):
                     tab.gender_combo.setCurrentIndex(1)
             if hasattr(tab, 'gender_icon_label'):
                 if gender == 'EPalGenderType::Male':
-                    tab.gender_icon_label.setText(nf.icons['nf-md-gender_male'] if nf else '\U000F0202')
+                    tab.gender_icon_label.setText(nf.icons['nf-md-gender_male'] if nf else '\U000f0202')
                     tab.gender_icon_label.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 20px; color: #7DD3FC; padding: 4px; min-width: 28px; font-family: "Material Design Icons", sans-serif; } QPushButton:hover { background-color: #555; border: 1px solid #888; } QPushButton:pressed { background-color: #222; border: 1px solid #666; }')
                 else:
-                    tab.gender_icon_label.setText(nf.icons['nf-md-gender_female'] if nf else '\U000F0203')
+                    tab.gender_icon_label.setText(nf.icons['nf-md-gender_female'] if nf else '\U000f0203')
                     tab.gender_icon_label.setStyleSheet('QPushButton { background-color: #333; border: 1px solid #666; font-size: 20px; color: #FB7185; padding: 4px; min-width: 28px; font-family: "Material Design Icons", sans-serif; } QPushButton:hover { background-color: #555; border: 1px solid #888; } QPushButton:pressed { background-color: #222; border: 1px solid #666; }')
             if hasattr(tab, 'boss_toggle_btn'):
                 tab.boss_toggle_btn.setEnabled(has_boss_variant)
@@ -2010,8 +2010,8 @@ class EditPalsDialog(FramelessDialog):
             self._set_gender('EPalGenderType::Male')
     def _toggle_gender_button(self, tab, gender_icon_btn):
         current_text = gender_icon_btn.text()
-        male_icon = nf.icons['nf-md-gender_male'] if nf else '\U000F0202'
-        female_icon = nf.icons['nf-md-gender_female'] if nf else '\U000F0203'
+        male_icon = nf.icons['nf-md-gender_male'] if nf else '\U000f0202'
+        female_icon = nf.icons['nf-md-gender_female'] if nf else '\U000f0203'
         if current_text == male_icon:
             gender_icon_btn.setText(female_icon)
             gender_icon_btn.setStyleSheet('QPushButton { background: transparent; border: 1px solid #666; font-size: 20px; color: #FB7185; padding: 4px; min-width: 28px; font-family: "Material Design Icons", sans-serif; } QPushButton:hover { background: transparent; } QPushButton:pressed { background: transparent; }')
@@ -2034,7 +2034,7 @@ class EditPalsDialog(FramelessDialog):
                         break
                 if widget and hasattr(widget, 'gender_label'):
                     widget.gender_label.setText(gender_icon_btn.text())
-                    female_icon = nf.icons['nf-md-gender_female'] if nf else '\U000F0203'
+                    female_icon = nf.icons['nf-md-gender_female'] if nf else '\U000f0203'
                     widget.gender_label.setStyleSheet(f"\n                        color: {(gender_icon_btn.property('color') if gender_icon_btn.property('color') else '#FB7185' if gender_icon_btn.text() == female_icon else '#7DD3FC')};\n                        font-size: 16px;\n                        font-weight: bold;\n                        background-color: rgba(0,0,0,0.15);\n                        border-radius: 10px;\n                        font-family: 'Material Design Icons', sans-serif;\n                    ")
                     widget.update_display()
             except Exception as e:
