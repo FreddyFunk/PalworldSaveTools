@@ -39,4 +39,4 @@ if ooz_l:
 ps6_a = find_pyside6_assets()
 if ps6_a:
     build_exe_options['include_files'].append(ps6_a)
-setup(name='PalworldSaveTools', version='1.1.51', options={'build_exe': build_exe_options}, executables=[Executable('Assets/palworld_aio/main.py', base='gui', target_name='PalworldSaveTools.exe', icon='Assets/resources/pal.ico')])
+setup(name='PalworldSaveTools', version='1.1.59', options={'build_exe': build_exe_options}, executables=[Executable('Assets/palworld_aio/main.py', base='gui', target_name='PalworldSaveTools.exe', icon='Assets/resources/pal.ico')])

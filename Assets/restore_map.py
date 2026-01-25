@@ -34,16 +34,20 @@ def copy_to_all_subfolders(source_file, file_size):
     print(t('LocalData.sav Size: {file_size} bytes', file_size=file_size))
     print('=' * 80)
 def center_window(win):
-    screen = QApplication.primaryScreen().availableGeometry()
-    size = win.sizeHint()
-    if not size.isValid():
-        win.adjustSize()
-        size = win.size()
-    win.move((screen.width() - size.width()) // 2, (screen.height() - size.height()) // 2)
+    win_center = win.frameGeometry().center()
+    from PySide6.QtWidgets import QApplication
+    screen = QApplication.screenAt(win_center)
+    if screen is None:
+        screen = QApplication.primaryScreen()
+    screen_geometry = screen.availableGeometry()
+    geo = win.frameGeometry()
+    geo.moveCenter(screen_geometry.center())
+    win.move(geo.topLeft())
 def restore_map():
     resources_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'LocalData.sav')
     if not os.path.exists(resources_file):
-        QMessageBox.critical(None, t('Error'), t('LocalData.sav not found: {file}', file=resources_file))
+        parent = QApplication.activeWindow()
+        QMessageBox.critical(parent, t('Error'), t('LocalData.sav not found: {file}', file=resources_file))
         return
     class RestoreMapDialog(QDialog):
         def __init__(self):

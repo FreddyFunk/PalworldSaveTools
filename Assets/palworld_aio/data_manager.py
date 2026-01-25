@@ -9,6 +9,58 @@ try:
 except ImportError:
     from . import constants
     from .utils import are_equal_uuids, as_uuid, fast_deepcopy
+def normalize_uid(uid):
+    if isinstance(uid, dict):
+        uid = uid.get('value', uid)
+    if uid is None:
+        return ''
+    return str(uid).replace('-', '').lower()
+def cleanup_player_references(wsd, deleted_uids):
+    if not deleted_uids:
+        return
+    deleted_uids_normalized = {normalize_uid(uid) for uid in deleted_uids}
+    map_objs = wsd.get('MapObjectSaveData', {}).get('value', {}).get('values', [])
+    for obj in map_objs:
+        try:
+            raw = obj.get('Model', {}).get('value', {}).get('RawData', {}).get('value', {})
+            build_uid = raw.get('build_player_uid')
+            if build_uid and normalize_uid(build_uid) in deleted_uids_normalized:
+                raw['build_player_uid'] = '00000000-0000-0000-0000-000000000000'
+            stage_id = raw.get('stage_instance_id_belong_to', {})
+            if isinstance(stage_id, dict):
+                stage_guid = stage_id.get('id')
+                if stage_guid and normalize_uid(stage_guid) in deleted_uids_normalized:
+                    stage_id['id'] = '00000000-0000-0000-0000-000000000000'
+        except:
+            pass
+    char_containers = wsd.get('CharacterContainerSaveData', {}).get('value', [])
+    for cont in char_containers:
+        try:
+            slots = cont['value']['Slots']['value']['values']
+            for slot in slots:
+                player_uid = slot.get('RawData', {}).get('value', {}).get('player_uid')
+                if player_uid and normalize_uid(player_uid) in deleted_uids_normalized:
+                    slot['RawData']['value']['player_uid'] = '00000000-0000-0000-0000-000000000000'
+        except:
+            pass
+    group_map = wsd.get('GroupSaveDataMap', {}).get('value', [])
+    for g in group_map:
+        try:
+            raw = g['value']['RawData']['value']
+            handle_ids = raw.get('individual_character_handle_ids', [])
+            if not handle_ids:
+                continue
+            cleaned_handles = []
+            for h in handle_ids:
+                if isinstance(h, dict):
+                    guid = normalize_uid(h.get('guid', ''))
+                    if guid not in deleted_uids_normalized:
+                        cleaned_handles.append(h)
+                else:
+                    cleaned_handles.append(h)
+            raw['individual_character_handle_ids'] = cleaned_handles
+        except:
+            pass
 def get_tick():
     return constants.loaded_level_json['properties']['worldSaveData']['value']['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
 def get_guilds():
@@ -76,7 +128,7 @@ def get_base_coords(base_id):
             except:
                 return (None, None)
     return (None, None)
-def delete_base_camp(base_entry, guild_id, level_json=None):
+def delete_base_camp(base_entry, guild_id, level_json=None, delete_workers=False):
     if level_json is None:
         level_json = constants.loaded_level_json
     wsd = level_json['properties']['worldSaveData']['value']
@@ -121,6 +173,7 @@ def delete_base_camp(base_entry, guild_id, level_json=None):
     work_entries[:] = [we for we in work_entries if should_keep_work_entry(we)]
     zero = UUID.from_str('00000000-0000-0000-0000-000000000000')
     if worker_cont_id:
+        workers_to_remove = []
         for ch in char_map:
             try:
                 raw = ch['value']['RawData']['value']
@@ -129,10 +182,17 @@ def delete_base_camp(base_entry, guild_id, level_json=None):
                     continue
                 slot_id = sp.get('SlotId', {}).get('value', {}).get('ContainerId', {}).get('value', {}).get('ID', {}).get('value')
                 if slot_id and str(slot_id).replace('-', '').lower() == worker_cont_id:
-                    sp['SlotId']['value']['ContainerId']['value']['ID']['value'] = zero
-                    raw['group_id'] = zero
+                    if delete_workers:
+                        workers_to_remove.append(ch)
+                    else:
+                        sp['SlotId']['value']['ContainerId']['value']['ID']['value'] = zero
+                        raw['group_id'] = zero
             except:
                 pass
+        if workers_to_remove:
+            for worker in workers_to_remove:
+                if worker in char_map:
+                    char_map.remove(worker)
     base_list[:] = [b for b in base_list if b != base_entry]
     for g in group_map:
         if are_equal_uuids(g['key'], guild_id):
@@ -177,7 +237,7 @@ def delete_guild(guild_id):
     for b in base_list[:]:
         try:
             if are_equal_uuids(b['value']['RawData']['value'].get('group_id_belong_to'), guild_id):
-                delete_base_camp(b, guild_id)
+                delete_base_camp(b, guild_id, delete_workers=True)
         except:
             pass
     for ch in char_map[:]:
@@ -192,6 +252,27 @@ def delete_guild(guild_id):
             owner = sp.get('OwnerPlayerUId', {}).get('value')
             if owner and str(owner).replace('-', '').lower() in deleted_uids:
                 char_map.remove(ch)
+        except:
+            pass
+    cleanup_player_references(wsd, deleted_uids)
+    guild_extra_map = wsd.get('GuildExtraSaveDataMap', {}).get('value', [])
+    guild_extra_map[:] = [entry for entry in guild_extra_map if normalize_uid(entry.get('key', '')) != guild_id_clean]
+    for g in group_map:
+        if g == target_g:
+            continue
+        try:
+            raw = g['value']['RawData']['value']
+            handle_ids = raw.get('individual_character_handle_ids', [])
+            if handle_ids:
+                cleaned_handles = []
+                for h in handle_ids:
+                    if isinstance(h, dict):
+                        guid = normalize_uid(h.get('guid', ''))
+                        if guid not in deleted_uids:
+                            cleaned_handles.append(h)
+                    else:
+                        cleaned_handles.append(h)
+                raw['individual_character_handle_ids'] = cleaned_handles
         except:
             pass
     for uid in deleted_uids:
@@ -233,14 +314,18 @@ def delete_player(uid, delete_files=True):
             for b in base_list[:]:
                 try:
                     if are_equal_uuids(b['value']['RawData']['value'].get('group_id_belong_to'), gid):
-                        delete_base_camp(b, gid)
+                        delete_base_camp(b, gid, delete_workers=True)
                 except:
                     pass
+            gid_clean = str(gid).replace('-', '').lower()
+            guild_extra_map = wsd.get('GuildExtraSaveDataMap', {}).get('value', [])
+            guild_extra_map[:] = [entry for entry in guild_extra_map if normalize_uid(entry.get('key', '')) != gid_clean]
             group_map.remove(g)
         else:
             admin = str(raw.get('admin_player_uid', '')).replace('-', '').lower()
             if admin == uid_clean:
                 raw['admin_player_uid'] = new_players[0]['player_uid']
+    cleanup_player_references(wsd, [uid_clean])
     if delete_files:
         constants.files_to_delete.add(uid_clean)
     return True

@@ -795,5 +795,15 @@
   "xgp.ui.convert": "Speicher konvertieren",
   "xgp.ui.description": "Spielstände zwischen Xbox (Game Pass) und Steam konvertieren",
   "yes": "Ja",
-  "zoom": "Zoom"
+  "zoom": "Zoom",
+  "fix_host_save.cannot_select_title": "Spieler kann nicht ausgewählt werden",
+  "fix_host_save.cannot_select_message": "Spieler \"{name}\" kann nicht ausgewählt werden - er ist nur Stufe {level}.\n\nSpieler müssen mindestens Stufe 2 haben (mindestens einmal aufgestiegen sein), damit die Migration funktioniert.",
+  "fix_host_save.both_players_level_2": "Beide Spieler müssen mindestens Stufe 2 sein.\nStufe des Quellspielers: {old_level}\nStufe des Zielspielers: {new_level}",
+  "fix_host_save.players_folder_not_found": "Players-Ordner neben der ausgewählten Level.sav nicht gefunden",
+  "fix_host_save.select_guids_and_file": "Bitte wählen Sie das alte GUID, das neue GUID und die Level-Speicherdatei aus!",
+  "fix_host_save.guids_cannot_be_same": "Das alte GUID und das neue GUID dürfen nicht identisch sein.",
+  "character_transfer.source_player_level_2": "Quellspieler muss mindestens Stufe 2 sein.\nAktuelle Stufe: {level}",
+  "character_transfer.source_player_not_leveled": "Quellspieler hat noch kein Level-Up durchgeführt. Bitte leveln Sie zuerst im Spiel auf.",
+  "character_transfer.target_player_level_2": "Zielspieler muss mindestens Stufe 2 sein.\nAktuelle Stufe: {level}",
+  "character_transfer.target_player_not_leveled": "Zielspieler hat noch kein Level-Up durchgeführt. Bitte leveln Sie zuerst im Spiel auf."
 }

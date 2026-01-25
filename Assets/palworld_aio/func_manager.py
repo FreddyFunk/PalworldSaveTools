@@ -265,6 +265,15 @@ def delete_unreferenced_data(parent=None):
     wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
     group_data_list = wsd.get('GroupSaveDataMap', {}).get('value', [])
     char_map = wsd.get('CharacterSaveParameterMap', {}).get('value', [])
+    char_containers = wsd.get('CharacterContainerSaveData', {}).get('value', [])
+    valid_container_ids = set()
+    for cont in char_containers:
+        try:
+            cont_id = normalize_uid(cont.get('key', {}).get('ID', {}).get('value', ''))
+            if cont_id:
+                valid_container_ids.add(cont_id)
+        except:
+            pass
     char_uids = set()
     for entry in char_map:
         uid_raw = entry.get('key', {}).get('PlayerUId')
@@ -276,6 +285,7 @@ def delete_unreferenced_data(parent=None):
         if owner_uid:
             char_uids.add(owner_uid)
     unreferenced_uids, invalid_uids, removed_guilds = ([], [], 0)
+    deleted_guild_ids = []
     for group in group_data_list[:]:
         if group['value']['GroupType']['value']['value'] != 'EPalGroupType::Guild':
             continue
@@ -298,11 +308,12 @@ def delete_unreferenced_data(parent=None):
         if not valid_players or all_invalid:
             gid_raw = group['key']
             gid = normalize_uid(gid_raw)
+            deleted_guild_ids.append(gid)
             for b in wsd.get('BaseCampSaveData', {}).get('value', [])[:]:
                 base_gid_raw = b['value']['RawData']['value'].get('group_id_belong_to')
                 base_gid = normalize_uid(base_gid_raw)
                 if base_gid == gid:
-                    delete_base_camp(b, gid_raw)
+                    delete_base_camp(b, gid_raw, delete_workers=True)
             group_data_list.remove(group)
             removed_guilds += 1
             continue
@@ -312,10 +323,74 @@ def delete_unreferenced_data(parent=None):
         keep_uids = {normalize_uid(p.get('player_uid')) for p in valid_players}
         if admin_uid not in keep_uids:
             raw['admin_player_uid'] = valid_players[0]['player_uid']
+    orphaned_pals = []
+    for entry in char_map[:]:
+        try:
+            raw = entry['value']['RawData']['value']
+            sp = raw['object']['SaveParameter']['value']
+            if sp.get('IsPlayer', {}).get('value'):
+                continue
+            owner_uid = normalize_uid(sp.get('OwnerPlayerUId', ''))
+            if owner_uid and owner_uid != '000000000000000000000000000000000':
+                continue
+            slot_id_obj = sp.get('SlotId', {}).get('value', {}).get('ContainerId', {}).get('value', {}).get('ID', {})
+            slot_id = normalize_uid(slot_id_obj.get('value', slot_id_obj) if isinstance(slot_id_obj, dict) else slot_id_obj)
+            if slot_id and slot_id != '000000000000000000000000000000000' and (slot_id not in valid_container_ids):
+                orphaned_pals.append(entry)
+        except:
+            pass
+    for pal in orphaned_pals:
+        if pal in char_map:
+            char_map.remove(pal)
     char_map[:] = [entry for entry in char_map if normalize_uid(entry.get('key', {}).get('PlayerUId')) not in unreferenced_uids + invalid_uids and normalize_uid(entry.get('value', {}).get('RawData', {}).get('value', {}).get('object', {}).get('SaveParameter', {}).get('value', {}).get('OwnerPlayerUId')) not in unreferenced_uids + invalid_uids]
     all_removed_uids = set(unreferenced_uids + invalid_uids)
     constants.files_to_delete.update(all_removed_uids)
     removed_pals = delete_player_pals(wsd, all_removed_uids)
+    if all_removed_uids:
+        map_objs = wsd.get('MapObjectSaveData', {}).get('value', {}).get('values', [])
+        for obj in map_objs:
+            try:
+                raw = obj.get('Model', {}).get('value', {}).get('RawData', {}).get('value', {})
+                build_uid = raw.get('build_player_uid')
+                if build_uid and normalize_uid(build_uid) in all_removed_uids:
+                    raw['build_player_uid'] = '00000000-0000-0000-0000-000000000000'
+                stage_id = raw.get('stage_instance_id_belong_to', {})
+                if isinstance(stage_id, dict):
+                    stage_guid = stage_id.get('id')
+                    if stage_guid and normalize_uid(stage_guid) in all_removed_uids:
+                        stage_id['id'] = '00000000-0000-0000-0000-000000000000'
+            except:
+                pass
+        char_containers = wsd.get('CharacterContainerSaveData', {}).get('value', [])
+        for cont in char_containers:
+            try:
+                slots = cont['value']['Slots']['value']['values']
+                for slot in slots:
+                    player_uid = slot.get('RawData', {}).get('value', {}).get('player_uid')
+                    if player_uid and normalize_uid(player_uid) in all_removed_uids:
+                        slot['RawData']['value']['player_uid'] = '00000000-0000-0000-0000-000000000000'
+            except:
+                pass
+        group_map = wsd.get('GroupSaveDataMap', {}).get('value', [])
+        for g in group_map:
+            try:
+                raw = g['value']['RawData']['value']
+                handle_ids = raw.get('individual_character_handle_ids', [])
+                if handle_ids:
+                    cleaned_handles = []
+                    for h in handle_ids:
+                        if isinstance(h, dict):
+                            guid = normalize_uid(h.get('guid', ''))
+                            if guid not in all_removed_uids:
+                                cleaned_handles.append(h)
+                        else:
+                            cleaned_handles.append(h)
+                    raw['individual_character_handle_ids'] = cleaned_handles
+            except:
+                pass
+    if deleted_guild_ids:
+        guild_extra_map = wsd.get('GuildExtraSaveDataMap', {}).get('value', [])
+        guild_extra_map[:] = [entry for entry in guild_extra_map if normalize_uid(entry.get('key', '')) not in deleted_guild_ids]
     map_objects_wrapper = wsd.get('MapObjectSaveData', {}).get('value', {})
     map_objects = map_objects_wrapper.get('values', [])
     broken_ids, dropped_ids = ([], [])
@@ -331,7 +406,8 @@ def delete_unreferenced_data(parent=None):
             new_map_objects.append(obj)
     map_objects_wrapper['values'] = new_map_objects
     removed_broken, removed_drops = (len(broken_ids), len(dropped_ids))
-    return {'characters': len(all_removed_uids), 'pals': removed_pals, 'guilds': removed_guilds, 'broken_objects': removed_broken, 'dropped_items': removed_drops}
+    removed_orphaned_dynamic = delete_orphaned_dynamic_items()
+    return {'characters': len(all_removed_uids), 'pals': removed_pals + len(orphaned_pals), 'guilds': removed_guilds, 'broken_objects': removed_broken, 'dropped_items': removed_drops, 'orphaned_dynamic_items': removed_orphaned_dynamic}
 def delete_non_base_map_objects(parent=None):
     if not constants.loaded_level_json:
         return 0
@@ -1080,3 +1156,61 @@ def modify_container_slots(new_slot_num, parent=None):
         return modified
     except:
         return 0
+def delete_orphaned_dynamic_items(parent=None):
+    if not constants.loaded_level_json:
+        return 0
+    def normalize_uid(uid):
+        if isinstance(uid, dict):
+            uid = uid.get('value', '')
+        return str(uid).replace('-', '').lower()
+    wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+    dynamic_items = wsd.get('DynamicItemSaveData', {}).get('value', {}).get('values', [])
+    dynamic_ids = set()
+    for di in dynamic_items:
+        try:
+            lid = di.get('RawData', {}).get('value', {}).get('id', {}).get('local_id_in_created_world', '')
+            if lid and lid != '00000000-0000-0000-0000-000000000000':
+                dynamic_ids.add(normalize_uid(lid))
+        except:
+            pass
+    if not dynamic_ids:
+        return 0
+    referenced_dynamic_ids = set()
+    def scan_container(cont):
+        try:
+            slots = cont.get('value', {}).get('Slots', {}).get('value', {}).get('values', [])
+            for slot in slots:
+                raw = slot.get('RawData', {}).get('value', {})
+                item = raw.get('item', {})
+                if item and isinstance(item, dict):
+                    dynamic_id = item.get('dynamic_id', {})
+                    if isinstance(dynamic_id, dict):
+                        lid = dynamic_id.get('local_id_in_created_world', '')
+                        if lid:
+                            normalized = normalize_uid(lid)
+                            if normalized in dynamic_ids:
+                                referenced_dynamic_ids.add(normalized)
+                items = raw.get('items', {}).get('value', {}).get('values', [])
+                for it in items:
+                    it_raw = it.get('RawData', {})
+                    if it_raw and isinstance(it_raw, dict):
+                        dynamic_id = it_raw.get('dynamic_id', {})
+                        if isinstance(dynamic_id, dict):
+                            lid = dynamic_id.get('local_id_in_created_world', '')
+                            if lid:
+                                normalized = normalize_uid(lid)
+                                if normalized in dynamic_ids:
+                                    referenced_dynamic_ids.add(normalized)
+        except:
+            pass
+    for cont in wsd.get('ItemContainerSaveData', {}).get('value', []):
+        scan_container(cont)
+    for cont in wsd.get('CharacterContainerSaveData', {}).get('value', []):
+        scan_container(cont)
+    orphaned_ids = dynamic_ids - referenced_dynamic_ids
+    if not orphaned_ids:
+        return 0
+    initial_count = len(dynamic_items)
+    dynamic_items[:] = [di for di in dynamic_items if normalize_uid(di.get('RawData', {}).get('value', {}).get('id', {}).get('local_id_in_created_world', '')) not in orphaned_ids]
+    deleted_count = initial_count - len(dynamic_items)
+    return deleted_count

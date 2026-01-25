@@ -1,5 +1,5 @@
 from import_libs import *
-from palworld_aio.utils import sav_to_json, json_to_sav
+from palworld_aio.utils import sav_to_json, json_to_sav, extract_value
 from fix_host_save import ask_string_with_icon
 from common import get_assets_directory
 from loading_manager import run_with_loading
@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QC
 from PySide6.QtCore import Qt, Signal, QObject, QTimer, QMetaObject, Q_ARG
 from PySide6.QtGui import QIcon, QFont
 saves = []
+save_info_map = {}
 save_extractor_done = threading.Event()
 save_converter_done = threading.Event()
 if getattr(sys, 'frozen', False):
@@ -125,6 +126,7 @@ class GamePassSaveFixWidget(QWidget):
         else:
             super().keyPressEvent(event)
     def get_save_game_pass(self):
+        global save_info_map
         default = os.path.expandvars('%LOCALAPPDATA%\\Packages\\PocketpairInc.Palworld_ad4psfrxyesvt\\SystemAppData\\wgs')
         self.raise_()
         self.activateWindow()
@@ -144,8 +146,16 @@ class GamePassSaveFixWidget(QWidget):
         if not saves:
             self.message_signal.emit('critical', t('Error'), t('xgp.err.no_valid_saves'))
             return
-        self.direct_saves_map = {os.path.basename(s): s for s in saves}
-        self.update_combobox_signal.emit(list(self.direct_saves_map.keys()))
+        save_info_map = {}
+        save_list_display = []
+        for save_path in saves:
+            folder_name = os.path.basename(save_path)
+            info = self.get_save_info(save_path)
+            save_info_map[folder_name] = info
+            display_name = f"{folder_name} - {info['world_name']} ({info['player_name']})"
+            save_list_display.append(display_name)
+        self.direct_saves_map = {display: s for display, s in zip(save_list_display, saves)}
+        self.update_combobox_signal.emit(save_list_display)
     def get_save_steam(self):
         import gc
         self.raise_()
@@ -209,7 +219,17 @@ class GamePassSaveFixWidget(QWidget):
             if name:
                 saveList.append(name)
                 successful += 1
-        self.update_combobox_signal.emit(saveList)
+        global save_info_map
+        save_info_map = {}
+        save_list_display = []
+        for folder_name in saveList:
+            save_path = os.path.join('./saves', folder_name)
+            info = self.get_save_info(save_path)
+            save_info_map[folder_name] = info
+            display_name = f"{folder_name} - {info['world_name']} ({info['player_name']})"
+            save_list_display.append(display_name)
+        self.direct_saves_map = {display: os.path.join('./saves', folder) for display, folder in zip(save_list_display, saveList)}
+        self.update_combobox_signal.emit(save_list_display)
         print('Choose a save to convert:')
         total = len(saveFolders)
         if successful > 0:
@@ -222,6 +242,7 @@ class GamePassSaveFixWidget(QWidget):
             self.message_signal.emit('critical', 'Conversion Failed', 'No save files were converted successfully.')
     def run_save_extractor(self):
         import gc
+        global save_info_map
         try:
             import xgp_save_extract as extractor
             extractor.main(self.xgp_source_folder)
@@ -247,13 +268,27 @@ class GamePassSaveFixWidget(QWidget):
             if not saves_found:
                 self.message_signal.emit('critical', t('Error'), t('xgp.err.no_valid_saves'))
                 return
-            self.update_combobox_signal.emit([os.path.basename(s) for s in saves_found])
+            save_info_map = {}
+            save_list_display = []
+            for save_path in saves_found:
+                folder_name = os.path.basename(save_path)
+                info = self.get_save_info(save_path)
+                save_info_map[folder_name] = info
+                display_name = f"{folder_name} - {info['world_name']} ({info['player_name']})"
+                save_list_display.append(display_name)
+            self.direct_saves_map = {display: s for display, s in zip(save_list_display, saves_found)}
+            self.update_combobox_signal.emit(save_list_display)
         except Exception as e:
             self.message_signal.emit('critical', t('Error'), str(e))
         finally:
             gc.collect()
     def convert_sav_JSON(self, saveName):
-        source_base = getattr(self, 'direct_saves_map', {}).get(saveName, os.path.join(root_dir, 'saves', saveName))
+        if hasattr(self, 'direct_saves_map') and saveName in self.direct_saves_map:
+            source_base = self.direct_saves_map[saveName]
+        else:
+            parts = saveName.split(' - ', 1)
+            folder_id = parts[0] if parts else saveName
+            source_base = os.path.join(root_dir, 'saves', folder_id)
         save_path = os.path.join(source_base, 'Level', '01.sav')
         if not os.path.exists(save_path):
             return None
@@ -273,7 +308,12 @@ class GamePassSaveFixWidget(QWidget):
                 logging.disable(logging.NOTSET)
         run_with_loading(self.update_combobox_signal.emit, task)
     def convert_JSON_sav(self, saveName):
-        source_base = getattr(self, 'direct_saves_map', {}).get(saveName, os.path.join(root_dir, 'saves', saveName))
+        if hasattr(self, 'direct_saves_map') and saveName in self.direct_saves_map:
+            source_base = self.direct_saves_map[saveName]
+        else:
+            parts = saveName.split(' - ', 1)
+            folder_id = parts[0] if parts else saveName
+            source_base = os.path.join(root_dir, 'saves', folder_id)
         json_path = os.path.join(source_base, 'Level', '01.sav.json')
         sav_path = os.path.join(source_base, 'Level', '01.sav')
         out_level = os.path.join(source_base, 'Level.sav')
@@ -331,7 +371,12 @@ class GamePassSaveFixWidget(QWidget):
             destination = QFileDialog.getExistingDirectory(self, 'Select where to place converted save', initial)
             if not destination:
                 return
-            source_base = getattr(self, 'direct_saves_map', {}).get(saveName, os.path.join(root_dir, 'saves', saveName))
+            if hasattr(self, 'direct_saves_map') and saveName in self.direct_saves_map:
+                source_base = self.direct_saves_map[saveName]
+            else:
+                parts = saveName.split(' - ', 1)
+                folder_id = parts[0] if parts else saveName
+                source_base = os.path.join(root_dir, 'saves', folder_id)
             if not os.path.isdir(source_base):
                 raise FileNotFoundError(t('xgp.err.source_not_found', src=source_base))
             if not os.path.isfile(os.path.join(source_base, 'Level.sav')):
@@ -339,7 +384,15 @@ class GamePassSaveFixWidget(QWidget):
                 return
             def ignore(_, names):
                 return {n for n in names if n in {'Level', 'Slot1', 'Slot2', 'Slot3'}}
-            new_name = self.generate_random_name()
+            original_folder_name = os.path.basename(source_base)
+            if self.is_valid_save_id(original_folder_name):
+                destination_path = os.path.join(destination, original_folder_name)
+                if os.path.exists(destination_path):
+                    new_name = self.generate_random_name()
+                else:
+                    new_name = original_folder_name
+            else:
+                new_name = self.generate_random_name()
             xgp_out = os.path.join(root_dir, 'XGP_converted_saves')
             os.makedirs(xgp_out, exist_ok=True)
             shutil.copytree(source_base, os.path.join(xgp_out, new_name), dirs_exist_ok=True, ignore=ignore)
@@ -354,6 +407,52 @@ class GamePassSaveFixWidget(QWidget):
             return ctypes.windll.shell32.IsUserAnAdmin() != 0
         except:
             return False
+    @staticmethod
+    def get_save_info(save_path):
+        info = {'world_name': 'Unknown World', 'player_name': 'Unknown Player'}
+        try:
+            meta_path = os.path.join(save_path, 'LevelMeta.sav')
+            if os.path.exists(meta_path):
+                try:
+                    meta_json = sav_to_json(meta_path)
+                    info['world_name'] = extract_value(meta_json['properties']['SaveData']['value'], 'WorldName', 'Unknown World')
+                except Exception as e:
+                    print(f'Failed to read LevelMeta.sav: {e}')
+            level_sav_path = os.path.join(save_path, 'Level.sav')
+            level_01_sav_path = os.path.join(save_path, 'Level', '01.sav')
+            if os.path.exists(level_sav_path):
+                actual_level_path = level_sav_path
+            elif os.path.exists(level_01_sav_path):
+                actual_level_path = level_01_sav_path
+            else:
+                return info
+            try:
+                level_json = sav_to_json(actual_level_path)
+                world_save_data = level_json['properties']['worldSaveData']['value']
+                group_data = world_save_data.get('GroupSaveDataMap', {}).get('value', {})
+                guilds_to_process = []
+                if isinstance(group_data, dict):
+                    guilds_to_process = group_data.items()
+                elif isinstance(group_data, list):
+                    guilds_to_process = [(i, g) for i, g in enumerate(group_data)]
+                for guild_id, guild_data in guilds_to_process:
+                    raw_data = guild_data.get('value', {}).get('RawData', {}).get('value', {})
+                    players = raw_data.get('players', [])
+                    if players:
+                        player = players[0]
+                        if isinstance(player, dict) and 'player_info' in player:
+                            info['player_name'] = player['player_info'].get('player_name', 'Unknown Player')
+                            break
+            except Exception as e:
+                print(f'Failed to read player name from {actual_level_path}: {e}')
+                import traceback
+                traceback.print_exc()
+        except Exception as e:
+            print(f'Error getting save info: {e}')
+        return info
+    @staticmethod
+    def is_valid_save_id(folder_name):
+        return len(folder_name) == 32 and folder_name.isalnum()
     def stop_gaming_services(self):
         try:
             subprocess.run(['cmd', '/c', 'net stop GamingServices /y'], check=False, capture_output=True)

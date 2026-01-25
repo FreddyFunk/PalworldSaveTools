@@ -2,7 +2,7 @@ import sys, os, time, random, subprocess, threading, json, traceback
 import tkinter as tk
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton, QTextEdit, QGraphicsOpacityEffect, QMessageBox, QProgressBar, QDialog
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QPropertyAnimation, QPoint, QSize
-from PySide6.QtGui import QPixmap, QFont
+from PySide6.QtGui import QPixmap, QFont, QCursor
 from import_libs import *
 _result_data = {'status': 'idle', 'data': None}
 def get_base_directory():
@@ -39,10 +39,12 @@ if '--spawn-loader' in sys.argv:
                 except:
                     pass
     class OverlayController(QWidget):
-        def __init__(self, start_time, phrases):
+        def __init__(self, start_time, phrases, parent_geom=None):
             super().__init__()
             self.phrases = phrases
-            self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+            self.parent_geom = parent_geom
+            self._target_pos = None
+            self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint)
             self.setAttribute(Qt.WA_TranslucentBackground)
             self.setMinimumSize(850, 500)
             self._drag_pos = QPoint()
@@ -58,9 +60,30 @@ if '--spawn-loader' in sys.argv:
             self.listener = STDINListener()
             self.listener.message_received.connect(self.handle_message)
             self.listener.start()
+            self.center_on_cursor_screen()
+        def center_on_cursor_screen(self):
+            win_width, win_height = (850, 500)
+            if self.parent_geom:
+                px, py, pw, ph = self.parent_geom
+                center_x = px + pw // 2 - win_width // 2
+                center_y = py + ph // 2 - win_height // 2
+                self._target_pos = (center_x, center_y)
+                self.setGeometry(center_x, center_y, win_width, win_height)
+            else:
+                cursor_pos = QCursor.pos()
+                screen = QApplication.screenAt(cursor_pos)
+                if screen is None:
+                    screen = QApplication.primaryScreen()
+                screen_geometry = screen.availableGeometry()
+                center_x = screen_geometry.x() + (screen_geometry.width() - win_width) // 2
+                center_y = screen_geometry.y() + (screen_geometry.height() - win_height) // 2
+                self._target_pos = (center_x, center_y)
+                self.setGeometry(center_x, center_y, win_width, win_height)
         def showEvent(self, event):
             super().showEvent(event)
             if not event.spontaneous():
+                if self._target_pos:
+                    self.move(*self._target_pos)
                 self.activateWindow()
                 self.raise_()
         def mousePressEvent(self, event):
@@ -276,10 +299,18 @@ if '--spawn-loader' in sys.argv:
             self.inner.addLayout(btns)
     app = QApplication(sys.argv)
     idx = sys.argv.index('--spawn-loader')
-    win = OverlayController(float(sys.argv[idx + 1]), json.loads(sys.argv[idx + 2]))
+    start_ts = float(sys.argv[idx + 1])
+    phrases = json.loads(sys.argv[idx + 2])
+    parent_geom = None
+    if idx + 3 < len(sys.argv) and sys.argv[idx + 3] == '--parent-geom' and (idx + 7 < len(sys.argv)):
+        try:
+            parent_geom = (int(sys.argv[idx + 4]), int(sys.argv[idx + 5]), int(sys.argv[idx + 6]), int(sys.argv[idx + 7]))
+        except (ValueError, IndexError):
+            pass
+    win = OverlayController(start_ts, phrases, parent_geom)
     win.show()
     sys.exit(app.exec())
-def run_with_loading(callback, func, *args, **kwargs):
+def run_with_loading(callback, func, *args, parent=None, **kwargs):
     global _result_data
     if _result_data.get('status') == 'running':
         return
@@ -289,7 +320,17 @@ def run_with_loading(callback, func, *args, **kwargs):
         phrases = [t(f'loading.phrase.{i}') for i in range(1, 21)]
     except:
         phrases = ['LOADING...']
-    loader_proc = _spawn_process(['--spawn-loader', str(start_ts), json.dumps(phrases)])
+    if parent is None:
+        for widget in QApplication.topLevelWidgets():
+            if widget.isVisible() and widget.isWindow() and widget.windowTitle() and (not isinstance(widget, QDialog)):
+                parent = widget
+                break
+    loader_args = ['--spawn-loader', str(start_ts), json.dumps(phrases)]
+    if parent:
+        geom = parent.geometry()
+        if geom.width() > 0 and geom.height() > 0:
+            loader_args.extend(['--parent-geom', str(geom.x()), str(geom.y()), str(geom.width()), str(geom.height())])
+    loader_proc = _spawn_process(loader_args)
     def cleanup():
         if loader_proc and loader_proc.poll() is None:
             try:
@@ -326,31 +367,53 @@ def run_with_loading(callback, func, *args, **kwargs):
                 except:
                     cleanup()
             else:
-                QMessageBox.critical(None, trans['title'], res)
+                dialog = ErrorDialog(res, parent=parent)
+                dialog.exec()
         else:
             cleanup()
             if callback:
                 callback(res)
     QTimer.singleShot(100, monitor)
 class ErrorDialog(QDialog):
-    def __init__(self, error_text):
-        super().__init__()
+    def __init__(self, error_text, parent=None):
+        super().__init__(parent)
         self.error_text = error_text
+        self.parent_window = parent
+        self._target_pos = None
         self.setModal(True)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.Dialog | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setMinimumSize(850, 500)
         self.adjustSize()
-        screen = QApplication.primaryScreen().availableGeometry()
-        self.move((screen.width() - self.width()) // 2, (screen.height() - self.height()) // 2)
+        self.center_on_cursor_screen()
         self.is_dark = self._load_theme_pref()
         self._load_theme()
         self.setup_error_ui()
     def showEvent(self, event):
         super().showEvent(event)
         if not event.spontaneous():
+            if self._target_pos:
+                self.move(*self._target_pos)
             self.activateWindow()
             self.raise_()
+    def center_on_cursor_screen(self):
+        win_width, win_height = (850, 500)
+        if self.parent_window:
+            geom = self.parent_window.geometry()
+            center_x = geom.x() + geom.width() // 2 - win_width // 2
+            center_y = geom.y() + geom.height() // 2 - win_height // 2
+            self._target_pos = (center_x, center_y)
+            self.setGeometry(center_x, center_y, win_width, win_height)
+        else:
+            cursor_pos = QCursor.pos()
+            screen = QApplication.screenAt(cursor_pos)
+            if screen is None:
+                screen = QApplication.primaryScreen()
+            screen_geometry = screen.availableGeometry()
+            center_x = screen_geometry.x() + (screen_geometry.width() - win_width) // 2
+            center_y = screen_geometry.y() + (screen_geometry.height() - win_height) // 2
+            self._target_pos = (center_x, center_y)
+            self.setGeometry(center_x, center_y, win_width, win_height)
     def _load_theme_pref(self):
         try:
             cfg = os.path.join(get_assets_directory(), 'data', 'configs', 'user.cfg')

@@ -39,9 +39,13 @@ def load_tool_icons():
 CONVERTING_TOOL_KEYS = ['tool.convert.saves', 'tool.convert.gamepass.steam', 'tool.convert.steamid', 'tool.restore_map']
 MANAGEMENT_TOOL_KEYS = ['tool.slot_injector', 'tool.modify_save', 'tool.character_transfer', 'tool.fix_host_save']
 def center_window(win):
-    screen = QApplication.primaryScreen().availableGeometry()
+    win_center = win.frameGeometry().center()
+    screen = QApplication.screenAt(win_center)
+    if screen is None:
+        screen = QApplication.primaryScreen()
+    screen_geometry = screen.availableGeometry()
     geo = win.frameGeometry()
-    geo.moveCenter(screen.center())
+    geo.moveCenter(screen_geometry.center())
     win.move(geo.topLeft())
 def center_on_parent(dialog):
     parent = dialog.parent()
@@ -51,11 +55,23 @@ def center_on_parent(dialog):
         size = dialog.size()
     if parent and hasattr(parent, 'geometry'):
         parent_rect = parent.geometry()
-        dialog.move(parent_rect.x() + (parent_rect.width() - size.width()) // 2, parent_rect.y() + (parent_rect.height() - size.height()) // 2)
+        parent_center = parent_rect.center()
+        screen = QApplication.screenAt(parent_center)
+        if screen is None:
+            screen = QApplication.primaryScreen()
+        dialog_x = parent_rect.x() + (parent_rect.width() - size.width()) // 2
+        dialog_y = parent_rect.y() + (parent_rect.height() - size.height()) // 2
+        screen_geometry = screen.availableGeometry()
+        dialog_x = max(screen_geometry.x(), min(dialog_x, screen_geometry.right() - size.width()))
+        dialog_y = max(screen_geometry.y(), min(dialog_y, screen_geometry.bottom() - size.height()))
+        dialog.move(dialog_x, dialog_y)
     else:
-        from PySide6.QtWidgets import QApplication
-        screen = QApplication.primaryScreen().availableGeometry()
-        dialog.move((screen.width() - size.width()) // 2, (screen.height() - size.height()) // 2)
+        cursor_pos = QCursor.pos()
+        screen = QApplication.screenAt(cursor_pos)
+        if screen is None:
+            screen = QApplication.primaryScreen()
+        screen_geometry = screen.availableGeometry()
+        dialog.move(screen_geometry.x() + (screen_geometry.width() - size.width()) // 2, screen_geometry.y() + (screen_geometry.height() - size.height()) // 2)
 class ConversionOptionsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)

@@ -773,5 +773,15 @@
   "xgp.ui.convert": "세이브 변환",
   "xgp.ui.description": "Xbox (Game Pass)와 Steam 간 저장 데이터 변환",
   "yes": "예",
-  "zoom": "확대"
+  "zoom": "확대",
+  "fix_host_save.cannot_select_title": "플레이어를 선택할 수 없습니다",
+  "fix_host_save.cannot_select_message": "플레이어 \"{name}\"을(를) 선택할 수 없습니다 - 레벨이 {level}입니다.\n\n마이그레이션이 작동하려면 플레이어가 최소 레벨 2(최소 한 번 레벨업)이어야 합니다.",
+  "fix_host_save.both_players_level_2": "두 플레이어 모두 최소 레벨 2여야 합니다.\n소스 플레이어 레벨: {old_level}\n대상 플레이어 레벨: {new_level}",
+  "fix_host_save.players_folder_not_found": "선택한 Level.sav 옆에 Players 폴더를 찾을 수 없습니다",
+  "fix_host_save.select_guids_and_file": "이전 GUID, 새 GUID 및 레벨 저장 파일을 선택하세요!",
+  "fix_host_save.guids_cannot_be_same": "이전 GUID와 새 GUID는 같을 수 없습니다.",
+  "character_transfer.source_player_level_2": "소스 플레이어는 최소 레벨 2여야 합니다.\n현재 레벨: {level}",
+  "character_transfer.source_player_not_leveled": "소스 플레이어가 아직 레벨업하지 않았습니다. 먼저 게임 내에서 레벨업하세요.",
+  "character_transfer.target_player_level_2": "대상 플레이어는 최소 레벨 2여야 합니다.\n현재 레벨: {level}",
+  "character_transfer.target_player_not_leveled": "대상 플레이어가 아직 레벨업하지 않았습니다. 먼저 게임 내에서 레벨업하세요."
 }

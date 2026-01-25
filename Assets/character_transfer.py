@@ -3,6 +3,28 @@ from PySide6.QtWidgets import QHeaderView, QWidget, QTreeWidget, QTreeWidgetItem
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon, QFont
 player_list_cache = []
+def get_player_level_from_cspm(level_json, player_uid):
+    try:
+        player_uid_lower = str(player_uid).lower().replace('-', '')
+        for entry in level_json.get('CharacterSaveParameterMap', {}).get('value', []):
+            try:
+                key = entry.get('key', {})
+                uid_obj = key.get('PlayerUId', {})
+                uid = str(uid_obj.get('value', '') if isinstance(uid_obj, dict) else uid_obj).lower().replace('-', '')
+                if uid == player_uid_lower:
+                    sp_val = entry['value']['RawData']['value']['object']['SaveParameter']['value']
+                    level_info = sp_val.get('Level', {})
+                    if isinstance(level_info, dict):
+                        level_val = level_info.get('value')
+                        if isinstance(level_val, dict):
+                            level_val = level_val.get('value')
+                        return int(level_val) if level_val is not None else 1
+                    return int(level_info) if level_info is not None else 1
+            except:
+                continue
+        return 1
+    except:
+        return 1
 level_sav_path, host_sav_path, t_level_sav_path, t_host_sav_path = (None, None, None, None)
 level_json, host_json, targ_lvl, targ_json = (None, None, None, None)
 target_section_ranges, target_save_type, target_raw_gvas, targ_json_gvas = (None, None, None, None)
@@ -414,6 +436,10 @@ def transfer_all_characters():
             host_json_gvas = load_player_file(level_sav_path, selected_source_player)
             if not host_json_gvas:
                 continue
+            player_level = get_player_level_from_cspm(level_json, selected_source_player)
+            if player_level < 2:
+                print(f'[SKIP] {player_uuid} - Player level {player_level} < 2 (not leveled up)')
+                continue
             host_json = host_json_gvas.properties
             targ_json_gvas = fast_deepcopy(host_json_gvas)
             targ_json = targ_json_gvas.properties
@@ -496,6 +522,47 @@ def main(skip_msgbox=False, skip_gui=False):
     if not load_json_files():
         print('Load Error: Failed to load JSON files.')
         return
+    source_player_level = get_player_level_from_cspm(level_json, selected_source_player)
+    if source_player_level < 2:
+        print(f'Error: Source player must be at least level 2. Current level: {source_player_level}')
+        error_msg = t('character_transfer.source_player_level_2', level=source_player_level) if source_player_level > 0 else t('character_transfer.source_player_not_leveled')
+        msg = QMessageBox(QMessageBox.Warning, t('Error!'), error_msg)
+        try:
+            msg.setWindowIcon(QIcon(ICON_PATH))
+        except Exception:
+            pass
+        msg.exec()
+        selected_source_player = None
+        selected_target_player = None
+        host_guid = None
+        targ_uid = None
+        exported_map = None
+        if not skip_gui:
+            current_selection_label.setText('Source: None,Target: None')
+            source_player_list.clearSelection()
+            target_player_list.clearSelection()
+        return False
+    if selected_target_player and selected_target_player != selected_source_player:
+        target_player_level = get_player_level_from_cspm(targ_lvl, selected_target_player)
+        if target_player_level < 2:
+            print(f'Error: Target player must be at least level 2. Current level: {target_player_level}')
+            error_msg = t('character_transfer.target_player_level_2', level=target_player_level) if target_player_level > 0 else t('character_transfer.target_player_not_leveled')
+            msg = QMessageBox(QMessageBox.Warning, t('Error!'), error_msg)
+            try:
+                msg.setWindowIcon(QIcon(ICON_PATH))
+            except Exception:
+                pass
+            msg.exec()
+            selected_source_player = None
+            selected_target_player = None
+            host_guid = None
+            targ_uid = None
+            exported_map = None
+            if not skip_gui:
+                current_selection_label.setText('Source: None,Target: None')
+                source_player_list.clearSelection()
+                target_player_list.clearSelection()
+            return False
     src_players_folder = os.path.join(os.path.dirname(level_sav_path), 'Players')
     tgt_players_folder = os.path.join(os.path.dirname(t_level_sav_path), 'Players')
     os.makedirs(tgt_players_folder, exist_ok=True)

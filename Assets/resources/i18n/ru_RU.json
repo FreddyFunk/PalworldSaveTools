@@ -771,5 +771,15 @@
   "xgp.ui.convert": "Конвертировать сохранение",
   "xgp.ui.description": "Конвертировать сохранения между Xbox (Game Pass) и Steam",
   "yes": "Да",
-  "zoom": "Масштаб"
+  "zoom": "Масштаб",
+  "fix_host_save.cannot_select_title": "Невозможно выбрать игрока",
+  "fix_host_save.cannot_select_message": "Невозможно выбрать игрока \"{name}\" - он только {level} уровня.\n\nИгроки должны быть не менее 2 уровня (достигли хотя бы одного повышения) для работы миграции.",
+  "fix_host_save.both_players_level_2": "Оба игрока должны быть не менее 2 уровня.\nУровень исходного игрока: {old_level}\nУровень целевого игрока: {new_level}",
+  "fix_host_save.players_folder_not_found": "Папка Players не найдена рядом с выбранным Level.sav",
+  "fix_host_save.select_guids_and_file": "Пожалуйста, выберите старый GUID, новый GUID и файл сохранения уровня!",
+  "fix_host_save.guids_cannot_be_same": "Старый GUID и новый GUID не могут быть одинаковыми.",
+  "character_transfer.source_player_level_2": "Исходный игрок должен быть не менее 2 уровня.\nТекущий уровень: {level}",
+  "character_transfer.source_player_not_leveled": "Исходный игрок еще не повысил уровень. Пожалуйста, сначала повысите уровень в игре.",
+  "character_transfer.target_player_level_2": "Целевой игрок должен быть не менее 2 уровня.\nТекущий уровень: {level}",
+  "character_transfer.target_player_not_leveled": "Целевой игрок еще не повысил уровень. Пожалуйста, сначала повысите уровень в игре."
 }

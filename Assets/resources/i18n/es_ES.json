@@ -765,5 +765,15 @@
   "xgp.ui.convert": "Convertir guardado",
   "xgp.ui.description": "Convertir partidas guardadas entre Xbox (Game Pass) y Steam",
   "yes": "Sí",
-  "zoom": "Zoom"
+  "zoom": "Zoom",
+  "fix_host_save.cannot_select_title": "No se puede seleccionar el jugador",
+  "fix_host_save.cannot_select_message": "No se puede seleccionar al jugador \"{name}\" - solo es nivel {level}.\n\nLos jugadores deben ser al menos nivel 2 (haber subido de nivel al menos una vez) para que la migración funcione.",
+  "fix_host_save.both_players_level_2": "Ambos jugadores deben ser al menos nivel 2.\nNivel del jugador origen: {old_level}\nNivel del jugador destino: {new_level}",
+  "fix_host_save.players_folder_not_found": "Carpeta Players no encontrada junto al Level.sav seleccionado",
+  "fix_host_save.select_guids_and_file": "¡Seleccione el GUID antiguo, el GUID nuevo y el archivo de guardado de nivel!",
+  "fix_host_save.guids_cannot_be_same": "El GUID antiguo y el GUID nuevo no pueden ser iguales.",
+  "character_transfer.source_player_level_2": "El jugador origen debe ser al menos nivel 2.\nNivel actual: {level}",
+  "character_transfer.source_player_not_leveled": "El jugador origen aún no ha subido de nivel. Por favor, sube de nivel en el juego primero.",
+  "character_transfer.target_player_level_2": "El jugador objetivo debe ser al menos nivel 2.\nNivel actual: {level}",
+  "character_transfer.target_player_not_leveled": "El jugador objetivo aún no ha subido de nivel. Por favor, sube de nivel en el juego primero."
 }

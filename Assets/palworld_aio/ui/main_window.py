@@ -8,7 +8,7 @@ import sys
 from functools import partial
 import logging
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QMenuBar, QMenu, QStatusBar, QSplitter, QMessageBox, QFileDialog, QInputDialog, QDialog, QCheckBox, QComboBox, QApplication, QStackedWidget, QTextEdit
-from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint, QPropertyAnimation, QEasingCurve, QByteArray
 from PySide6.QtGui import QIcon, QFont, QAction, QPixmap, QCloseEvent, QTextCursor
 from i18n import t, set_language, load_resources
 from common import get_versions
@@ -73,6 +73,13 @@ class DetachedStatusWindow(QWidget):
         if event.buttons() == Qt.LeftButton:
             self.move(event.globalPosition().toPoint() - self._drag_pos)
             event.accept()
+    def save_geometry(self):
+        geo = self.saveGeometry()
+        return bytes(geo.toBase64()).decode()
+    def load_geometry(self, geo_str):
+        if geo_str:
+            geo = QByteArray.fromBase64(bytes(geo_str, 'utf-8'))
+            self.restoreGeometry(geo)
     def _load_theme(self):
         base_path = constants.get_assets_path()
         theme_file = 'darkmode.qss' if self.is_dark else 'lightmode.qss'
@@ -139,10 +146,20 @@ class DetachedStatusWindow(QWidget):
         cursor.movePosition(QTextCursor.End)
         self.text_edit.setTextCursor(cursor)
     def closeEvent(self, event):
+        if self.parent and hasattr(self.parent, 'user_settings'):
+            try:
+                self.parent.user_settings['console_window_geometry'] = self.save_geometry()
+                if hasattr(self.parent, '_save_user_settings'):
+                    self.parent._save_user_settings()
+            except (RuntimeError, AttributeError):
+                pass
         if self.parent and hasattr(self.parent, 'status_stream'):
-            self.parent.status_stream.detach_window = None
-            self.parent.status_stream.detached = False
-            self.parent.status_stream.detach_state_changed.emit(False)
+            try:
+                self.parent.status_stream.detach_window = None
+                self.parent.status_stream.detached = False
+                self.parent.status_stream.detach_state_changed.emit(False)
+            except (RuntimeError, AttributeError):
+                pass
         event.accept()
 class StatusBarStream(QObject):
     text_written = Signal(str)
@@ -171,6 +188,9 @@ class StatusBarStream(QObject):
             self.detached = True
             self.detach_window = DetachedStatusWindow(self.parent)
             self.detach_window.setWindowOpacity(0.0)
+            saved_geo = self.parent.user_settings.get('console_window_geometry') if self.parent and hasattr(self.parent, 'user_settings') else None
+            if saved_geo:
+                self.detach_window.load_geometry(saved_geo)
             self.detach_window.show()
             self.detach_window.activateWindow()
             self.detach_window.raise_()
@@ -182,12 +202,11 @@ class StatusBarStream(QObject):
             self.detach_window.fade_animation.start()
             self.detach_state_changed.emit(True)
     def attach(self):
-        if self.detached:
+        if self.detached and self.detach_window:
             self.detached = False
             self.detach_state_changed.emit(False)
-            if self.detach_window:
-                self.detach_window.close()
-                self.detach_window = None
+            self.detach_window.close()
+            self.detach_window = None
     def __getattr__(self, name):
         return getattr(self.stringio, name)
 class MainWindow(QMainWindow):
@@ -353,12 +372,38 @@ class MainWindow(QMainWindow):
     def _setup_connections(self):
         save_manager.load_finished.connect(self._on_load_finished)
         save_manager.save_finished.connect(self._on_save_finished)
+    def _create_message_box(self, icon=QMessageBox.Information):
+        msg_box = QMessageBox(self)
+        msg_box.setWindowFlags(Qt.Dialog | Qt.WindowType.Window)
+        msg_box.setWindowModality(Qt.WindowModal)
+        msg_box.setIcon(icon)
+        return msg_box
+    def _show_info(self, title, text):
+        msg_box = self._create_message_box(QMessageBox.Information)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+        msg_box.exec()
+    def _show_warning(self, title, text):
+        msg_box = self._create_message_box(QMessageBox.Warning)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+        msg_box.exec()
+    def _show_error(self, title, text):
+        msg_box = self._create_message_box(QMessageBox.Critical)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+        msg_box.exec()
+    def _show_question(self, title, text):
+        msg_box = self._create_message_box(QMessageBox.Question)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+        msg_box.exec()
     def _on_tab_changed(self, index):
         self.stacked_widget.setCurrentIndex(index)
     def _load_user_settings(self):
         base_path = constants.get_assets_path()
         user_cfg_path = os.path.join(base_path, 'data', 'configs', 'user.cfg')
-        default_settings = {'theme': 'dark', 'language': 'en_US', 'show_icons': True, 'boot_preference': 'menu', 'console_detached': False}
+        default_settings = {'theme': 'dark', 'language': 'en_US', 'show_icons': True, 'boot_preference': 'menu', 'console_detached': False, 'console_window_geometry': None}
         if os.path.exists(user_cfg_path):
             try:
                 with open(user_cfg_path, 'r') as f:
@@ -488,26 +533,23 @@ class MainWindow(QMainWindow):
             self.refresh_all()
             self.results_widget.refresh_stats_before()
             self.status_bar.showMessage(t('status.loaded') if t else 'Save loaded successfully', 5000)
-            msg_box = QMessageBox(self)
+            msg_box = self._create_message_box(QMessageBox.Information)
             msg_box.setWindowTitle(t('success.title'))
             msg_box.setText(t('save.loaded'))
-            msg_box.setIcon(QMessageBox.Information)
             msg_box.addButton(t('button.ok'), QMessageBox.AcceptRole)
             msg_box.exec()
         else:
             self.status_bar.showMessage(t('status.load_failed') if t else 'Failed to load save', 5000)
-            msg_box = QMessageBox(self)
+            msg_box = self._create_message_box(QMessageBox.Critical)
             msg_box.setWindowTitle(t('error.title'))
             msg_box.setText(t('save.load_failed'))
-            msg_box.setIcon(QMessageBox.Critical)
             msg_box.addButton(t('button.ok'), QMessageBox.AcceptRole)
             msg_box.exec()
     def _on_save_finished(self, duration):
         self.status_bar.showMessage(f"{(t('status.saved') if t else 'Save completed')}({duration:.2f}s)", 5000)
-        msg_box = QMessageBox(self)
+        msg_box = self._create_message_box(QMessageBox.Information)
         msg_box.setWindowTitle(t('success.title'))
         msg_box.setText(t('Changes saved successfully.'))
-        msg_box.setIcon(QMessageBox.Information)
         msg_box.addButton(t('button.ok'), QMessageBox.AcceptRole)
         msg_box.exec()
     def refresh_all(self):
@@ -579,19 +621,21 @@ class MainWindow(QMainWindow):
         combined = '\n\n'.join((w for w, _ in warnings if w))
         if not combined:
             combined = t('notice.none') if t else 'No warnings.'
-        QMessageBox.warning(self, t('PalworldSaveTools') if t else 'Palworld Save Tools', combined)
+        msg_box = self._create_message_box(QMessageBox.Warning)
+        msg_box.setWindowTitle(t('PalworldSaveTools') if t else 'Palworld Save Tools')
+        msg_box.setText(combined)
+        msg_box.exec()
     def _show_about(self):
         tools_version, game_version = get_versions()
         h2_color = '#4a90e2' if self.is_dark_mode else '#1a5fb4'
         text_color = '#e0e0e0' if self.is_dark_mode else '#333'
         sub_color = '#888' if self.is_dark_mode else '#666'
-        about_text = f'''<h2 style="color: {h2_color};">{(t('about.title') if t else 'Palworld Save Tools')} v{tools_version}</h2>\n    <p style="color: {text_color};">{(t('about.description') if t else 'A comprehensive toolkit for managing Palworld save files.')}</p>\n    <p style="color: {text_color};"><b>{(t('about.features.label') if t else 'Features')}:</b></p>\n    <ul>\n    <li style="color: {text_color};">{(t('about.features.1') if t else 'Transfer saves between servers and co-op worlds')}</li>\n    <li style="color: {text_color};">{(t('about.features.2') if t else 'Fix host saves and manage player/guild data')}</li>\n    <li style="color: {text_color};">{(t('about.features.3') if t else 'Edit bases and manage save files')}</li>\n    <li style="color: {text_color};">{(t('about.features.4') if t else 'Convert between Steam and GamePass formats')}</li>\n    <li style="color: {text_color};">{(t('about.features.5') if t else 'Visualize and manage world maps')}</li>\n    </ul>\n    <p style="color: {text_color};"><b>{(t('about.game_version') if t else 'Game Version')}:</b> {game_version}</p>\n    <p style="color: {text_color};"><b>{(t('about.developer') if t else 'Developer')}:</b> Palworld Save Tools Team</p>\n    <p style="color: {text_color};"><b>GitHub:</b> <a href="{GITHUB_LATEST_ZIP}" style="color: {h2_color};">{(t('about.github') if t else 'View on GitHub')}</a></p>\n    <p style="color: {sub_color};">© 2025 Palworld Save Tools</p>'''
-        msg_box = QMessageBox(self)
+        about_text = f'''<h2 style="color: {h2_color};">{(t('about.title') if t else 'Palworld Save Tools')} v{tools_version}</h2>\n    <p style="color: {text_color};">{(t('about.description') if t else 'A comprehensive toolkit for managing Palworld save files.')}</p>\n    <p style="color: {text_color};"><b>{(t('about.features.label') if t else 'Features')}:</b></p>\n    <ul>\n    <li style="color: {text_color};">{(t('about.features.1') if t else 'Transfer saves between servers and co-op worlds')}</li>\n    <li style="color: {text_color};">{(t('about.features.2') if t else 'Fix host saves and manage player/guild data')}</li>\n    <li style="color: {text_color};">{(t('about.features.3') if t else 'Edit bases and manage save files')}</li>\n    <li style="color: {text_color};">{(t('about.features.4') if t else 'Convert between Steam and GamePass formats')}</li>\n    <li style="color: {text_color};">{(t('about.features.5') if t else 'Visualize and manage world maps')}</li>\n    </ul>\n    <p style="color: {text_color};"><b>{(t('about.game_version') if t else 'Game Version')}:</b> {game_version}</p>\n    <p style="color: {text_color};"><b>{(t('about.developer') if t else 'Developer')}:</b> Palworld Save Tools Team</p>\n    <p style="color: {text_color};"><b>GitHub:</b> <a href="{GITHUB_LATEST_ZIP}" style="color: {h2_color};">{(t('about.github') if t else 'View on GitHub')}</a></p>\n    <p style="color: {sub_color};">© 2026 Palworld Save Tools</p>'''
+        msg_box = self._create_message_box(QMessageBox.Information)
         msg_box.setWindowTitle(t('About PST') if t else 'About PST')
         msg_box.setTextFormat(Qt.RichText)
         msg_box.setText(about_text)
         msg_box.setStandardButtons(QMessageBox.Ok)
-        msg_box.setIcon(QMessageBox.Information)
         center_on_parent(msg_box)
         msg_box.exec()
     def _on_player_selected(self, data):
@@ -615,6 +659,12 @@ class MainWindow(QMainWindow):
             self.results_widget.set_base(data[0])
             self.results_widget.set_guild(data[2])
     def closeEvent(self, event: QCloseEvent):
+        if self.status_stream and self.status_stream.detach_window:
+            try:
+                self.user_settings['console_window_geometry'] = self.status_stream.detach_window.save_geometry()
+                self._save_user_settings()
+            except (RuntimeError, AttributeError):
+                pass
         boot_preference = self.user_settings.get('boot_preference', 'menu')
         if boot_preference == 'palworld_aio':
             QApplication.quit()
@@ -710,7 +760,7 @@ class MainWindow(QMainWindow):
         os.execl(python, python, *sys.argv)
     def _save_changes(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('error.title'), t('guild.rebuild.no_save'))
+            self._show_warning(t('error.title'), t('guild.rebuild.no_save'))
             return
         save_manager.save_changes(parent=self)
     def _rename_world(self):
@@ -726,13 +776,15 @@ class MainWindow(QMainWindow):
         if new_name:
             meta_json['properties']['SaveData']['value']['WorldName']['value'] = new_name
             json_to_sav(meta_json, meta_path)
-            QMessageBox.information(self, t('success.title'), t('world.rename.done'))
+            msg_box = self._create_message_box(QMessageBox.Information)
+            msg_box.setWindowTitle(t('success.title'))
+            msg_box.setText(t('world.rename.done'))
+            msg_box.exec()
     def _delete_empty_guilds(self):
         if not constants.loaded_level_json:
-            msg_box = QMessageBox(self)
+            msg_box = self._create_message_box(QMessageBox.Warning)
             msg_box.setWindowTitle(t('error.title') if t else 'Error')
             msg_box.setText(t('error.no_save_loaded') if t else 'No save file loaded.')
-            msg_box.setIcon(QMessageBox.Warning)
             msg_box.addButton(t('button.ok') if t else 'OK', QMessageBox.AcceptRole)
             msg_box.exec()
             return
@@ -740,19 +792,17 @@ class MainWindow(QMainWindow):
             return delete_empty_guilds(self)
         def on_finished(removed):
             self.refresh_all()
-            msg_box = QMessageBox(self)
+            msg_box = self._create_message_box(QMessageBox.Information)
             msg_box.setWindowTitle(t('Done'))
             msg_box.setText(t('deletion.empty_guilds_removed', count=removed))
-            msg_box.setIcon(QMessageBox.Information)
             msg_box.addButton(t('button.ok'), QMessageBox.AcceptRole)
             msg_box.exec()
         run_with_loading(on_finished, task)
     def _delete_inactive_bases(self):
         if not constants.loaded_level_json:
-            msg_box = QMessageBox(self)
+            msg_box = self._create_message_box(QMessageBox.Warning)
             msg_box.setWindowTitle(t('error.title') if t else 'Error')
             msg_box.setText(t('error.no_save_loaded') if t else 'No save file loaded.')
-            msg_box.setIcon(QMessageBox.Warning)
             msg_box.addButton(t('button.ok') if t else 'OK', QMessageBox.AcceptRole)
             msg_box.exec()
             return
@@ -765,10 +815,9 @@ class MainWindow(QMainWindow):
             return cnt
         def on_finished(cnt):
             self.refresh_all()
-            msg_box = QMessageBox(self)
+            msg_box = self._create_message_box(QMessageBox.Information)
             msg_box.setWindowTitle(t('Done') if t else 'Done')
             msg_box.setText(t('bases.deleted_count', count=cnt) if t else f'Deleted {cnt} bases')
-            msg_box.setIcon(QMessageBox.Information)
             msg_box.addButton(t('button.ok') if t else 'OK', QMessageBox.AcceptRole)
             msg_box.exec()
         run_with_loading(on_finished, task)
@@ -787,20 +836,20 @@ class MainWindow(QMainWindow):
                 if delete_base_camp(b, gid):
                     cnt += 1
         if cnt > 0:
-            QMessageBox.information(self, t('Done'), t('orphaned_bases_deleted', count=cnt))
+            self._show_info(t('Done'), t('orphaned_bases_deleted', count=cnt))
     def _delete_duplicate_players(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return delete_duplicated_players(self)
         def on_finished(removed):
             self.refresh_all()
-            QMessageBox.information(self, t('Done'), t('deletion.duplicates_removed', count=removed))
+            self._show_info(t('Done'), t('deletion.duplicates_removed', count=removed))
         run_with_loading(on_finished, task)
     def _delete_inactive_players(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         days = DaysInputDialog.get_days(t('deletion.inactive_days_title'), t('deletion.inactive_days_prompt'), self)
         if days:
@@ -808,11 +857,11 @@ class MainWindow(QMainWindow):
                 return delete_inactive_players(days, self)
             def on_finished(removed):
                 self.refresh_all()
-                QMessageBox.information(self, t('Done'), t('deletion.inactive_players_removed', count=removed))
+                self._show_info(t('Done'), t('deletion.inactive_players_removed', count=removed))
             run_with_loading(on_finished, task)
     def _delete_unreferenced(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return delete_unreferenced_data(self)
@@ -820,161 +869,161 @@ class MainWindow(QMainWindow):
             self.refresh_all()
             msg = f"Removed {result.get('characters', 0)} players,{result.get('pals', 0)} pals,{result.get('guilds', 0)} guilds\n"
             msg += f"Removed {result.get('broken_objects', 0)} broken objects,{result.get('dropped_items', 0)} dropped items"
-            QMessageBox.information(self, t('Done'), msg)
+            self._show_info(t('Done'), msg)
         run_with_loading(on_finished, task)
     def _delete_non_base_map_objs(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return delete_non_base_map_objects(self)
         def on_finished(removed):
             self.refresh_all()
-            QMessageBox.information(self, t('Done'), t('deletion.non_base_objs_removed', count=removed))
+            self._show_info(t('Done'), t('deletion.non_base_objs_removed', count=removed))
         run_with_loading(on_finished, task)
     def _delete_all_skins(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return delete_all_skins(self)
         def on_finished(removed):
             self.refresh_all()
-            QMessageBox.information(self, t('Done'), t('deletion.skins_removed', count=removed))
+            self._show_info(t('Done'), t('deletion.skins_removed', count=removed))
         run_with_loading(on_finished, task)
     def _unlock_private_chests(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return unlock_all_private_chests(self)
         def on_finished(unlocked):
             self.refresh_all()
-            QMessageBox.information(self, t('Done'), t('deletion.chests_unlocked', count=unlocked))
+            self._show_info(t('Done'), t('deletion.chests_unlocked', count=unlocked))
         run_with_loading(on_finished, task)
     def _remove_invalid_items(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return remove_invalid_items_from_save(self)
         def on_finished(fixed):
             self.refresh_all()
-            QMessageBox.information(self, t('done'), t('fixed_files', fixed=fixed))
+            self._show_info(t('done'), t('fixed_files', fixed=fixed))
         run_with_loading(on_finished, task)
     def _remove_invalid_structures(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return delete_invalid_structure_map_objects(self)
         def on_finished(removed):
             self.refresh_all()
-            QMessageBox.information(self, t('Done'), t('invalid_structures_removed', removed=removed))
+            self._show_info(t('Done'), t('invalid_structures_removed', removed=removed))
         run_with_loading(on_finished, task)
     def _remove_invalid_pals(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return remove_invalid_pals_from_save(self)
         def on_finished(removed):
             self.refresh_all()
-            QMessageBox.information(self, t('Done'), t('palclean.summary', removed=removed))
+            self._show_info(t('Done'), t('palclean.summary', removed=removed))
         run_with_loading(on_finished, task)
     def _remove_invalid_passives(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return remove_invalid_passives_from_save(self)
         def on_finished(removed):
             self.refresh_all()
-            QMessageBox.information(self, t('Done'), t('deletion.invalid_passives_removed', count=removed))
+            self._show_info(t('Done'), t('deletion.invalid_passives_removed', count=removed))
         run_with_loading(on_finished, task)
     def _remove_invalid_passives(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return remove_invalid_passives_from_save(self)
         def on_finished(removed):
             self.refresh_all()
-            QMessageBox.information(self, t('Done'), t('deletion.invalid_passives_removed', count=removed))
+            self._show_info(t('Done'), t('deletion.invalid_passives_removed', count=removed))
         run_with_loading(on_finished, task)
     def _reset_missions(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return fix_missions(self)
         def on_finished(result):
             self.refresh_all()
-            QMessageBox.information(self, t('missions.reset_title'), t('missions.summary', **result))
+            self._show_info(t('missions.reset_title'), t('missions.summary', **result))
         run_with_loading(on_finished, task)
     def _reset_anti_air(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         count = reset_anti_air_turrets(self)
         self.refresh_all()
-        QMessageBox.information(self, t('Done'), t('anti_air_reset_count', count=count))
+        self._show_info(t('Done'), t('anti_air_reset_count', count=count))
     def _reset_dungeons(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         count = reset_dungeons(self)
         self.refresh_all()
-        QMessageBox.information(self, t('Done'), t('dungeons_reset_count', count=count))
+        self._show_info(t('Done'), t('dungeons_reset_count', count=count))
     def _fix_all_timestamps(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error') if t else 'Error', t('guild.rebuild.no_save') if t else 'No save loaded!')
+            self._show_warning(t('Error') if t else 'Error', t('guild.rebuild.no_save') if t else 'No save loaded!')
             return
         fixed = fix_all_negative_timestamps(self)
         self.refresh_all()
-        QMessageBox.information(self, t('Done') if t else 'Done', t('timestamps.fixed_count', count=fixed) if t else f'Fixed {fixed} player timestamps')
+        self._show_info(t('Done') if t else 'Done', t('timestamps.fixed_count', count=fixed) if t else f'Fixed {fixed} player timestamps')
     def _reset_player_timestamp(self, uid):
         if reset_selected_player_timestamp(uid, self):
             self.refresh_all()
-            QMessageBox.information(self, t('Done') if t else 'Done', t('timestamps.player_reset') if t else 'Player timestamp reset to current time')
+            self._show_info(t('Done') if t else 'Done', t('timestamps.player_reset') if t else 'Player timestamp reset to current time')
         else:
-            QMessageBox.warning(self, t('Error') if t else 'Error', t('timestamps.reset_failed') if t else 'Failed to reset player timestamp')
+            self._show_warning(t('Error') if t else 'Error', t('timestamps.reset_failed') if t else 'Failed to reset player timestamp')
     def _open_paldefender(self):
         dialog = PalDefenderDialog(self)
         dialog.exec()
     def _rebuild_all_guilds(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         def task():
             return rebuild_all_guilds()
         def on_finished(success):
             if success:
                 self.refresh_all()
-                QMessageBox.information(self, t('Done'), t('guild.rebuild.done'))
+                self._show_info(t('Done'), t('guild.rebuild.done'))
             else:
-                QMessageBox.warning(self, t('error.title'), t('guild.rebuild.failed'))
+                self._show_warning(t('error.title'), t('guild.rebuild.failed'))
         run_with_loading(on_finished, task)
     def _move_player_to_guild(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         player_data = self.players_panel.get_selected_data()
         guild_data = self.guilds_panel.get_selected_data()
         if not player_data:
-            QMessageBox.warning(self, t('Error'), t('guild.move.no_player'))
+            self._show_warning(t('Error'), t('guild.move.no_player'))
             return
         if not guild_data:
-            QMessageBox.warning(self, t('Error'), t('guild.common.select_guild_first'))
+            self._show_warning(t('Error'), t('guild.common.select_guild_first'))
             return
         if move_player_to_guild(player_data[4], guild_data[1]):
             self.refresh_all()
-            QMessageBox.information(self, t('Done'), t('guild.move.moved', player=player_data[0], guild=guild_data[0]))
+            self._show_info(t('Done'), t('guild.move.moved', player=player_data[0], guild=guild_data[0]))
         else:
-            QMessageBox.warning(self, t('Error'), t('guild.move.failed'))
+            self._show_warning(t('Error'), t('guild.move.failed'))
     def _show_map(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
+            self._show_warning(t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
             return
         for i in range(self.stacked_widget.count()):
             if self.stacked_widget.widget(i) == self.map_tab:
@@ -982,7 +1031,7 @@ class MainWindow(QMainWindow):
                 return
     def _generate_map(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
+            self._show_warning(t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
             return
         def task():
             return generate_world_map()
@@ -997,11 +1046,11 @@ class MainWindow(QMainWindow):
                 msg_box.addButton(t('button.ok') if t else 'OK', QMessageBox.AcceptRole)
                 msg_box.exec()
             else:
-                QMessageBox.warning(self, t('Error') if t else 'Error', t('mapgen.failed') if t else 'Map generation failed.')
+                self._show_warning(t('Error') if t else 'Error', t('mapgen.failed') if t else 'Map generation failed.')
         run_with_loading(on_finished, task)
     def _save_exclusions(self):
         save_exclusions()
-        QMessageBox.information(self, t('Saved'), t('deletion.saved_exclusions'))
+        self._show_info(t('Saved'), t('deletion.saved_exclusions'))
     def _change_language(self, code):
         old_lang = self.user_settings.get('language')
         if old_lang != code:
@@ -1060,28 +1109,28 @@ class MainWindow(QMainWindow):
             constants.exclusions[excl_type].append(value)
             self._refresh_exclusions()
         else:
-            QMessageBox.information(self, t('Info'), t('deletion.info.already_in_exclusions', kind=excl_type[:-1].capitalize()))
+            self._show_info(t('Info'), t('deletion.info.already_in_exclusions', kind=excl_type[:-1].capitalize()))
     def _remove_exclusion(self, excl_type, value):
         if value in constants.exclusions[excl_type]:
             constants.exclusions[excl_type].remove(value)
             self._refresh_exclusions()
     def _delete_player(self, uid):
         if uid in constants.exclusions.get('players', []):
-            QMessageBox.warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_player') if t else f'Player {uid} is in exclusion list and cannot be deleted.')
+            self._show_warning(t('warning.title') if t else 'Warning', t('deletion.warning.protected_player') if t else f'Player {uid} is in exclusion list and cannot be deleted.')
             return
         delete_player(uid)
         self.refresh_all()
-        QMessageBox.information(self, t('Done'), t('deletion.player_deleted'))
+        self._show_info(t('Done'), t('deletion.player_deleted'))
     def _delete_guild(self, gid):
         if gid in constants.exclusions.get('guilds', []):
-            QMessageBox.warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_guild') if t else f'Guild {gid} is in exclusion list and cannot be deleted.')
+            self._show_warning(t('warning.title') if t else 'Warning', t('deletion.warning.protected_guild') if t else f'Guild {gid} is in exclusion list and cannot be deleted.')
             return
         delete_guild(gid)
         self.refresh_all()
-        QMessageBox.information(self, t('Done'), t('deletion.guild_deleted'))
+        self._show_info(t('Done'), t('deletion.guild_deleted'))
     def _delete_base(self, bid, gid):
         if bid in constants.exclusions.get('bases', []):
-            QMessageBox.warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_base') if t else f'Base {bid} is in exclusion list and cannot be deleted.')
+            self._show_warning(t('warning.title') if t else 'Warning', t('deletion.warning.protected_base') if t else f'Base {bid} is in exclusion list and cannot be deleted.')
             return
         from ..data_manager import delete_base_camp
         wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
@@ -1091,32 +1140,32 @@ class MainWindow(QMainWindow):
                 delete_base_camp(b, gid)
                 break
         self.refresh_all()
-        QMessageBox.information(self, t('Done'), t('deletion.base_deleted'))
+        self._show_info(t('Done'), t('deletion.base_deleted'))
     def _rename_player(self, uid, old_name):
         new_name = InputDialog.get_text(t('player.rename.title'), t('player.rename.prompt'), self)
         if new_name:
             rename_player(uid, new_name)
             self.refresh_all()
-            QMessageBox.information(self, t('player.rename.done_title'), t('player.rename.done_msg', old=old_name, new=new_name))
+            self._show_info(t('player.rename.done_title'), t('player.rename.done_msg', old=old_name, new=new_name))
     def _unlock_viewing_cage(self, uid):
         if unlock_viewing_cage_for_player(uid, self):
-            QMessageBox.information(self, t('Done'), t('player.viewing_cage.unlocked'))
+            self._show_info(t('Done'), t('player.viewing_cage.unlocked'))
         else:
-            QMessageBox.warning(self, t('Error'), t('player.viewing_cage.failed'))
+            self._show_warning(t('Error'), t('player.viewing_cage.failed'))
     def _rename_guild_action(self, gid, old_name):
         new_name = InputDialog.get_text(t('guild.rename.title'), t('guild.rename.prompt'), self)
         if new_name:
             rename_guild(gid, new_name)
             self.refresh_all()
-            QMessageBox.information(self, t('guild.rename.done_title'), t('guild.rename.done_msg', old=old_name, new=new_name))
+            self._show_info(t('guild.rename.done_title'), t('guild.rename.done_msg', old=old_name, new=new_name))
     def _max_guild_level(self, gid):
         max_guild_level(gid)
         self.refresh_all()
-        QMessageBox.information(self, t('success.title'), t('guild.level.maxed'))
+        self._show_info(t('success.title'), t('guild.level.maxed'))
     def _make_leader(self, gid, uid):
         make_member_leader(gid, uid)
         self.refresh_all()
-        QMessageBox.information(self, t('Done'), t('guild.leader_changed'))
+        self._show_info(t('Done'), t('guild.leader_changed'))
     def _import_base_to_guild(self, gid):
         file_paths, _ = QFileDialog.getOpenFileNames(self, 'Select Base JSON Files', '', 'JSON Files(*.json)')
         if not file_paths:
@@ -1141,16 +1190,16 @@ class MainWindow(QMainWindow):
             msg = f'Successfully imported {successful_imports} base(s).'
             if failed_imports > 0:
                 msg += f'\nFailed to import {failed_imports} file(s):\n' + '\n'.join(failed_files)
-            QMessageBox.information(self, t('success.title'), msg)
+            self._show_info(t('success.title'), msg)
         else:
-            QMessageBox.warning(self, t('error.title'), f'Failed to import any bases.\n' + '\n'.join(failed_files))
+            self._show_warning(t('error.title'), f'Failed to import any bases.\n' + '\n'.join(failed_files))
     def _export_all_bases(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
+            self._show_warning(t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
             return
         bases = get_bases()
         if not bases:
-            QMessageBox.information(self, t('Info') if t else 'Info', 'No bases found in the save.')
+            self._show_info(t('Info') if t else 'Info', 'No bases found in the save.')
             return
         export_dir = QFileDialog.getExistingDirectory(self, 'Select Export Directory')
         if not export_dir:
@@ -1190,22 +1239,22 @@ class MainWindow(QMainWindow):
                 msg = f'Successfully exported {successful_exports} base(s)to {export_dir}.'
                 if failed_exports > 0:
                     msg += f'\nFailed to export {failed_exports} base(s):\n' + '\n'.join(failed_bases)
-                QMessageBox.information(self, t('success.title'), msg)
+                self._show_info(t('success.title'), msg)
             else:
-                QMessageBox.warning(self, t('error.title'), f'Failed to export any bases.\n' + '\n'.join(failed_bases))
+                self._show_warning(t('error.title'), f'Failed to export any bases.\n' + '\n'.join(failed_bases))
         run_with_loading(on_finished, task)
     def _export_bases_for_guild(self, gid):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
+            self._show_warning(t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
             return
         guild_name = save_manager.get_guild_name_by_id(gid)
         if not guild_name:
-            QMessageBox.warning(self, t('error.title'), f'Guild not found: {gid}')
+            self._show_warning(t('error.title'), f'Guild not found: {gid}')
             return
         bases = get_bases()
         guild_bases = [b for b in bases if str(b['guild_id']) == str(gid)]
         if not guild_bases:
-            QMessageBox.information(self, t('Info') if t else 'Info', f'No bases found for guild "{guild_name}".')
+            self._show_info(t('Info') if t else 'Info', f'No bases found for guild "{guild_name}".')
             return
         export_dir = QFileDialog.getExistingDirectory(self, f'Select Export Directory for "{guild_name}"')
         if not export_dir:
@@ -1240,16 +1289,16 @@ class MainWindow(QMainWindow):
             msg = f'Successfully exported {successful_exports} base(s)for guild "{guild_name}" to {export_dir}.'
             if failed_exports > 0:
                 msg += f'\nFailed to export {failed_exports} base(s):\n' + '\n'.join(failed_bases)
-            QMessageBox.information(self, t('success.title'), msg)
+            self._show_info(t('success.title'), msg)
         else:
-            QMessageBox.warning(self, t('error.title'), f'Failed to export any bases for guild "{guild_name}".\n' + '\n'.join(failed_bases))
+            self._show_warning(t('error.title'), f'Failed to export any bases for guild "{guild_name}".\n' + '\n'.join(failed_bases))
     def _export_base(self, bid):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
+            self._show_warning(t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
             return
         data = export_base_json(constants.loaded_level_json, bid)
         if not data:
-            QMessageBox.warning(self, t('error.title') if t else 'Error', t('base.export.not_found') if t else f'Could not find base data for ID: {bid}')
+            self._show_warning(t('error.title') if t else 'Error', t('base.export.not_found') if t else f'Could not find base data for ID: {bid}')
             return
         default_filename = f'base_{bid}.json'
         file_path, _ = QFileDialog.getSaveFileName(self, t('base.export.title') if t else 'Export Base', default_filename, 'JSON Files(*.json)')
@@ -1263,27 +1312,27 @@ class MainWindow(QMainWindow):
                     return super().default(obj)
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, cls=CustomEncoder, indent=2)
-            QMessageBox.information(self, t('success.title') if t else 'Success', t('base.export.success') if t else 'Base exported successfully')
+            self._show_info(t('success.title') if t else 'Success', t('base.export.success') if t else 'Base exported successfully')
         except Exception as e:
-            QMessageBox.critical(self, t('error.title') if t else 'Error', t('base.export.failed') if t else f'Failed to export base: {str(e)}')
+            self._show_error(t('error.title') if t else 'Error', t('base.export.failed') if t else f'Failed to export base: {str(e)}')
     def _import_base(self, gid):
         self._import_base_to_guild(gid)
     def _trim_overfilled_inventories(self):
         if not constants.current_save_path:
-            QMessageBox.warning(self, t('error.title') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
+            self._show_warning(t('error.title') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
             return
         def task():
             return detect_and_trim_overfilled_inventories(self)
         def on_finished(fixed):
             self.refresh_all()
-            QMessageBox.information(self, t('done') if t else 'Done', t('deletion.trimmed_inventories', fixed=fixed) if t else f'Trimmed {fixed} overfilled inventories')
+            self._show_info(t('done') if t else 'Done', t('deletion.trimmed_inventories', fixed=fixed) if t else f'Trimmed {fixed} overfilled inventories')
         run_with_loading(on_finished, task)
     def _clone_base(self, bid, gid):
         if clone_base_complete(constants.loaded_level_json, bid, gid):
             self.refresh_all()
-            QMessageBox.information(self, t('success.title'), t('clone_base.msg'))
+            self._show_info(t('success.title'), t('clone_base.msg'))
         else:
-            QMessageBox.warning(self, t('error.title'), 'Failed to clone base')
+            self._show_warning(t('error.title'), 'Failed to clone base')
     def _edit_player_pals(self, uid, name):
         from ..edit_pals import EditPalsDialog
         dialog = EditPalsDialog(uid, name, self)
@@ -1291,30 +1340,30 @@ class MainWindow(QMainWindow):
             self.refresh_all()
     def _unlock_all_technologies_for_player(self, uid):
         if unlock_all_technologies_for_player(uid, self):
-            QMessageBox.information(self, t('Done') if t else 'Done', t('player.unlock_technologies.success') if t else 'Unlock All Technologies completed')
+            self._show_info(t('Done') if t else 'Done', t('player.unlock_technologies.success') if t else 'Unlock All Technologies completed')
         else:
-            QMessageBox.warning(self, t('Error') if t else 'Error', t('player.unlock_technologies.failed') if t else 'Unlock All Technologies failed')
+            self._show_warning(t('Error') if t else 'Error', t('player.unlock_technologies.failed') if t else 'Unlock All Technologies failed')
     def _unlock_all_lab_research_for_guild(self, gid):
         if unlock_all_lab_research_for_guild(gid, self):
-            QMessageBox.information(self, t('Done') if t else 'Done', t('guild.unlock_lab_research.success') if t else 'Unlock All Lab Research completed')
+            self._show_info(t('Done') if t else 'Done', t('guild.unlock_lab_research.success') if t else 'Unlock All Lab Research completed')
         else:
-            QMessageBox.warning(self, t('Error') if t else 'Error', t('guild.unlock_lab_research.failed') if t else 'Unlock All Lab Research failed')
+            self._show_warning(t('Error') if t else 'Error', t('guild.unlock_lab_research.failed') if t else 'Unlock All Lab Research failed')
     def _level_up_player(self, uid):
         from ..player_manager import adjust_player_level, get_level_from_exp
         current_level = constants.player_levels.get(str(uid).replace('-', ''), 1)
         if adjust_player_level(uid, current_level + 1):
             self.refresh_all()
-            QMessageBox.information(self, t('Done') if t else 'Done', 'Player leveled up successfully')
+            self._show_info(t('Done') if t else 'Done', 'Player leveled up successfully')
         else:
-            QMessageBox.warning(self, t('Error') if t else 'Error', 'Failed to level up player (already max level?)')
+            self._show_warning(t('Error') if t else 'Error', 'Failed to level up player (already max level?)')
     def _level_down_player(self, uid):
         from ..player_manager import adjust_player_level, get_level_from_exp
         current_level = constants.player_levels.get(str(uid).replace('-', ''), 1)
         if adjust_player_level(uid, current_level - 1):
             self.refresh_all()
-            QMessageBox.information(self, t('Done') if t else 'Done', 'Player leveled down successfully')
+            self._show_info(t('Done') if t else 'Done', 'Player leveled down successfully')
         else:
-            QMessageBox.warning(self, t('Error') if t else 'Error', 'Failed to level down player (already min level?)')
+            self._show_warning(t('Error') if t else 'Error', 'Failed to level down player (already min level?)')
     def _set_player_level(self, uid):
         from ..player_manager import adjust_player_level, get_level_from_exp
         current_level_raw = constants.player_levels.get(str(uid).replace('-', ''), 1)
@@ -1323,12 +1372,12 @@ class MainWindow(QMainWindow):
         if new_level is not None and new_level != current_level:
             if adjust_player_level(uid, new_level):
                 self.refresh_all()
-                QMessageBox.information(self, t('Done') if t else 'Done', t('player.level.set_success', level=new_level) if t else f'Player level set to {new_level}')
+                self._show_info(t('Done') if t else 'Done', t('player.level.set_success', level=new_level) if t else f'Player level set to {new_level}')
             else:
-                QMessageBox.warning(self, t('Error') if t else 'Error', t('player.level.set_failed') if t else 'Failed to set player level')
+                self._show_warning(t('Error') if t else 'Error', t('player.level.set_failed') if t else 'Failed to set player level')
     def _modify_container_slots(self):
         if not constants.loaded_level_json:
-            QMessageBox.warning(self, t('Error'), t('error.no_save_loaded'))
+            self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
         new_slot_num, ok = QInputDialog.getInt(self, t('modify_container_slots_title') if t else 'Modify Container Slots', t('modify_container_slots_prompt') if t else 'Enter new slot number for all containers:', 50, 1, 1000, 1)
         if ok:
@@ -1336,7 +1385,7 @@ class MainWindow(QMainWindow):
                 return modify_container_slots(new_slot_num, self)
             def on_finished(modified):
                 self.refresh_all()
-                QMessageBox.information(self, t('Done'), t('modify_container_slots_result', modified=modified) if t else f'Modified {modified} containers')
+                self._show_info(t('Done'), t('modify_container_slots_result', modified=modified) if t else f'Modified {modified} containers')
             run_with_loading(on_finished, task)
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_F5:

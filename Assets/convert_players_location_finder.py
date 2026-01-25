@@ -59,8 +59,9 @@ def convert_players_location_finder(ext):
     run_with_loading(lambda _: loop.quit(), task)
     loop.exec()
     time.sleep(0.5)
-    from PySide6.QtWidgets import QMessageBox
-    QMessageBox.information(None, t('tool.convert.done'), t('tool.convert.players_done', count=converted_count))
+    from PySide6.QtWidgets import QApplication, QMessageBox
+    parent = QApplication.activeWindow()
+    QMessageBox.information(parent, t('tool.convert.done'), t('tool.convert.players_done', count=converted_count))
     return True
 def main():
     if len(sys.argv) != 2 or sys.argv[1] not in ['sav', 'json']:

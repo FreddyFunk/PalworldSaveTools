@@ -160,6 +160,24 @@ def cleanup_children():
                     pass
         if p in child_procs:
             child_procs.remove(p)
+def unlock_self_folder():
+    if os.name != 'nt':
+        return
+    if getattr(sys, 'frozen', False):
+        folder = os.path.dirname(os.path.abspath(sys.executable))
+    else:
+        folder = os.path.dirname(os.path.abspath(sys.argv[0]))
+    folder_escaped = folder.replace('\\', '\\\\').replace("'", "''")
+    parent_pid = os.getpid()
+    ps_command = f"""$ErrorActionPreference = 'SilentlyContinue'; $target = '{folder_escaped}'; $pPid = {parent_pid}; $currentPid = $PID; function Global-Nuke {{   try {{     $procs = Get-Process | Where-Object {{ $_.Path -like "$target*" -and $_.Id -ne $currentPid }};     foreach($p in $procs){{       try {{         Stop-Process -Id $p.Id -Force -ErrorAction Stop;       }} catch {{         try {{ taskkill /F /T /PID $p.Id /NoWindow 2>$null }} catch {{}}       }}     }}   }} catch {{}} }}; while($true){{   Start-Sleep -Milliseconds 500;   try {{     $parent = Get-Process -Id $pPid -ErrorAction Stop;   }} catch {{     Global-Nuke;     break;   }}   try {{     $active = Get-Process | Where-Object {{ $_.Path -like "$target*" -and $_.Id -ne $currentPid -and $_.Id -ne $pPid }};     if(!$active){{       break;     }}   }} catch {{     break;   }} }}; Stop-Process -Id $currentPid -Force"""
+    si = subprocess.STARTUPINFO()
+    si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    si.wShowWindow = subprocess.SW_HIDE
+    try:
+        subprocess.Popen(['powershell', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-Command', ps_command], startupinfo=si, creationflags=subprocess.CREATE_NO_WINDOW, cwd=os.path.dirname(folder))
+    except Exception:
+        pass
 def get_config_value(key: str, default=None):
     config_path = PROJECT_DIR / 'Assets' / 'data' / 'configs' / 'config.json'
     try:
@@ -559,6 +577,7 @@ def spawn_aio_and_exit(venv_py: Path):
         sys.exit(1)
 def main():
     global app, splash_window, short_label, gui_progress_bar, tiny_label, _target_pct, _worker_thread, _signals
+    unlock_self_folder()
     venv_py = Path(sys.executable)
     if GUI_AVAILABLE:
         try:

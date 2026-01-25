@@ -3,6 +3,28 @@ from PySide6.QtWidgets import QHeaderView, QMainWindow, QWidget, QLineEdit, QTre
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QTimer
 player_list_cache = []
+def get_player_level_from_cspm(level_json, player_uid):
+    try:
+        player_uid_lower = str(player_uid).lower().replace('-', '')
+        for entry in level_json.get('properties', {}).get('worldSaveData', {}).get('value', {}).get('CharacterSaveParameterMap', {}).get('value', []):
+            try:
+                key = entry.get('key', {})
+                uid_obj = key.get('PlayerUId', {})
+                uid = str(uid_obj.get('value', '') if isinstance(uid_obj, dict) else uid_obj).lower().replace('-', '')
+                if uid == player_uid_lower:
+                    sp_val = entry['value']['RawData']['value']['object']['SaveParameter']['value']
+                    level_info = sp_val.get('Level', {})
+                    if isinstance(level_info, dict):
+                        level_val = level_info.get('value')
+                        if isinstance(level_val, dict):
+                            level_val = level_val.get('value')
+                        return int(level_val) if level_val is not None else 1
+                    return int(level_info) if level_info is not None else 1
+            except:
+                continue
+        return 1
+    except:
+        return 1
 def fix_save(save_path, new_guid, old_guid, guild_fix=True):
     def task():
         fmt = lambda g: '{}-{}-{}-{}-{}'.format(g[:8], g[8:12], g[12:16], g[16:20], g[20:]).lower()
@@ -13,6 +35,17 @@ def fix_save(save_path, new_guid, old_guid, guild_fix=True):
         level = sav_to_json(lvl)
         old_j = sav_to_json(old_sav)
         new_j = sav_to_json(new_sav)
+        old_player_level = get_player_level_from_cspm(level, old_uid)
+        new_player_level = get_player_level_from_cspm(level, new_uid)
+        if old_player_level < 2 or new_player_level < 2:
+            error_msg = t('fix_host_save.both_players_level_2', old_level=old_player_level, new_level=new_player_level)
+            print(f'Error: {error_msg}')
+            try:
+                parent = QApplication.activeWindow()
+                QMessageBox.warning(parent, t('Error'), error_msg)
+            except:
+                pass
+            return False
         old_j['properties']['SaveData']['value']['PlayerUId']['value'] = new_uid
         old_j['properties']['SaveData']['value']['IndividualId']['value']['PlayerUId']['value'] = new_uid
         new_j['properties']['SaveData']['value']['PlayerUId']['value'] = old_uid
@@ -73,8 +106,10 @@ def fix_save(save_path, new_guid, old_guid, guild_fix=True):
             os.rename(new_sav, os.path.join(save_path, 'Players', old_guid.upper() + '.sav'))
         os.rename(tmp_path, os.path.join(save_path, 'Players', new_guid.upper() + '.sav'))
         return True
-    def on_finished(_):
-        QMessageBox.information(None, t('Success'), t('Fix has been applied! Have fun!'))
+    def on_finished(result):
+        if result:
+            parent = QApplication.activeWindow()
+            QMessageBox.information(parent, t('Success'), t('Fix has been applied! Have fun!'))
     run_with_loading(on_finished, task)
 def copy_dps_file(src_folder, src_uid, tgt_folder, tgt_uid):
     src_file = os.path.join(src_folder, f"{str(src_uid).replace('-', '').upper()}_dps.sav")
@@ -134,7 +169,8 @@ def populate_player_lists(folder_path):
         return player_list_cache
     players_folder = os.path.join(folder_path, 'Players')
     if not os.path.exists(players_folder):
-        QMessageBox.warning(None, 'Error', 'Players folder not found next to selected Level.sav')
+        parent = QApplication.activeWindow()
+        QMessageBox.warning(parent, t('Error'), t('fix_host_save.players_folder_not_found'))
         return []
     level_json = sav_to_json(os.path.join(folder_path, 'Level.sav'))
     group_data_list = level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']
@@ -189,15 +225,18 @@ def background_load_task(path):
                 uid = str(p.get('player_uid', '')).replace('-', '')
                 name = p.get('player_info', {}).get('player_name', 'Unknown')
                 player_files.append((uid, name, guild_id))
-    return player_files
+    return (player_files, level_json)
 def choose_level_file(window, level_sav_entry, old_tree, new_tree):
     path, _ = QFileDialog.getOpenFileName(window, t('Select Level.sav file'), '', 'SAV Files(*.sav)')
     if not path:
         return
     def task():
         return background_load_task(path)
-    def on_task_complete(player_data_list):
+    def on_task_complete(result):
         global player_list_cache
+        player_data_list, level_json = result
+        window.level_json = level_json
+        window.level_sav_path = path
         level_sav_entry.setText(path)
         old_tree.clear()
         new_tree.clear()
@@ -218,10 +257,10 @@ def fix_save_wrapper(window, level_sav_entry, old_tree, new_tree):
     new_guid = extract_guid_from_tree_selection(new_tree)
     file_path = level_sav_entry.text()
     if not (old_guid and new_guid and file_path):
-        QMessageBox.warning(window, 'Error', 'Please select old GUID,new GUID and level save file!')
+        QMessageBox.warning(window, t('Error'), t('fix_host_save.select_guids_and_file'))
         return
     if old_guid == new_guid:
-        QMessageBox.warning(window, 'Error', 'Old GUID and New GUID cannot be the same.')
+        QMessageBox.warning(window, t('Error'), t('fix_host_save.guids_cannot_be_same'))
         return
     folder_path = os.path.dirname(file_path)
     fix_save(folder_path, new_guid, old_guid)
@@ -358,14 +397,30 @@ class FixHostSaveWindow(QWidget):
         selected = self.old_tree.selectedItems()
         if selected:
             values = [selected[0].text(col) for col in range(3)]
-            self.source_result_label.setText(t('Source Player: {name}({guid})', name=values[1], guid=values[0]))
+            player_guid = values[0]
+            if hasattr(self, 'level_json') and self.level_json:
+                player_level = get_player_level_from_cspm(self.level_json, player_guid)
+                if player_level < 2:
+                    self.old_tree.clearSelection()
+                    self.source_result_label.setText(t('Source Player: N/A'))
+                    QMessageBox.warning(self, t('fix_host_save.cannot_select_title'), t('fix_host_save.cannot_select_message', name=values[1], level=player_level))
+                    return
+            self.source_result_label.setText(t('Source Player: {name}({guid})', name=values[1], guid=player_guid))
         else:
             self.source_result_label.setText(t('Source Player: N/A'))
     def update_target_selection(self):
         selected = self.new_tree.selectedItems()
         if selected:
             values = [selected[0].text(col) for col in range(3)]
-            self.target_result_label.setText(t('Target Player: {name}({guid})', name=values[1], guid=values[0]))
+            player_guid = values[0]
+            if hasattr(self, 'level_json') and self.level_json:
+                player_level = get_player_level_from_cspm(self.level_json, player_guid)
+                if player_level < 2:
+                    self.new_tree.clearSelection()
+                    self.target_result_label.setText(t('Target Player: N/A'))
+                    QMessageBox.warning(self, t('fix_host_save.cannot_select_title'), t('fix_host_save.cannot_select_message', name=values[1], level=player_level))
+                    return
+            self.target_result_label.setText(t('Target Player: {name}({guid})', name=values[1], guid=player_guid))
         else:
             self.target_result_label.setText(t('Target Player: N/A'))
     def load_styles(self):

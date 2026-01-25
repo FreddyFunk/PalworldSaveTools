@@ -754,5 +754,15 @@
   "xgp.ui.convert": "Convertir la sauvegarde",
   "xgp.ui.description": "Convertir les sauvegardes entre Xbox (Game Pass) et Steam",
   "yes": "Oui",
-  "zoom": "Zoom"
+  "zoom": "Zoom",
+  "fix_host_save.cannot_select_title": "Impossible de sélectionner le joueur",
+  "fix_host_save.cannot_select_message": "Impossible de sélectionner le joueur \"{name}\" - il est seulement niveau {level}.\n\nLes joueurs doivent être au moins niveau 2 (avoir atteint au moins un niveau) pour que la migration fonctionne.",
+  "fix_host_save.both_players_level_2": "Les deux joueurs doivent être au moins niveau 2.\nNiveau du joueur source : {old_level}\nNiveau du joueur cible : {new_level}",
+  "fix_host_save.players_folder_not_found": "Dossier Players introuvable à côté du Level.sav sélectionné",
+  "fix_host_save.select_guids_and_file": "Veuillez sélectionner l'ancien GUID, le nouveau GUID et le fichier de sauvegarde de niveau !",
+  "fix_host_save.guids_cannot_be_same": "L'ancien GUID et le nouveau GUID ne peuvent pas être identiques.",
+  "character_transfer.source_player_level_2": "Le joueur source doit être au moins niveau 2.\nNiveau actuel : {level}",
+  "character_transfer.source_player_not_leveled": "Le joueur source n'a pas encore monté de niveau. Veuillez d'abord monter de niveau dans le jeu.",
+  "character_transfer.target_player_level_2": "Le joueur cible doit être au moins niveau 2.\nNiveau actuel : {level}",
+  "character_transfer.target_player_not_leveled": "Le joueur cible n'a pas encore monté de niveau. Veuillez d'abord monter de niveau dans le jeu."
 }

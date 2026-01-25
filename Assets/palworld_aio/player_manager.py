@@ -1,6 +1,6 @@
 import os
 import json
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox
 from i18n import t
 try:
     from palworld_aio import constants
@@ -112,7 +112,8 @@ def set_player_level(player_uid, new_level):
             if uid == uid_clean:
                 if 'Level' not in sp_val:
                     from i18n import t
-                    QMessageBox.warning(None, t('player.level.set_no_level_title') if t else 'Cannot Set Level', t('player.level.set_no_level_data') if t else 'This player has not leveled up yet. Please have them level up in-game first before using this tool.')
+                    parent = QApplication.activeWindow()
+                    QMessageBox.warning(parent, t('player.level.set_no_level_title') if t else 'Cannot Set Level', t('player.level.set_no_level_data') if t else 'This player has not leveled up yet. Please have them level up in-game first before using this tool.')
                     return False
                 sp_val['Level']['value']['value'] = new_level
                 if 'Exp' not in sp_val:

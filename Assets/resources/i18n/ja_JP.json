@@ -774,5 +774,15 @@
   "xgp.ui.convert": "セーブ変換",
   "xgp.ui.description": "Xbox - Game Pass とSteam間でセーブデータを変換する",
   "yes": "はい",
-  "zoom": "ズーム"
+  "zoom": "ズーム",
+  "fix_host_save.cannot_select_title": "プレーヤーを選択できません",
+  "fix_host_save.cannot_select_message": "プレーヤー\"{name}\"を選択できません - レベルは{level}のみです。\n\n移行を機能させるには、プレーヤーは少なくともレベル2（少なくとも一度レベルアップしている）必要があります。",
+  "fix_host_save.both_players_level_2": "両方のプレーヤーは最低レベル2である必要があります。\nソースプレーヤーのレベル：{old_level}\nターゲットプレーヤーのレベル：{new_level}",
+  "fix_host_save.players_folder_not_found": "選択された Level.sav の横に Players フォルダーが見つかりません",
+  "fix_host_save.select_guids_and_file": "古いGUID、新しいGUID、およびレベルセーブファイルを選択してください！",
+  "fix_host_save.guids_cannot_be_same": "古いGUIDと新しいGUIDは同じにできません。",
+  "character_transfer.source_player_level_2": "ソースプレーヤーは最低レベル2である必要があります。\n現在のレベル：{level}",
+  "character_transfer.source_player_not_leveled": "ソースプレーヤーはまだレベルアップしていません。まずゲーム内でレベルアップしてください。",
+  "character_transfer.target_player_level_2": "ターゲットプレーヤーは最低レベル2である必要があります。\n現在のレベル：{level}",
+  "character_transfer.target_player_not_leveled": "ターゲットプレーヤーはまだレベルアップしていません。まずゲーム内でレベルアップしてください。"
 }

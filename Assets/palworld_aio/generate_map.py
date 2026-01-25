@@ -23,24 +23,25 @@ def _show_message_threadsafe(title, message, msg_type='info'):
     app = QApplication.instance()
     if not app:
         return
+    parent = app.activeWindow()
     main_thread = app.thread()
     if current_thread() == main_thread:
         if msg_type == 'error':
-            QMessageBox.critical(None, title, message)
+            QMessageBox.critical(parent, title, message)
         elif msg_type == 'warning':
-            QMessageBox.warning(None, title, message)
+            QMessageBox.warning(parent, title, message)
         else:
-            QMessageBox.information(None, title, message)
+            QMessageBox.information(parent, title, message)
         return True
     result = [None]
     event = Event()
     def show():
         if msg_type == 'error':
-            QMessageBox.critical(None, title, message)
+            QMessageBox.critical(parent, title, message)
         elif msg_type == 'warning':
-            QMessageBox.warning(None, title, message)
+            QMessageBox.warning(parent, title, message)
         else:
-            QMessageBox.information(None, title, message)
+            QMessageBox.information(parent, title, message)
         result[0] = True
         event.set()
     QTimer.singleShot(0, show)
