@@ -783,5 +783,16 @@
   "character_transfer.source_player_level_2": "소스 플레이어는 최소 레벨 2여야 합니다.\n현재 레벨: {level}",
   "character_transfer.source_player_not_leveled": "소스 플레이어가 아직 레벨업하지 않았습니다. 먼저 게임 내에서 레벨업하세요.",
   "character_transfer.target_player_level_2": "대상 플레이어는 최소 레벨 2여야 합니다.\n현재 레벨: {level}",
-  "character_transfer.target_player_not_leveled": "대상 플레이어가 아직 레벨업하지 않았습니다. 먼저 게임 내에서 레벨업하세요."
+  "character_transfer.target_player_not_leveled": "대상 플레이어가 아직 레벨업하지 않았습니다. 먼저 게임 내에서 레벨업하세요.",
+  "Level": "레벨",
+  "Last Seen": "마지막 접속",
+  "base.import.no_bases": "이 저장 파일로 베이스를 가져올 수 없습니다.\n\n이 저장 파일에는 베이스가 없습니다.\n\n먼저 게임 내에 팔박스를 배치하여 베이스를 생성한 후 다시 시도하세요.",
+  "tool.convert.levelmeta.to_json": "LevelMeta.sav를 JSON로 변환",
+  "tool.convert.levelmeta.to_sav": "LevelMeta.json을 SAV로 변환",
+  "tool.convert.worldoption.to_json": "WorldOption.sav를 JSON로 변환",
+  "tool.convert.worldoption.to_sav": "WorldOption.json을 SAV로 변환",
+  "tool.convert.levelmeta_done": "{source}이(가) {target}(으)로 변환되었습니다",
+  "tool.convert.worldoption_done": "{source}이(가) {target}(으)로 변환되었습니다",
+  "menu.file.load_worldoption": "월드옵션 로드",
+  "menu.file.load_levelmeta": "Load LevelMeta"
 }

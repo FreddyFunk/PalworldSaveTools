@@ -99,7 +99,7 @@ class ConversionOptionsDialog(QDialog):
         separator.setObjectName('dialogSeparator')
         glass_layout.addWidget(separator)
         glass_layout.addSpacing(4)
-        options = [('tool.convert.level.to_json', 0), ('tool.convert.level.to_sav', 1), ('tool.convert.players.to_json', 2), ('tool.convert.players.to_sav', 3)]
+        options = [('tool.convert.level.to_json', 0), ('tool.convert.level.to_sav', 1), ('tool.convert.players.to_json', 2), ('tool.convert.players.to_sav', 3), ('tool.convert.levelmeta.to_json', 4), ('tool.convert.levelmeta.to_sav', 5), ('tool.convert.worldoption.to_json', 6), ('tool.convert.worldoption.to_sav', 7)]
         for key, index in options:
             btn = QPushButton(t(key) if t else key)
             btn.setObjectName('dialogOption')
@@ -332,6 +332,14 @@ class ToolsTab(QWidget):
                         self._import_and_call('convert_players_location_finder', 'convert_players_location_finder', 'json')
                     elif options_dialog.selected_option == 3:
                         self._import_and_call('convert_players_location_finder', 'convert_players_location_finder', 'sav')
+                    elif options_dialog.selected_option == 4:
+                        self._import_and_call('convert_levelmeta', 'convert_levelmeta_to_json')
+                    elif options_dialog.selected_option == 5:
+                        self._import_and_call('convert_levelmeta', 'convert_levelmeta_to_sav')
+                    elif options_dialog.selected_option == 6:
+                        self._import_and_call('convert_worldoption', 'convert_worldoption_to_json')
+                    elif options_dialog.selected_option == 7:
+                        self._import_and_call('convert_worldoption', 'convert_worldoption_to_sav')
             elif index == 1:
                 dialog = self._import_and_call('game_pass_save_fix', 'game_pass_save_fix')
             elif index == 2:

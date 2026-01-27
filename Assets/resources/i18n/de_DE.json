@@ -805,5 +805,16 @@
   "character_transfer.source_player_level_2": "Quellspieler muss mindestens Stufe 2 sein.\nAktuelle Stufe: {level}",
   "character_transfer.source_player_not_leveled": "Quellspieler hat noch kein Level-Up durchgeführt. Bitte leveln Sie zuerst im Spiel auf.",
   "character_transfer.target_player_level_2": "Zielspieler muss mindestens Stufe 2 sein.\nAktuelle Stufe: {level}",
-  "character_transfer.target_player_not_leveled": "Zielspieler hat noch kein Level-Up durchgeführt. Bitte leveln Sie zuerst im Spiel auf."
+  "character_transfer.target_player_not_leveled": "Zielspieler hat noch kein Level-Up durchgeführt. Bitte leveln Sie zuerst im Spiel auf.",
+  "Level": "Stufe",
+  "Last Seen": "Zuletzt gesehen",
+  "base.import.no_bases": "Basis kann nicht in diesen Speicherstand importiert werden.\n\nDieser Speicherstand hat keine Basen.\n\nBitte erstellen Sie zuerst eine Basis, indem Sie eine Palbox im Spiel platzieren, und versuchen Sie dann erneut zu importieren.",
+  "tool.convert.levelmeta.to_json": "LevelMeta.sav in JSON konvertieren",
+  "tool.convert.levelmeta.to_sav": "LevelMeta.json in SAV konvertieren",
+  "tool.convert.worldoption.to_json": "WorldOption.sav in JSON konvertieren",
+  "tool.convert.worldoption.to_sav": "WorldOption.json in SAV konvertieren",
+  "tool.convert.levelmeta_done": "{source} in {target} konvertiert",
+  "tool.convert.worldoption_done": "{source} in {target} konvertiert",
+  "menu.file.load_worldoption": "Weltoption laden",
+  "menu.file.load_levelmeta": "Load LevelMeta"
 }

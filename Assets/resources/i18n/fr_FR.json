@@ -764,5 +764,16 @@
   "character_transfer.source_player_level_2": "Le joueur source doit être au moins niveau 2.\nNiveau actuel : {level}",
   "character_transfer.source_player_not_leveled": "Le joueur source n'a pas encore monté de niveau. Veuillez d'abord monter de niveau dans le jeu.",
   "character_transfer.target_player_level_2": "Le joueur cible doit être au moins niveau 2.\nNiveau actuel : {level}",
-  "character_transfer.target_player_not_leveled": "Le joueur cible n'a pas encore monté de niveau. Veuillez d'abord monter de niveau dans le jeu."
+  "character_transfer.target_player_not_leveled": "Le joueur cible n'a pas encore monté de niveau. Veuillez d'abord monter de niveau dans le jeu.",
+  "Level": "Niveau",
+  "Last Seen": "Vu dernièrement",
+  "base.import.no_bases": "Impossible d'importer une base dans cette sauvegarde.\n\nCette sauvegarde n'a pas de bases.\n\nVeuillez d'abord créer une base en plaçant un Palboîte dans le jeu, puis réessayez d'importer.",
+  "tool.convert.levelmeta.to_json": "Convertir LevelMeta.sav en JSON",
+  "tool.convert.levelmeta.to_sav": "Convertir LevelMeta.json en SAV",
+  "tool.convert.worldoption.to_json": "Convertir WorldOption.sav en JSON",
+  "tool.convert.worldoption.to_sav": "Convertir WorldOption.json en SAV",
+  "tool.convert.levelmeta_done": "{source} converti en {target}",
+  "tool.convert.worldoption_done": "{source} converti en {target}",
+  "menu.file.load_worldoption": "Charger l'Option du Monde",
+  "menu.file.load_levelmeta": "Load LevelMeta"
 }

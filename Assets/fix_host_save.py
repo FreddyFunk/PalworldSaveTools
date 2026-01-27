@@ -2,7 +2,64 @@ from import_libs import *
 from PySide6.QtWidgets import QHeaderView, QMainWindow, QWidget, QLineEdit, QTreeWidget, QTreeWidgetItem, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QFrame, QApplication
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QTimer
+import struct
+import io
 player_list_cache = []
+class MyReader(FArchiveReader):
+    def __init__(self, data, type_hints=None, custom_properties=None, debug=False, allow_nan=True):
+        super().__init__(data, type_hints=type_hints or {}, custom_properties=custom_properties or {}, debug=debug, allow_nan=allow_nan)
+        self.orig_data = data
+        self.data = io.BytesIO(data)
+    def curr_property(self, path=''):
+        properties = {}
+        name = self.fstring()
+        type_name = self.fstring()
+        size = self.u64()
+        properties[name] = self.property(type_name, size, f'{path}.{name}')
+        return properties
+class SkipGvasFile(GvasFile):
+    header: GvasHeader
+    properties: dict[str, Any]
+    trailer: bytes
+    @staticmethod
+    def read(data: bytes, type_hints: dict[str, str]={}, custom_properties: dict[str, tuple[Callable, Callable]]={}, allow_nan: bool=True) -> 'GvasFile':
+        gvas_file = SkipGvasFile()
+        with MyReader(data, type_hints=type_hints, custom_properties=custom_properties, allow_nan=allow_nan) as reader:
+            gvas_file.header = GvasHeader.read(reader)
+            gvas_file.properties = reader.properties_until_end()
+            gvas_file.trailer = reader.read_to_end()
+            if gvas_file.trailer != b'\x00\x00\x00\x00':
+                print(f'{len(gvas_file.trailer)} bytes of trailer data,file may not have fully parsed')
+        return gvas_file
+    def write(self, custom_properties: dict[str, tuple[Callable, Callable]]={}) -> bytes:
+        writer = FArchiveWriter(custom_properties)
+        self.header.write(writer)
+        writer.properties(self.properties)
+        writer.write(self.trailer)
+        return writer.bytes()
+def gvas_to_sav(output_filepath, gvas_bytes):
+    gvas_file = GvasFile.read(gvas_bytes, PALWORLD_TYPE_HINTS, SKP_PALWORLD_CUSTOM_PROPERTIES)
+    save_type = 50 if 'Pal.PalworldSaveGame' in gvas_file.header.save_game_class_name or 'Pal.PalLocalWorldSaveGame' in gvas_file.header.save_game_class_name else 49
+    sav_file = compress_gvas_to_sav(gvas_file.write(SKP_PALWORLD_CUSTOM_PROPERTIES), save_type)
+    with open(output_filepath, 'wb') as f:
+        f.write(sav_file)
+target_save_type = 49
+def format_last_seen(last_online_time, current_tick):
+    try:
+        if last_online_time is None or last_online_time == 0:
+            return 'Unknown'
+        diff = (current_tick - last_online_time) / 10000000.0
+        days = int(diff // 86400)
+        hours = int(diff % 86400 // 3600)
+        mins = int(diff % 3600 // 60)
+        if days > 0:
+            return f'{days}d {hours}h'
+        elif hours > 0:
+            return f'{hours}h {mins}m'
+        else:
+            return f'{mins}m'
+    except:
+        return 'Unknown'
 def get_player_level_from_cspm(level_json, player_uid):
     try:
         player_uid_lower = str(player_uid).lower().replace('-', '')
@@ -52,6 +109,10 @@ def fix_save(save_path, new_guid, old_guid, guild_fix=True):
         new_j['properties']['SaveData']['value']['IndividualId']['value']['PlayerUId']['value'] = old_uid
         old_inst = old_j['properties']['SaveData']['value']['IndividualId']['value']['InstanceId']['value']
         new_inst = new_j['properties']['SaveData']['value']['IndividualId']['value']['InstanceId']['value']
+        try:
+            new_player_pal_storage_id = new_j['properties']['SaveData']['value']['PalStorageContainerId']['value']['ID']['value']
+        except:
+            new_player_pal_storage_id = None
         cspm = level['properties']['worldSaveData']['value']['CharacterSaveParameterMap']['value']
         for e in cspm:
             if e['key']['InstanceId']['value'] == old_inst:
@@ -95,7 +156,8 @@ def fix_save(save_path, new_guid, old_guid, guild_fix=True):
                 for i in data:
                     deep_swap(i)
         deep_swap(level)
-        copy_dps_file(os.path.join(os.path.dirname(lvl), 'Players'), old_guid, os.path.join(os.path.dirname(lvl), 'Players'), new_guid)
+        players_folder = os.path.join(os.path.dirname(lvl), 'Players')
+        copy_dps_file(players_folder, old_guid, players_folder, new_guid, new_player_pal_storage_id)
         backup_whole_directory(save_path, 'Backups/Fix Host Save')
         json_to_sav(level, lvl)
         json_to_sav(old_j, old_sav)
@@ -111,14 +173,54 @@ def fix_save(save_path, new_guid, old_guid, guild_fix=True):
             parent = QApplication.activeWindow()
             QMessageBox.information(parent, t('Success'), t('Fix has been applied! Have fun!'))
     run_with_loading(on_finished, task)
-def copy_dps_file(src_folder, src_uid, tgt_folder, tgt_uid):
+def copy_dps_file(src_folder, src_uid, tgt_folder, tgt_uid, target_pal_storage_id):
     src_file = os.path.join(src_folder, f"{str(src_uid).replace('-', '').upper()}_dps.sav")
     tgt_file = os.path.join(tgt_folder, f"{str(tgt_uid).replace('-', '').upper()}_dps.sav")
+    print(f'\n[DPS] Copying {src_uid} -> {tgt_uid}')
     if not os.path.exists(src_file):
-        print(f'Source DPS file missing: {src_file}')
+        print(f'[DPS] Source file missing: {src_file}')
         return None
-    shutil.copy2(src_file, tgt_file)
-    print(f'DPS save copied from {src_file} to {tgt_file}')
+    try:
+        with open(src_file, 'rb') as f:
+            data = f.read()
+        raw_gvas, save_type = decompress_sav_to_gvas(data)
+        dps = SkipGvasFile.read(raw_gvas)
+        update_count = 0
+        if 'SaveParameterArray' in dps.properties:
+            save_param_array = dps.properties['SaveParameterArray']
+            if isinstance(save_param_array, dict) and 'value' in save_param_array:
+                inner_value = save_param_array['value']
+                if isinstance(inner_value, dict) and 'values' in inner_value:
+                    pal_list = inner_value['values']
+                    if isinstance(pal_list, list):
+                        for pal_entry in pal_list:
+                            if isinstance(pal_entry, dict) and 'SaveParameter' in pal_entry:
+                                save_param = pal_entry['SaveParameter']
+                                if isinstance(save_param, dict) and 'value' in save_param:
+                                    pal_data = save_param['value']
+                                    if isinstance(pal_data, dict) and 'SlotId' in pal_data:
+                                        slot_id = pal_data['SlotId']
+                                        if isinstance(slot_id, dict) and 'value' in slot_id:
+                                            slot_id_value = slot_id['value']
+                                            if isinstance(slot_id_value, dict) and 'ContainerId' in slot_id_value:
+                                                container_id = slot_id_value['ContainerId']
+                                                if isinstance(container_id, dict) and 'value' in container_id:
+                                                    container_id_value = container_id['value']
+                                                    if isinstance(container_id_value, dict) and 'ID' in container_id_value:
+                                                        id_obj = container_id_value['ID']
+                                                        if isinstance(id_obj, dict) and 'value' in id_obj:
+                                                            id_obj['value'] = target_pal_storage_id
+                                                            update_count += 1
+        print(f'[DPS] Updated {update_count} container IDs')
+        gvas_to_sav(tgt_file, dps.write())
+        print(f'[DPS] Successfully copied to {tgt_uid}')
+    except Exception as e:
+        print(f'[DPS] Error: {e}')
+        import traceback
+        traceback.print_exc()
+        print(f'[DPS] Falling back to simple copy...')
+        shutil.copy2(src_file, tgt_file)
+        print(f'[DPS] Copied without container ID update')
 def ask_string_with_icon(title, prompt, icon_path):
     class CustomDialog(QDialog):
         def __init__(self, parent):
@@ -174,6 +276,11 @@ def populate_player_lists(folder_path):
         return []
     level_json = sav_to_json(os.path.join(folder_path, 'Level.sav'))
     group_data_list = level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']
+    world_tick = 0
+    try:
+        world_tick = level_json['properties']['worldSaveData']['value']['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
+    except:
+        pass
     player_files = []
     for group in group_data_list:
         if group['value']['GroupType']['value']['value'] == 'EPalGroupType::Guild':
@@ -186,22 +293,23 @@ def populate_player_lists(folder_path):
             for player in players:
                 uid = str(player.get('player_uid', '')).replace('-', '')
                 name = player.get('player_info', {}).get('player_name', 'Unknown')
-                player_files.append(f'{uid} - {name} - {guild_id}')
+                level = get_player_level_from_cspm(level_json, uid)
+                last_online_time = player.get('player_info', {}).get('last_online_real_time', 0)
+                last_seen = format_last_seen(last_online_time, world_tick)
+                player_files.append((uid, name, guild_id, level, last_seen))
     player_list_cache = player_files
     return player_files
 def populate_player_tree(tree, folder_path):
     tree.clear()
     player_list = populate_player_lists(folder_path)
     existing_iids = set()
-    for player in player_list:
-        parts = player.split(' - ')
-        uid, name, guild = (parts[0], parts[1], parts[2])
+    for uid, name, guild, level, last_seen in player_list:
         orig_uid = uid
         count = 1
         while uid in existing_iids:
             uid = f'{orig_uid}_{count}'
             count += 1
-        item = QTreeWidgetItem([orig_uid, name, guild])
+        item = QTreeWidgetItem([orig_uid, name, guild, str(level), last_seen])
         tree.addTopLevelItem(item)
         existing_iids.add(uid)
     tree.original_items = [tree.topLevelItem(i) for i in range(tree.topLevelItemCount())]
@@ -216,6 +324,11 @@ def filter_treeview(tree, query):
 def background_load_task(path):
     level_json = sav_to_json(path)
     group_data_list = level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']
+    world_tick = 0
+    try:
+        world_tick = level_json['properties']['worldSaveData']['value']['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
+    except:
+        pass
     player_files = []
     for group in group_data_list:
         if group['value']['GroupType']['value']['value'] == 'EPalGroupType::Guild':
@@ -224,7 +337,10 @@ def background_load_task(path):
             for p in players:
                 uid = str(p.get('player_uid', '')).replace('-', '')
                 name = p.get('player_info', {}).get('player_name', 'Unknown')
-                player_files.append((uid, name, guild_id))
+                level = get_player_level_from_cspm(level_json, uid)
+                last_online_time = p.get('player_info', {}).get('last_online_real_time', 0)
+                last_seen = format_last_seen(last_online_time, world_tick)
+                player_files.append((uid, name, guild_id, level, last_seen))
     return (player_files, level_json)
 def choose_level_file(window, level_sav_entry, old_tree, new_tree):
     path, _ = QFileDialog.getOpenFileName(window, t('Select Level.sav file'), '', 'SAV Files(*.sav)')
@@ -240,12 +356,12 @@ def choose_level_file(window, level_sav_entry, old_tree, new_tree):
         level_sav_entry.setText(path)
         old_tree.clear()
         new_tree.clear()
-        for uid, name, guild in player_data_list:
-            old_tree.addTopLevelItem(QTreeWidgetItem([uid, name, guild]))
-            new_tree.addTopLevelItem(QTreeWidgetItem([uid, name, guild]))
+        for uid, name, guild, level, last_seen in player_data_list:
+            old_tree.addTopLevelItem(QTreeWidgetItem([uid, name, guild, str(level), last_seen]))
+            new_tree.addTopLevelItem(QTreeWidgetItem([uid, name, guild, str(level), last_seen]))
         old_tree.original_items = [old_tree.topLevelItem(i) for i in range(old_tree.topLevelItemCount())]
         new_tree.original_items = [new_tree.topLevelItem(i) for i in range(new_tree.topLevelItemCount())]
-        player_list_cache = [f'{u} - {n} - {g}' for u, n, g in player_data_list]
+        player_list_cache = [(u, n, g, l, ls) for u, n, g, l, ls in player_data_list]
     run_with_loading(on_task_complete, task)
 def extract_guid_from_tree_selection(tree):
     selected = tree.selectedItems()
@@ -265,10 +381,11 @@ def fix_save_wrapper(window, level_sav_entry, old_tree, new_tree):
     folder_path = os.path.dirname(file_path)
     fix_save(folder_path, new_guid, old_guid)
     for i, entry in enumerate(player_list_cache):
-        if entry.startswith(old_guid):
-            player_list_cache[i] = entry.replace(old_guid, new_guid, 1)
-        elif entry.startswith(new_guid):
-            player_list_cache[i] = entry.replace(new_guid, old_guid, 1)
+        uid, name, guild, level, last_seen = entry
+        if uid == old_guid:
+            player_list_cache[i] = (new_guid, name, guild, level, last_seen)
+        elif uid == new_guid:
+            player_list_cache[i] = (old_guid, name, guild, level, last_seen)
     populate_player_tree(old_tree, folder_path)
     populate_player_tree(new_tree, folder_path)
 def center_window(win):
@@ -330,7 +447,7 @@ class FixHostSaveWindow(QWidget):
         old_search_row.addWidget(self.old_search_entry)
         old_panel_layout.addLayout(old_search_row)
         self.old_tree = QTreeWidget()
-        self.old_tree.setHeaderLabels([t('GUID'), t('Name'), t('Guild ID')])
+        self.old_tree.setHeaderLabels([t('GUID'), t('Name'), t('Guild ID'), t('Level'), t('Last Seen')])
         self.old_tree.setSortingEnabled(True)
         self.old_tree.setSelectionMode(QTreeWidget.SingleSelection)
         old_panel_layout.addWidget(self.old_tree, 1)
@@ -355,7 +472,7 @@ class FixHostSaveWindow(QWidget):
         new_search_row.addWidget(self.new_search_entry)
         new_panel_layout.addLayout(new_search_row)
         self.new_tree = QTreeWidget()
-        self.new_tree.setHeaderLabels([t('GUID'), t('Name'), t('Guild ID')])
+        self.new_tree.setHeaderLabels([t('GUID'), t('Name'), t('Guild ID'), t('Level'), t('Last Seen')])
         self.new_tree.setSortingEnabled(True)
         self.new_tree.setSelectionMode(QTreeWidget.SingleSelection)
         new_panel_layout.addWidget(self.new_tree, 1)
@@ -372,10 +489,14 @@ class FixHostSaveWindow(QWidget):
         old_header_widget.setSectionResizeMode(0, QHeaderView.Stretch)
         old_header_widget.setSectionResizeMode(1, QHeaderView.Stretch)
         old_header_widget.setSectionResizeMode(2, QHeaderView.Stretch)
+        old_header_widget.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        old_header_widget.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         new_header_widget = self.new_tree.header()
         new_header_widget.setSectionResizeMode(0, QHeaderView.Stretch)
         new_header_widget.setSectionResizeMode(1, QHeaderView.Stretch)
         new_header_widget.setSectionResizeMode(2, QHeaderView.Stretch)
+        new_header_widget.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        new_header_widget.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         self.browse_button.clicked.connect(lambda: choose_level_file(self, self.level_sav_entry, self.old_tree, self.new_tree))
         self.migrate_button.clicked.connect(lambda: fix_save_wrapper(self, self.level_sav_entry, self.old_tree, self.new_tree))
         self.old_search_entry.textChanged.connect(lambda: filter_treeview(self.old_tree, self.old_search_entry.text()))

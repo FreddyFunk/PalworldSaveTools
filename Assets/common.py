@@ -1,6 +1,6 @@
 import os, sys, subprocess
 APP_NAME = 'PalworldSaveTools'
-APP_VERSION = '1.1.59'
+APP_VERSION = '1.1.60'
 GAME_VERSION = '0.7.1'
 def get_base_directory():
     if getattr(sys, 'frozen', False):

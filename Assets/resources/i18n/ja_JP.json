@@ -784,5 +784,16 @@
   "character_transfer.source_player_level_2": "ソースプレーヤーは最低レベル2である必要があります。\n現在のレベル：{level}",
   "character_transfer.source_player_not_leveled": "ソースプレーヤーはまだレベルアップしていません。まずゲーム内でレベルアップしてください。",
   "character_transfer.target_player_level_2": "ターゲットプレーヤーは最低レベル2である必要があります。\n現在のレベル：{level}",
-  "character_transfer.target_player_not_leveled": "ターゲットプレーヤーはまだレベルアップしていません。まずゲーム内でレベルアップしてください。"
+  "character_transfer.target_player_not_leveled": "ターゲットプレーヤーはまだレベルアップしていません。まずゲーム内でレベルアップしてください。",
+  "Level": "レベル",
+  "Last Seen": "最終ログイン",
+  "base.import.no_bases": "このセーブデータにベースをインポートできません。\n\nこのセーブデータにはベースがありません。\n\nまずゲーム内でパルボックスを配置してベースを作成してから、再度インポートしてください。",
+  "tool.convert.levelmeta.to_json": "LevelMeta.savをJSONに変換",
+  "tool.convert.levelmeta.to_sav": "LevelMeta.jsonをSAVに変換",
+  "tool.convert.worldoption.to_json": "WorldOption.savをJSONに変換",
+  "tool.convert.worldoption.to_sav": "WorldOption.jsonをSAVに変換",
+  "tool.convert.levelmeta_done": "{source}が{target}に変換されました",
+  "tool.convert.worldoption_done": "{source}が{target}に変換されました",
+  "menu.file.load_worldoption": "ワールドオプションを読み込む",
+  "menu.file.load_levelmeta": "Load LevelMeta"
 }

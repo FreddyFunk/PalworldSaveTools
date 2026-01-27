@@ -763,6 +763,10 @@
   "tool.convert.players.to_sav": "Convert Player files back to sav format",
   "tool.convert.players_done": "Converted {count} player files.",
   "tool.convert.saves": "Convert Save Files",
+  "tool.convert.levelmeta.to_json": "Convert LevelMeta.sav to JSON",
+  "tool.convert.levelmeta.to_sav": "Convert LevelMeta.json to SAV",
+  "tool.convert.worldoption.to_json": "Convert WorldOption.sav to JSON",
+  "tool.convert.worldoption.to_sav": "Convert WorldOption.json to SAV",
   "tool.convert.steamid": "Convert SteamID",
   "tool.deletion": "All in One Tools",
   "tool.fix_host_save": "Fix Host Save",
@@ -841,5 +845,12 @@
   "character_transfer.source_player_level_2": "Source player must be at least level 2.\nCurrent level: {level}",
   "character_transfer.source_player_not_leveled": "Source player has not leveled up yet. Please level up in-game first.",
   "character_transfer.target_player_level_2": "Target player must be at least level 2.\nCurrent level: {level}",
-  "character_transfer.target_player_not_leveled": "Target player has not leveled up yet. Please level up in-game first."
+  "character_transfer.target_player_not_leveled": "Target player has not leveled up yet. Please level up in-game first.",
+  "Level": "Level",
+  "Last Seen": "Last Seen",
+  "base.import.no_bases": "Cannot import base to this save.\n\nThis save does not have any bases.\n\nPlease create a base first by placing a Palbox in-game, then try importing again.",
+  "tool.convert.levelmeta_done": "{source} converted to {target}",
+  "tool.convert.worldoption_done": "{source} converted to {target}",
+  "menu.file.load_worldoption": "Load WorldOption",
+  "menu.file.load_levelmeta": "Load LevelMeta"
 }

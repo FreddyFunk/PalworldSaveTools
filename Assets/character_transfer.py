@@ -3,6 +3,22 @@ from PySide6.QtWidgets import QHeaderView, QWidget, QTreeWidget, QTreeWidgetItem
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon, QFont
 player_list_cache = []
+def format_last_seen(last_online_time, current_tick):
+    try:
+        if last_online_time is None or last_online_time == 0:
+            return 'Unknown'
+        diff = (current_tick - last_online_time) / 10000000.0
+        days = int(diff // 86400)
+        hours = int(diff % 86400 // 3600)
+        mins = int(diff % 3600 // 60)
+        if days > 0:
+            return f'{days}d {hours}h'
+        elif hours > 0:
+            return f'{hours}h {mins}m'
+        else:
+            return f'{mins}m'
+    except:
+        return 'Unknown'
 def get_player_level_from_cspm(level_json, player_uid):
     try:
         player_uid_lower = str(player_uid).lower().replace('-', '')
@@ -31,7 +47,7 @@ target_section_ranges, target_save_type, target_raw_gvas, targ_json_gvas = (None
 selected_source_player, selected_target_player = (None, None)
 source_guild_dict, target_guild_dict = (dict(), dict())
 source_section_load_handle, target_section_load_handle = (None, None)
-target_world_tick = 0
+source_world_tick, target_world_tick = (0, 0)
 STRUCT_START = b'\x0f\x00\x00\x00StructProperty\x00'
 MAP_START = b'\x0c\x00\x00\x00MapProperty\x00'
 ARRAY_START = b'\x0e\x00\x00\x00ArrayProperty\x00'
@@ -255,13 +271,15 @@ class CharacterTransferWindow(QWidget):
         self.source_search_entry.textChanged.connect(lambda txt: self.filter_treeview(self.source_player_list, txt, True))
         source_panel_layout.addWidget(self.source_search_entry)
         self.source_player_list = QTreeWidget()
-        self.source_player_list.setHeaderLabels([t('Guild ID'), t('GUID'), t('Name')])
+        self.source_player_list.setHeaderLabels([t('Guild ID'), t('GUID'), t('Name'), t('Level'), t('Last Seen')])
         self.source_player_list.itemSelectionChanged.connect(self.on_selection_of_source_player)
         self.source_player_list.setSortingEnabled(True)
         src_header = self.source_player_list.header()
         src_header.setSectionResizeMode(0, QHeaderView.Stretch)
         src_header.setSectionResizeMode(1, QHeaderView.Stretch)
         src_header.setSectionResizeMode(2, QHeaderView.Stretch)
+        src_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        src_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         source_panel_layout.addWidget(self.source_player_list, 1)
         trees_layout.addWidget(source_panel, 1)
         target_panel = QFrame()
@@ -278,13 +296,15 @@ class CharacterTransferWindow(QWidget):
         self.target_search_entry.textChanged.connect(lambda txt: self.filter_treeview(self.target_player_list, txt, False))
         target_panel_layout.addWidget(self.target_search_entry)
         self.target_player_list = QTreeWidget()
-        self.target_player_list.setHeaderLabels([t('Guild ID'), t('GUID'), t('Name')])
+        self.target_player_list.setHeaderLabels([t('Guild ID'), t('GUID'), t('Name'), t('Level'), t('Last Seen')])
         self.target_player_list.itemSelectionChanged.connect(self.on_selection_of_target_player)
         self.target_player_list.setSortingEnabled(True)
         tgt_header = self.target_player_list.header()
         tgt_header.setSectionResizeMode(0, QHeaderView.Stretch)
         tgt_header.setSectionResizeMode(1, QHeaderView.Stretch)
         tgt_header.setSectionResizeMode(2, QHeaderView.Stretch)
+        tgt_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        tgt_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         target_panel_layout.addWidget(self.target_player_list, 1)
         trees_layout.addWidget(target_panel, 1)
         glass_layout.addLayout(trees_layout)
@@ -740,7 +760,6 @@ def transfer_character_only(host_guid, targ_uid):
         except:
             pass
     if not exported_map:
-        print(f'[ERROR]Could not find exported_map for {host_guid}')
         return False
     targ_instance_id = targ_json['SaveData']['value']['IndividualId']['value']['InstanceId']['value']
     char_list = targ_lvl.setdefault('CharacterSaveParameterMap', {}).setdefault('value', [])
@@ -994,10 +1013,16 @@ def load_players(save_json, is_source):
             guild_dict[group_id] = group_data
     list_box = source_player_list if is_source else target_player_list
     list_box.clear()
+    current_tick = source_world_tick if is_source else target_world_tick
+    cspm_json = level_json if is_source else targ_lvl
     for guild_id, player_items in players.items():
         for player_item in player_items:
             playerUId = ''.join(safe_uuid_str(player_item['player_uid']).split('-')).upper()
-            item = QTreeWidgetItem([safe_uuid_str(guild_id), playerUId, player_item['player_info']['player_name']])
+            player_name = player_item['player_info']['player_name']
+            player_level = get_player_level_from_cspm(cspm_json, playerUId)
+            last_online_time = player_item.get('player_info', {}).get('last_online_real_time', 0)
+            last_seen = format_last_seen(last_online_time, current_tick)
+            item = QTreeWidgetItem([safe_uuid_str(guild_id), playerUId, player_name, str(player_level), last_seen])
             list_box.addTopLevelItem(item)
 def load_all_source_sections_async(group_save_section, reader):
     global level_json
@@ -1020,11 +1045,17 @@ def source_level_file():
     import gc
     gc.collect()
     def task():
+        global source_world_tick
         raw_gvas, save_type = load_file(tmp)
         if not raw_gvas:
             return None
         print('Now loading the data from Source Save...')
         reader = MyReader(raw_gvas, PALWORLD_TYPE_HINTS, PALWORLD_CUSTOM_PROPERTIES)
+        try:
+            temp_lvl, _ = reader.load_sections([('GameTimeSaveData', STRUCT_START)], path='.worldSaveData')
+            source_world_tick = temp_lvl['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
+        except:
+            source_world_tick = 0
         group_save_section, _ = reader.load_section('GroupSaveDataMap', MAP_START, reverse=True)
         source_section_load_handle = threading.Thread(target=load_all_source_sections_async, args=(group_save_section, reader))
         source_section_load_handle.start()

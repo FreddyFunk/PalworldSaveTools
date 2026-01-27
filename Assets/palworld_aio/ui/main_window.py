@@ -363,7 +363,7 @@ class MainWindow(QMainWindow):
         self.tab_bar.addTab(t('deletion.menu.exclusions') if t else 'Exclusions')
         self.stacked_widget.addWidget(exclusions_tab)
     def _setup_menus(self):
-        menu_actions = {'file': [(t('menu.file.load_save') if t else 'Load Save', self._load_save), (t('menu.file.save_changes') if t else 'Save Changes', self._save_changes), (t('menu.file.rename_world') if t else 'Rename World', self._rename_world)], 'functions': [(t('deletion.menu.delete_empty_guilds') if t else 'Delete Empty Guilds', self._delete_empty_guilds), (t('deletion.menu.delete_inactive_bases') if t else 'Delete Inactive Bases', self._delete_inactive_bases), (t('deletion.menu.delete_duplicate_players') if t else 'Delete Duplicate Players', self._delete_duplicate_players), (t('deletion.menu.delete_inactive_players') if t else 'Delete Inactive Players', self._delete_inactive_players), (t('deletion.menu.delete_unreferenced') if t else 'Delete Unreferenced Data', self._delete_unreferenced), (t('deletion.menu.delete_non_base_map_objs') if t else 'Delete Non-Base Map Objects', self._delete_non_base_map_objs), (t('deletion.menu.delete_all_skins') if t else 'Delete All Skins', self._delete_all_skins), (t('deletion.menu.unlock_private_chests') if t else 'Unlock Private Chests', self._unlock_private_chests), (t('deletion.menu.remove_invalid_items') if t else 'Remove Invalid Items', self._remove_invalid_items), (t('deletion.menu.remove_invalid_structures') if t else 'Remove Invalid Structures', self._remove_invalid_structures), (t('deletion.menu.remove_invalid_pals') if t else 'Remove Invalid Pals', self._remove_invalid_pals), (t('deletion.menu.remove_invalid_passives') if t else 'Remove Invalid Passives', self._remove_invalid_passives), (t('deletion.menu.reset_missions') if t else 'Reset Missions', self._reset_missions), (t('deletion.menu.reset_anti_air') if t else 'Reset Anti-Air Turrets', self._reset_anti_air), (t('deletion.menu.reset_dungeons') if t else 'Reset Dungeons', self._reset_dungeons), (t('deletion.menu.paldefender') if t else 'PalDefender Commands', self._open_paldefender, 'separator_after'), (t('deletion.menu.fix_timestamps') if t else 'Fix All Negative Timestamps', self._fix_all_timestamps, 'separator_after'), (t('base.export_all') if t else 'Export All Bases', self._export_all_bases), (t('guild.menu.rebuild_all_guilds') if t else 'Rebuild All Guilds', self._rebuild_all_guilds), (t('guild.menu.move_selected_player_to_selected_guild') if t else 'Move Player to Guild', self._move_player_to_guild), (t('deletion.menu.trim_overfilled_inventories') if t else 'Trim Overfilled Inventories', self._trim_overfilled_inventories), (t('modify_container_slots') if t else 'Modify Container Slots', self._modify_container_slots), 'separator_after'], 'maps': [(t('deletion.menu.show_map') if t else 'Show Map', self._show_map), (t('deletion.menu.generate_map') if t else 'Generate Map', self._generate_map)], 'exclusions': [(t('deletion.menu.save_exclusions') if t else 'Save Exclusions', self._save_exclusions)], 'languages': [(t(f'lang.{code}') if t else code, partial(self._change_language, code), {'en_US': '🇺🇸', 'zh_CN': '🇨🇳', 'ru_RU': '🇷🇺', 'fr_FR': '🇫🇷', 'es_ES': '🇪🇸', 'de_DE': '🇩🇪', 'ja_JP': '🇯🇵', 'ko_KR': '🇰🇷'}[code]) for code in ['en_US', 'zh_CN', 'ru_RU', 'fr_FR', 'es_ES', 'de_DE', 'ja_JP', 'ko_KR']]}
+        menu_actions = {'file': [(t('menu.file.load_save') if t else 'Load Save', self._load_save), (t('menu.file.load_worldoption') if t else 'Load WorldOption', self._load_worldoption), (t('menu.file.load_levelmeta') if t else 'Load LevelMeta', self._load_levelmeta), (t('menu.file.save_changes') if t else 'Save Changes', self._save_changes), (t('menu.file.rename_world') if t else 'Rename World', self._rename_world)], 'functions': [(t('deletion.menu.delete_empty_guilds') if t else 'Delete Empty Guilds', self._delete_empty_guilds), (t('deletion.menu.delete_inactive_bases') if t else 'Delete Inactive Bases', self._delete_inactive_bases), (t('deletion.menu.delete_duplicate_players') if t else 'Delete Duplicate Players', self._delete_duplicate_players), (t('deletion.menu.delete_inactive_players') if t else 'Delete Inactive Players', self._delete_inactive_players), (t('deletion.menu.delete_unreferenced') if t else 'Delete Unreferenced Data', self._delete_unreferenced), (t('deletion.menu.delete_non_base_map_objs') if t else 'Delete Non-Base Map Objects', self._delete_non_base_map_objs), (t('deletion.menu.delete_all_skins') if t else 'Delete All Skins', self._delete_all_skins), (t('deletion.menu.unlock_private_chests') if t else 'Unlock Private Chests', self._unlock_private_chests), (t('deletion.menu.remove_invalid_items') if t else 'Remove Invalid Items', self._remove_invalid_items), (t('deletion.menu.remove_invalid_structures') if t else 'Remove Invalid Structures', self._remove_invalid_structures), (t('deletion.menu.remove_invalid_pals') if t else 'Remove Invalid Pals', self._remove_invalid_pals), (t('deletion.menu.remove_invalid_passives') if t else 'Remove Invalid Passives', self._remove_invalid_passives), (t('deletion.menu.reset_missions') if t else 'Reset Missions', self._reset_missions), (t('deletion.menu.reset_anti_air') if t else 'Reset Anti-Air Turrets', self._reset_anti_air), (t('deletion.menu.reset_dungeons') if t else 'Reset Dungeons', self._reset_dungeons), (t('deletion.menu.paldefender') if t else 'PalDefender Commands', self._open_paldefender, 'separator_after'), (t('deletion.menu.fix_timestamps') if t else 'Fix All Negative Timestamps', self._fix_all_timestamps, 'separator_after'), (t('base.export_all') if t else 'Export All Bases', self._export_all_bases), (t('guild.menu.rebuild_all_guilds') if t else 'Rebuild All Guilds', self._rebuild_all_guilds), (t('guild.menu.move_selected_player_to_selected_guild') if t else 'Move Player to Guild', self._move_player_to_guild), (t('deletion.menu.trim_overfilled_inventories') if t else 'Trim Overfilled Inventories', self._trim_overfilled_inventories), (t('modify_container_slots') if t else 'Modify Container Slots', self._modify_container_slots), 'separator_after'], 'maps': [(t('deletion.menu.show_map') if t else 'Show Map', self._show_map), (t('deletion.menu.generate_map') if t else 'Generate Map', self._generate_map)], 'exclusions': [(t('deletion.menu.save_exclusions') if t else 'Save Exclusions', self._save_exclusions)], 'languages': [(t(f'lang.{code}') if t else code, partial(self._change_language, code), {'en_US': '🇺🇸', 'zh_CN': '🇨🇳', 'ru_RU': '🇷🇺', 'fr_FR': '🇫🇷', 'es_ES': '🇪🇸', 'de_DE': '🇩🇪', 'ja_JP': '🇯🇵', 'ko_KR': '🇰🇷'}[code]) for code in ['en_US', 'zh_CN', 'ru_RU', 'fr_FR', 'es_ES', 'de_DE', 'ja_JP', 'ko_KR']]}
         self.header_widget.set_menu_actions(menu_actions)
     def _create_action(self, text, callback):
         action = QAction(text, self)
@@ -374,8 +374,8 @@ class MainWindow(QMainWindow):
         save_manager.save_finished.connect(self._on_save_finished)
     def _create_message_box(self, icon=QMessageBox.Information):
         msg_box = QMessageBox(self)
-        msg_box.setWindowFlags(Qt.Dialog | Qt.WindowType.Window)
-        msg_box.setWindowModality(Qt.WindowModal)
+        msg_box.setWindowFlags(Qt.Dialog | Qt.WindowType.Window | Qt.WindowStaysOnTopHint)
+        msg_box.setWindowModality(Qt.ApplicationModal)
         msg_box.setIcon(icon)
         return msg_box
     def _show_info(self, title, text):
@@ -780,6 +780,44 @@ class MainWindow(QMainWindow):
             msg_box.setWindowTitle(t('success.title'))
             msg_box.setText(t('world.rename.done'))
             msg_box.exec()
+    def _load_worldoption(self):
+        from ..utils import sav_to_json
+        sav_path, _ = QFileDialog.getOpenFileName(self, t('menu.file.load_worldoption') if t else 'Load WorldOption', '', 'WorldOption.sav (WorldOption.sav)')
+        if not sav_path:
+            return
+        if not os.path.basename(sav_path).startswith('WorldOption'):
+            self._show_warning(t('error.title') if t else 'Error', 'Please select a WorldOption.sav file')
+            return
+        try:
+            json_data = sav_to_json(sav_path)
+            if 'properties' not in json_data or 'OptionWorldData' not in json_data.get('properties', {}):
+                self._show_warning(t('error.title') if t else 'Error', 'Invalid WorldOption.sav structure')
+                return
+            from worldoption_editor import edit_worldoption_settings
+            result = edit_worldoption_settings(json_data, sav_path, self)
+            if result:
+                self._show_info(t('success.title') if t else 'Success', f'WorldOption settings saved successfully!\n\nLocation: {sav_path}')
+        except Exception as e:
+            self._show_error(t('error.title') if t else 'Error', f'Failed to load WorldOption.sav:\n{str(e)}')
+    def _load_levelmeta(self):
+        from ..utils import sav_to_json
+        sav_path, _ = QFileDialog.getOpenFileName(self, t('menu.file.load_levelmeta') if t else 'Load LevelMeta', '', 'LevelMeta.sav (LevelMeta.sav)')
+        if not sav_path:
+            return
+        if not os.path.basename(sav_path).startswith('LevelMeta'):
+            self._show_warning(t('error.title') if t else 'Error', 'Please select a LevelMeta.sav file')
+            return
+        try:
+            json_data = sav_to_json(sav_path)
+            if 'properties' not in json_data or 'SaveData' not in json_data.get('properties', {}):
+                self._show_warning(t('error.title') if t else 'Error', 'Invalid LevelMeta.sav structure')
+                return
+            from levelmeta_editor import edit_levelmeta_settings
+            result = edit_levelmeta_settings(json_data, sav_path, self)
+            if result:
+                self._show_info(t('success.title') if t else 'Success', f'LevelMeta settings saved successfully!\n\nLocation: {sav_path}')
+        except Exception as e:
+            self._show_error(t('error.title') if t else 'Error', f'Failed to load LevelMeta.sav:\n{str(e)}')
     def _delete_empty_guilds(self):
         if not constants.loaded_level_json:
             msg_box = self._create_message_box(QMessageBox.Warning)
@@ -1167,6 +1205,11 @@ class MainWindow(QMainWindow):
         self.refresh_all()
         self._show_info(t('Done'), t('guild.leader_changed'))
     def _import_base_to_guild(self, gid):
+        wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+        base_camp_data = wsd.get('BaseCampSaveData', {}).get('value', [])
+        if not base_camp_data or len(base_camp_data) == 0:
+            self._show_warning(t('warning.title') if t else 'Warning', t('base.import.no_bases') if t else 'Cannot import base to this save.\n\nThis save does not have any bases.\n\nPlease create a base first by placing a Palbox in-game, then try importing again.')
+            return
         file_paths, _ = QFileDialog.getOpenFileNames(self, 'Select Base JSON Files', '', 'JSON Files(*.json)')
         if not file_paths:
             return

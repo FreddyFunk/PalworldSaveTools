@@ -775,5 +775,16 @@
   "character_transfer.source_player_level_2": "El jugador origen debe ser al menos nivel 2.\nNivel actual: {level}",
   "character_transfer.source_player_not_leveled": "El jugador origen aún no ha subido de nivel. Por favor, sube de nivel en el juego primero.",
   "character_transfer.target_player_level_2": "El jugador objetivo debe ser al menos nivel 2.\nNivel actual: {level}",
-  "character_transfer.target_player_not_leveled": "El jugador objetivo aún no ha subido de nivel. Por favor, sube de nivel en el juego primero."
+  "character_transfer.target_player_not_leveled": "El jugador objetivo aún no ha subido de nivel. Por favor, sube de nivel en el juego primero.",
+  "Level": "Nivel",
+  "Last Seen": "Visto por última vez",
+  "base.import.no_bases": "No se puede importar una base a este guardado.\n\nEste guardado no tiene bases.\n\nPor favor, crea primero una base colocando una Caja Pal en el juego, luego intenta importar de nuevo.",
+  "tool.convert.levelmeta.to_json": "Convertir LevelMeta.sav a JSON",
+  "tool.convert.levelmeta.to_sav": "Convertir LevelMeta.json a SAV",
+  "tool.convert.worldoption.to_json": "Convertir WorldOption.sav a JSON",
+  "tool.convert.worldoption.to_sav": "Convertir WorldOption.json a SAV",
+  "tool.convert.levelmeta_done": "{source} convertido a {target}",
+  "tool.convert.worldoption_done": "{source} convertido a {target}",
+  "menu.file.load_worldoption": "Cargar Opción del Mundo",
+  "menu.file.load_levelmeta": "Load LevelMeta"
 }

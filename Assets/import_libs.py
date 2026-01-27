@@ -1,6 +1,4 @@
 import os, warnings, ssl
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-warnings.filterwarnings('ignore', category=UserWarning, module='pygame.pkgdata')
 import sys, argparse, code, collections, copy, ctypes, datetime, functools, gc, importlib.metadata, json, shutil, glob
 import logging, multiprocessing, platform, pprint, re, subprocess, tarfile, threading, pickle, zipfile, string, palworld_coord
 import time, traceback, uuid, io, pathlib, csv, urllib.request, tempfile, random, pandas as pd
@@ -25,7 +23,6 @@ except ImportError:
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QDialog, QMessageBox, QFileDialog, QInputDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QComboBox, QTextEdit, QTreeWidget, QTreeWidgetItem, QProgressBar, QCheckBox, QRadioButton, QGroupBox, QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView, QSplitter, QScrollArea, QFrame, QMenuBar, QMenu, QStatusBar, QSystemTrayIcon, QStyle, QCommonStyle
 from PySide6.QtGui import QPixmap, QIcon, QFont, QPainter, QPen, QBrush, QColor, QAction
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QObject, QEvent, QSize, QPoint, QRect
-from PIL import Image, ImageDraw, ImageOps, ImageFont
 try:
     from i18n import init_language, t, set_language, get_language, load_resources
 except Exception:
@@ -51,7 +48,6 @@ from palworld_save_tools.json_tools import *
 from palworld_coord import sav_to_map
 from common import ICON_PATH
 from collections import defaultdict
-import pygame
 from common import *
 from loading_manager import *
 def backup_whole_directory(source_folder, backup_folder):

@@ -781,5 +781,16 @@
   "character_transfer.source_player_level_2": "Исходный игрок должен быть не менее 2 уровня.\nТекущий уровень: {level}",
   "character_transfer.source_player_not_leveled": "Исходный игрок еще не повысил уровень. Пожалуйста, сначала повысите уровень в игре.",
   "character_transfer.target_player_level_2": "Целевой игрок должен быть не менее 2 уровня.\nТекущий уровень: {level}",
-  "character_transfer.target_player_not_leveled": "Целевой игрок еще не повысил уровень. Пожалуйста, сначала повысите уровень в игре."
+  "character_transfer.target_player_not_leveled": "Целевой игрок еще не повысил уровень. Пожалуйста, сначала повысите уровень в игре.",
+  "Level": "Уровень",
+  "Last Seen": "Был в сети",
+  "base.import.no_bases": "Невозможно импортировать базу в это сохранение.\n\nВ этом сохранении нет баз.\n\nПожалуйста, сначала создайте базу, разместив ящик для pals (Palbox) в игре, а затем попробуйте импортировать снова.",
+  "tool.convert.levelmeta.to_json": "Конвертировать LevelMeta.sav в JSON",
+  "tool.convert.levelmeta.to_sav": "Конвертировать LevelMeta.json в SAV",
+  "tool.convert.worldoption.to_json": "Конвертировать WorldOption.sav в JSON",
+  "tool.convert.worldoption.to_sav": "Конвертировать WorldOption.json в SAV",
+  "tool.convert.levelmeta_done": "{source} конвертирован в {target}",
+  "tool.convert.worldoption_done": "{source} конвертирован в {target}",
+  "menu.file.load_worldoption": "Загрузить настройки мира",
+  "menu.file.load_levelmeta": "Load LevelMeta"
 }

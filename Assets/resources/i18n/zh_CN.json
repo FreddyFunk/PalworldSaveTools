@@ -784,5 +784,16 @@
   "character_transfer.source_player_level_2": "源玩家必须至少达到 2 级。\n当前等级：{level}",
   "character_transfer.source_player_not_leveled": "源玩家尚未升级。请先在游戏中升级。",
   "character_transfer.target_player_level_2": "目标玩家必须至少达到 2 级。\n当前等级：{level}",
-  "character_transfer.target_player_not_leveled": "目标玩家尚未升级。请先在游戏中升级。"
+  "character_transfer.target_player_not_leveled": "目标玩家尚未升级。请先在游戏中升级。",
+  "Level": "等级",
+  "Last Seen": "最后在线",
+  "base.import.no_bases": "无法将基地导入此存档。\n\n此存档没有任何基地。\n\n请先在游戏中放置帕魔盒来创建基地，然后再尝试导入。",
+  "tool.convert.levelmeta.to_json": "将 LevelMeta.sav 转换为 JSON",
+  "tool.convert.levelmeta.to_sav": "将 LevelMeta.json 转换为 SAV",
+  "tool.convert.worldoption.to_json": "将 WorldOption.sav 转换为 JSON",
+  "tool.convert.worldoption.to_sav": "将 WorldOption.json 转换为 SAV",
+  "tool.convert.levelmeta_done": "{source} 已转换为 {target}",
+  "tool.convert.worldoption_done": "{source} 已转换为 {target}",
+  "menu.file.load_worldoption": "加载世界选项",
+  "menu.file.load_levelmeta": "Load LevelMeta"
 }
