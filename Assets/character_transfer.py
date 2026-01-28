@@ -798,6 +798,7 @@ def transfer_character_only(host_guid, targ_uid):
         except:
             pass
     if not exported_map:
+        print(f'[ERROR]Could not find exported_map for {host_guid}')
         return False
     targ_instance_id = targ_json['SaveData']['value']['IndividualId']['value']['InstanceId']['value']
     char_list = targ_lvl.setdefault('CharacterSaveParameterMap', {}).setdefault('value', [])
@@ -810,17 +811,13 @@ def transfer_character_only(host_guid, targ_uid):
             break
     if not updated:
         char_list.append(fast_deepcopy(exported_map))
-    inv_src = gather_inventory_ids(host_json)
-    pal_id = host_json['SaveData']['value']['PalStorageContainerId']['value']['ID']['value']
-    oto_id = host_json['SaveData']['value']['OtomoCharacterContainerId']['value']['ID']['value']
-    relevant_container_ids = set(inv_src.values()) | {pal_id, oto_id}
     targ_lvl.setdefault('CharacterContainerSaveData', {'value': []})
     targ_lvl.setdefault('ItemContainerSaveData', {'value': []})
     for container_list in ('CharacterContainerSaveData', 'ItemContainerSaveData'):
         existing_ids = {c.get('key', {}).get('ID', {}).get('value') for c in targ_lvl[container_list]['value']}
         for c in level_json.get(container_list, {}).get('value', []):
             cid = c['key']['ID']['value']
-            if cid in relevant_container_ids and cid not in existing_ids:
+            if cid not in existing_ids:
                 targ_lvl[container_list]['value'].append(fast_deepcopy(c))
     return True
 def transfer_inventory_only():
