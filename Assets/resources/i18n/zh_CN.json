@@ -795,5 +795,6 @@
   "tool.convert.levelmeta_done": "{source} 已转换为 {target}",
   "tool.convert.worldoption_done": "{source} 已转换为 {target}",
   "menu.file.load_worldoption": "加载世界选项",
-  "menu.file.load_levelmeta": "Load LevelMeta"
+  "menu.file.load_levelmeta": "Load LevelMeta",
+  "player.level.minimum_level": "无法设置玩家等级 - 最低等级为 2"
 }

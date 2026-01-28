@@ -795,5 +795,6 @@
   "tool.convert.levelmeta_done": "{source}が{target}に変換されました",
   "tool.convert.worldoption_done": "{source}が{target}に変換されました",
   "menu.file.load_worldoption": "ワールドオプションを読み込む",
-  "menu.file.load_levelmeta": "Load LevelMeta"
+  "menu.file.load_levelmeta": "Load LevelMeta",
+  "player.level.minimum_level": "プレーヤーのレベルを設定できません - 最小レベルは 2 です"
 }

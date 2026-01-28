@@ -816,5 +816,6 @@
   "tool.convert.levelmeta_done": "{source} in {target} konvertiert",
   "tool.convert.worldoption_done": "{source} in {target} konvertiert",
   "menu.file.load_worldoption": "Weltoption laden",
-  "menu.file.load_levelmeta": "Load LevelMeta"
+  "menu.file.load_levelmeta": "Load LevelMeta",
+  "player.level.minimum_level": "Spielerlevel kann nicht festgelegt werden – Mindestlevel ist 2"
 }

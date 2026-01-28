@@ -39,13 +39,17 @@ def rename_player(player_uid, new_name):
     char_map = wsd.get('CharacterSaveParameterMap', {}).get('value', [])
     for entry in char_map:
         raw = entry.get('value', {}).get('RawData', {}).get('value', {})
-        sp_val = raw.get('object', {}).get('SaveParameter', {}).get('value', {})
-        if sp_val.get('IsPlayer', {}).get('value'):
-            uid_obj = entry.get('key', {}).get('PlayerUId', {})
-            uid = str(uid_obj.get('value', '')).replace('-', '') if isinstance(uid_obj, dict) else ''
-            if uid == p_uid_clean:
-                sp_val.setdefault('NickName', {})['value'] = new_name
-                break
+        sp = raw.get('object', {}).get('SaveParameter', {})
+        if sp.get('struct_type') != 'PalIndividualCharacterSaveParameter':
+            continue
+        sp_val = sp.get('value', {})
+        if not sp_val.get('IsPlayer', {}).get('value'):
+            continue
+        uid_obj = entry.get('key', {}).get('PlayerUId', {})
+        uid = str(uid_obj.get('value', '')).replace('-', '') if isinstance(uid_obj, dict) else ''
+        if uid == p_uid_clean:
+            sp_val.setdefault('NickName', {})['value'] = new_name
+            break
     return True
 def get_player_info(player_uid):
     if not constants.loaded_level_json:
@@ -105,23 +109,26 @@ def set_player_level(player_uid, new_level):
     char_map = wsd.get('CharacterSaveParameterMap', {}).get('value', [])
     for entry in char_map:
         raw = entry.get('value', {}).get('RawData', {}).get('value', {})
-        sp_val = raw.get('object', {}).get('SaveParameter', {}).get('value', {})
-        if sp_val.get('IsPlayer', {}).get('value'):
-            uid_obj = entry.get('key', {}).get('PlayerUId', {})
-            uid = str(uid_obj.get('value', '')).replace('-', '') if isinstance(uid_obj, dict) else ''
-            if uid == uid_clean:
-                if 'Level' not in sp_val:
-                    from i18n import t
-                    parent = QApplication.activeWindow()
-                    QMessageBox.warning(parent, t('player.level.set_no_level_title') if t else 'Cannot Set Level', t('player.level.set_no_level_data') if t else 'This player has not leveled up yet. Please have them level up in-game first before using this tool.')
-                    return False
-                sp_val['Level']['value']['value'] = new_level
-                if 'Exp' not in sp_val:
-                    sp_val['Exp'] = {'value': EXP_DATA[str(new_level)]['TotalEXP']}
-                else:
-                    sp_val['Exp']['value'] = EXP_DATA[str(new_level)]['TotalEXP']
-                constants.player_levels[uid] = new_level
-                return True
+        sp = raw.get('object', {}).get('SaveParameter', {})
+        if sp.get('struct_type') != 'PalIndividualCharacterSaveParameter':
+            continue
+        sp_val = sp.get('value', {})
+        if not sp_val.get('IsPlayer', {}).get('value'):
+            continue
+        uid_obj = entry.get('key', {}).get('PlayerUId', {})
+        uid = str(uid_obj.get('value', '')).replace('-', '') if isinstance(uid_obj, dict) else ''
+        if uid == uid_clean:
+            if 'Level' not in sp_val:
+                sp_val['Level'] = {}
+            if 'value' not in sp_val['Level']:
+                sp_val['Level']['value'] = {}
+            sp_val['Level']['value']['value'] = new_level
+            if 'Exp' not in sp_val:
+                sp_val['Exp'] = {'value': EXP_DATA[str(new_level)]['TotalEXP']}
+            else:
+                sp_val['Exp']['value'] = EXP_DATA[str(new_level)]['TotalEXP']
+            constants.player_levels[uid] = new_level
+            return True
     return False
 def adjust_player_level(player_uid, target_level):
     if target_level < 1 or target_level > 65:

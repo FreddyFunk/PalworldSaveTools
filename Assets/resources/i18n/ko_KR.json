@@ -794,5 +794,6 @@
   "tool.convert.levelmeta_done": "{source}이(가) {target}(으)로 변환되었습니다",
   "tool.convert.worldoption_done": "{source}이(가) {target}(으)로 변환되었습니다",
   "menu.file.load_worldoption": "월드옵션 로드",
-  "menu.file.load_levelmeta": "Load LevelMeta"
+  "menu.file.load_levelmeta": "Load LevelMeta",
+  "player.level.minimum_level": "플레이어 레벨을 설정할 수 없습니다. 최소 레벨은 2입니다."
 }

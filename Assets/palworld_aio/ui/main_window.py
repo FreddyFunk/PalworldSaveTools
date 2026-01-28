@@ -1394,6 +1394,9 @@ class MainWindow(QMainWindow):
     def _level_up_player(self, uid):
         from ..player_manager import adjust_player_level, get_level_from_exp
         current_level = constants.player_levels.get(str(uid).replace('-', ''), 1)
+        if current_level == 1 or current_level == '?':
+            self._show_warning(t('Error') if t else 'Error', t('player.level.set_no_level_data') if t else 'Cannot level up player - player is at level 1 or unknown')
+            return
         if adjust_player_level(uid, current_level + 1):
             self.refresh_all()
             self._show_info(t('Done') if t else 'Done', 'Player leveled up successfully')
@@ -1402,6 +1405,12 @@ class MainWindow(QMainWindow):
     def _level_down_player(self, uid):
         from ..player_manager import adjust_player_level, get_level_from_exp
         current_level = constants.player_levels.get(str(uid).replace('-', ''), 1)
+        if current_level == 1 or current_level == '?':
+            self._show_warning(t('Error') if t else 'Error', t('player.level.set_no_level_data') if t else 'Cannot level down player - player is at level 1 or unknown')
+            return
+        if current_level - 1 < 2:
+            self._show_warning(t('Error') if t else 'Error', t('player.level.minimum_level') if t else 'Cannot level down player - minimum level is 2')
+            return
         if adjust_player_level(uid, current_level - 1):
             self.refresh_all()
             self._show_info(t('Done') if t else 'Done', 'Player leveled down successfully')
@@ -1411,8 +1420,14 @@ class MainWindow(QMainWindow):
         from ..player_manager import adjust_player_level, get_level_from_exp
         current_level_raw = constants.player_levels.get(str(uid).replace('-', ''), 1)
         current_level = 1 if current_level_raw == '?' else current_level_raw
-        new_level = LevelInputDialog.get_level(t('player.set_level.title') if t else 'Set Player Level', t('player.set_level.prompt', current_level=current_level) if t else f'Current level: {current_level}\nEnter new level (1-65):', current_level, self)
+        if current_level == 1 or current_level_raw == '?':
+            self._show_warning(t('Error') if t else 'Error', t('player.level.set_no_level_data') if t else 'Cannot set player level - player is at level 1 or unknown')
+            return
+        new_level = LevelInputDialog.get_level(t('player.set_level.title') if t else 'Set Player Level', t('player.set_level.prompt', current_level=current_level) if t else f'Current level: {current_level}\nEnter new level (2-65):', current_level, self)
         if new_level is not None and new_level != current_level:
+            if new_level < 2:
+                self._show_warning(t('Error') if t else 'Error', t('player.level.minimum_level') if t else 'Cannot set player level - minimum level is 2')
+                return
             if adjust_player_level(uid, new_level):
                 self.refresh_all()
                 self._show_info(t('Done') if t else 'Done', t('player.level.set_success', level=new_level) if t else f'Player level set to {new_level}')

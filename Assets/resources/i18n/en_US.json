@@ -616,6 +616,7 @@
   "player.level.set_failed": "Failed to set player level",
   "player.level.set_no_level_data": "This player has not leveled up yet. Please have them level up in-game first before using this tool.",
   "player.level.set_no_level_title": "Cannot Set Level",
+  "player.level.minimum_level": "Cannot set player level - minimum level is 2",
   "player.level.set_success": "Player level set to {level}",
   "player.level_down": "Level Down Player",
   "player.level_up": "Level Up Player",

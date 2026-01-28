@@ -3,6 +3,13 @@ from PySide6.QtWidgets import QHeaderView, QWidget, QTreeWidget, QTreeWidgetItem
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon, QFont
 player_list_cache = []
+def extract_value(data, key, default_value=''):
+    value = data.get(key, default_value)
+    if isinstance(value, dict):
+        value = value.get('value', default_value)
+        if isinstance(value, dict):
+            value = value.get('value', default_value)
+    return value
 def format_last_seen(last_online_time, current_tick):
     try:
         if last_online_time is None or last_online_time == 0:
@@ -21,26 +28,55 @@ def format_last_seen(last_online_time, current_tick):
         return 'Unknown'
 def get_player_level_from_cspm(level_json, player_uid):
     try:
-        player_uid_lower = str(player_uid).lower().replace('-', '')
-        for entry in level_json.get('CharacterSaveParameterMap', {}).get('value', []):
+        player_uid_clean = str(player_uid).lower().replace('-', '')
+        char_map = level_json.get('CharacterSaveParameterMap', {}).get('value', [])
+        uid_level_map = {}
+        for entry in char_map:
             try:
+                sp = entry['value']['RawData']['value']['object']['SaveParameter']
+                if sp['struct_type'] != 'PalIndividualCharacterSaveParameter':
+                    continue
+                sp_val = sp['value']
+                if not sp_val.get('IsPlayer', {}).get('value', False):
+                    continue
                 key = entry.get('key', {})
                 uid_obj = key.get('PlayerUId', {})
-                uid = str(uid_obj.get('value', '') if isinstance(uid_obj, dict) else uid_obj).lower().replace('-', '')
-                if uid == player_uid_lower:
-                    sp_val = entry['value']['RawData']['value']['object']['SaveParameter']['value']
-                    level_info = sp_val.get('Level', {})
-                    if isinstance(level_info, dict):
-                        level_val = level_info.get('value')
-                        if isinstance(level_val, dict):
-                            level_val = level_val.get('value')
-                        return int(level_val) if level_val is not None else 1
-                    return int(level_info) if level_info is not None else 1
-            except:
+                uid = str(uid_obj.get('value', '') if isinstance(uid_obj, dict) else uid_obj)
+                if uid:
+                    uid_clean = uid.lower().replace('-', '')
+                    level = extract_value(sp_val, 'Level', 1)
+                    uid_level_map[uid_clean] = int(level) if level is not None else 1
+            except Exception:
                 continue
+        return uid_level_map.get(player_uid_clean, 1)
+    except Exception:
         return 1
-    except:
-        return 1
+def get_player_pals_count_from_cspm(level_json, player_uid):
+    try:
+        player_uid_clean = str(player_uid).lower().replace('-', '')
+        char_map = level_json.get('CharacterSaveParameterMap', {}).get('value', [])
+        pal_count = 0
+        for entry in char_map:
+            try:
+                sp = entry['value']['RawData']['value']['object']['SaveParameter']
+                if sp['struct_type'] != 'PalIndividualCharacterSaveParameter':
+                    continue
+                sp_val = sp['value']
+                if sp_val.get('IsPlayer', {}).get('value', False):
+                    continue
+                owner_uid_obj = sp_val.get('OwnerPlayerUId', {})
+                if not owner_uid_obj:
+                    continue
+                owner_uid = str(owner_uid_obj.get('value', '') if isinstance(owner_uid_obj, dict) else owner_uid_obj)
+                if owner_uid:
+                    owner_uid_clean = str(owner_uid).lower().replace('-', '')
+                    if owner_uid_clean == player_uid_clean:
+                        pal_count += 1
+            except Exception:
+                continue
+        return pal_count
+    except Exception:
+        return 0
 level_sav_path, host_sav_path, t_level_sav_path, t_host_sav_path = (None, None, None, None)
 level_json, host_json, targ_lvl, targ_json = (None, None, None, None)
 target_section_ranges, target_save_type, target_raw_gvas, targ_json_gvas = (None, None, None, None)
@@ -271,7 +307,7 @@ class CharacterTransferWindow(QWidget):
         self.source_search_entry.textChanged.connect(lambda txt: self.filter_treeview(self.source_player_list, txt, True))
         source_panel_layout.addWidget(self.source_search_entry)
         self.source_player_list = QTreeWidget()
-        self.source_player_list.setHeaderLabels([t('Guild ID'), t('GUID'), t('Name'), t('Level'), t('Last Seen')])
+        self.source_player_list.setHeaderLabels([t('Guild ID'), t('GUID'), t('Name'), t('Level'), t('deletion.col.pals'), t('Last Seen')])
         self.source_player_list.itemSelectionChanged.connect(self.on_selection_of_source_player)
         self.source_player_list.setSortingEnabled(True)
         src_header = self.source_player_list.header()
@@ -280,6 +316,7 @@ class CharacterTransferWindow(QWidget):
         src_header.setSectionResizeMode(2, QHeaderView.Stretch)
         src_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
         src_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        src_header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
         source_panel_layout.addWidget(self.source_player_list, 1)
         trees_layout.addWidget(source_panel, 1)
         target_panel = QFrame()
@@ -296,7 +333,7 @@ class CharacterTransferWindow(QWidget):
         self.target_search_entry.textChanged.connect(lambda txt: self.filter_treeview(self.target_player_list, txt, False))
         target_panel_layout.addWidget(self.target_search_entry)
         self.target_player_list = QTreeWidget()
-        self.target_player_list.setHeaderLabels([t('Guild ID'), t('GUID'), t('Name'), t('Level'), t('Last Seen')])
+        self.target_player_list.setHeaderLabels([t('Guild ID'), t('GUID'), t('Name'), t('Level'), t('deletion.col.pals'), t('Last Seen')])
         self.target_player_list.itemSelectionChanged.connect(self.on_selection_of_target_player)
         self.target_player_list.setSortingEnabled(True)
         tgt_header = self.target_player_list.header()
@@ -305,6 +342,7 @@ class CharacterTransferWindow(QWidget):
         tgt_header.setSectionResizeMode(2, QHeaderView.Stretch)
         tgt_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
         tgt_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        tgt_header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
         target_panel_layout.addWidget(self.target_player_list, 1)
         trees_layout.addWidget(target_panel, 1)
         glass_layout.addLayout(trees_layout)
@@ -1020,9 +1058,10 @@ def load_players(save_json, is_source):
             playerUId = ''.join(safe_uuid_str(player_item['player_uid']).split('-')).upper()
             player_name = player_item['player_info']['player_name']
             player_level = get_player_level_from_cspm(cspm_json, playerUId)
+            player_pals_count = get_player_pals_count_from_cspm(cspm_json, playerUId)
             last_online_time = player_item.get('player_info', {}).get('last_online_real_time', 0)
             last_seen = format_last_seen(last_online_time, current_tick)
-            item = QTreeWidgetItem([safe_uuid_str(guild_id), playerUId, player_name, str(player_level), last_seen])
+            item = QTreeWidgetItem([safe_uuid_str(guild_id), playerUId, player_name, str(player_level), str(player_pals_count), last_seen])
             list_box.addTopLevelItem(item)
 def load_all_source_sections_async(group_save_section, reader):
     global level_json

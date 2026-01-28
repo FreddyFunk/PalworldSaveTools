@@ -775,5 +775,6 @@
   "tool.convert.levelmeta_done": "{source} converti en {target}",
   "tool.convert.worldoption_done": "{source} converti en {target}",
   "menu.file.load_worldoption": "Charger l'Option du Monde",
-  "menu.file.load_levelmeta": "Load LevelMeta"
+  "menu.file.load_levelmeta": "Load LevelMeta",
+  "player.level.minimum_level": "Impossible de définir le niveau du joueur - le niveau minimum est de 2"
 }

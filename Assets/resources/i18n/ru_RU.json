@@ -792,5 +792,6 @@
   "tool.convert.levelmeta_done": "{source} конвертирован в {target}",
   "tool.convert.worldoption_done": "{source} конвертирован в {target}",
   "menu.file.load_worldoption": "Загрузить настройки мира",
-  "menu.file.load_levelmeta": "Load LevelMeta"
+  "menu.file.load_levelmeta": "Load LevelMeta",
+  "player.level.minimum_level": "Невозможно установить уровень игрока. Минимальный уровень — 2."
 }

@@ -5,6 +5,13 @@ from PySide6.QtCore import Qt, QTimer
 import struct
 import io
 player_list_cache = []
+def extract_value(data, key, default_value=''):
+    value = data.get(key, default_value)
+    if isinstance(value, dict):
+        value = value.get('value', default_value)
+        if isinstance(value, dict):
+            value = value.get('value', default_value)
+    return value
 class MyReader(FArchiveReader):
     def __init__(self, data, type_hints=None, custom_properties=None, debug=False, allow_nan=True):
         super().__init__(data, type_hints=type_hints or {}, custom_properties=custom_properties or {}, debug=debug, allow_nan=allow_nan)
@@ -62,26 +69,55 @@ def format_last_seen(last_online_time, current_tick):
         return 'Unknown'
 def get_player_level_from_cspm(level_json, player_uid):
     try:
-        player_uid_lower = str(player_uid).lower().replace('-', '')
-        for entry in level_json.get('properties', {}).get('worldSaveData', {}).get('value', {}).get('CharacterSaveParameterMap', {}).get('value', []):
+        player_uid_clean = str(player_uid).lower().replace('-', '')
+        char_map = level_json.get('properties', {}).get('worldSaveData', {}).get('value', {}).get('CharacterSaveParameterMap', {}).get('value', [])
+        uid_level_map = {}
+        for entry in char_map:
             try:
+                sp = entry['value']['RawData']['value']['object']['SaveParameter']
+                if sp['struct_type'] != 'PalIndividualCharacterSaveParameter':
+                    continue
+                sp_val = sp['value']
+                if not sp_val.get('IsPlayer', {}).get('value', False):
+                    continue
                 key = entry.get('key', {})
                 uid_obj = key.get('PlayerUId', {})
-                uid = str(uid_obj.get('value', '') if isinstance(uid_obj, dict) else uid_obj).lower().replace('-', '')
-                if uid == player_uid_lower:
-                    sp_val = entry['value']['RawData']['value']['object']['SaveParameter']['value']
-                    level_info = sp_val.get('Level', {})
-                    if isinstance(level_info, dict):
-                        level_val = level_info.get('value')
-                        if isinstance(level_val, dict):
-                            level_val = level_val.get('value')
-                        return int(level_val) if level_val is not None else 1
-                    return int(level_info) if level_info is not None else 1
-            except:
+                uid = str(uid_obj.get('value', '') if isinstance(uid_obj, dict) else uid_obj)
+                if uid:
+                    uid_clean = uid.lower().replace('-', '')
+                    level = extract_value(sp_val, 'Level', 1)
+                    uid_level_map[uid_clean] = int(level) if level is not None else 1
+            except Exception:
                 continue
+        return uid_level_map.get(player_uid_clean, 1)
+    except Exception:
         return 1
-    except:
-        return 1
+def get_player_pals_count_from_cspm(level_json, player_uid):
+    try:
+        player_uid_clean = str(player_uid).lower().replace('-', '')
+        char_map = level_json.get('properties', {}).get('worldSaveData', {}).get('value', {}).get('CharacterSaveParameterMap', {}).get('value', [])
+        pal_count = 0
+        for entry in char_map:
+            try:
+                sp = entry['value']['RawData']['value']['object']['SaveParameter']
+                if sp['struct_type'] != 'PalIndividualCharacterSaveParameter':
+                    continue
+                sp_val = sp['value']
+                if sp_val.get('IsPlayer', {}).get('value', False):
+                    continue
+                owner_uid_obj = sp_val.get('OwnerPlayerUId', {})
+                if not owner_uid_obj:
+                    continue
+                owner_uid = str(owner_uid_obj.get('value', '') if isinstance(owner_uid_obj, dict) else owner_uid_obj)
+                if owner_uid:
+                    owner_uid_clean = str(owner_uid).lower().replace('-', '')
+                    if owner_uid_clean == player_uid_clean:
+                        pal_count += 1
+            except Exception:
+                continue
+        return pal_count
+    except Exception:
+        return 0
 def fix_save(save_path, new_guid, old_guid, guild_fix=True):
     def task():
         fmt = lambda g: '{}-{}-{}-{}-{}'.format(g[:8], g[8:12], g[12:16], g[16:20], g[20:]).lower()
@@ -294,22 +330,23 @@ def populate_player_lists(folder_path):
                 uid = str(player.get('player_uid', '')).replace('-', '')
                 name = player.get('player_info', {}).get('player_name', 'Unknown')
                 level = get_player_level_from_cspm(level_json, uid)
+                pals_count = get_player_pals_count_from_cspm(level_json, uid)
                 last_online_time = player.get('player_info', {}).get('last_online_real_time', 0)
                 last_seen = format_last_seen(last_online_time, world_tick)
-                player_files.append((uid, name, guild_id, level, last_seen))
+                player_files.append((uid, name, guild_id, level, pals_count, last_seen))
     player_list_cache = player_files
     return player_files
 def populate_player_tree(tree, folder_path):
     tree.clear()
     player_list = populate_player_lists(folder_path)
     existing_iids = set()
-    for uid, name, guild, level, last_seen in player_list:
+    for uid, name, guild, level, pals_count, last_seen in player_list:
         orig_uid = uid
         count = 1
         while uid in existing_iids:
             uid = f'{orig_uid}_{count}'
             count += 1
-        item = QTreeWidgetItem([orig_uid, name, guild, str(level), last_seen])
+        item = QTreeWidgetItem([orig_uid, name, guild, str(level), str(pals_count), last_seen])
         tree.addTopLevelItem(item)
         existing_iids.add(uid)
     tree.original_items = [tree.topLevelItem(i) for i in range(tree.topLevelItemCount())]
@@ -338,9 +375,10 @@ def background_load_task(path):
                 uid = str(p.get('player_uid', '')).replace('-', '')
                 name = p.get('player_info', {}).get('player_name', 'Unknown')
                 level = get_player_level_from_cspm(level_json, uid)
+                pals_count = get_player_pals_count_from_cspm(level_json, uid)
                 last_online_time = p.get('player_info', {}).get('last_online_real_time', 0)
                 last_seen = format_last_seen(last_online_time, world_tick)
-                player_files.append((uid, name, guild_id, level, last_seen))
+                player_files.append((uid, name, guild_id, level, pals_count, last_seen))
     return (player_files, level_json)
 def choose_level_file(window, level_sav_entry, old_tree, new_tree):
     path, _ = QFileDialog.getOpenFileName(window, t('Select Level.sav file'), '', 'SAV Files(*.sav)')
@@ -356,12 +394,12 @@ def choose_level_file(window, level_sav_entry, old_tree, new_tree):
         level_sav_entry.setText(path)
         old_tree.clear()
         new_tree.clear()
-        for uid, name, guild, level, last_seen in player_data_list:
-            old_tree.addTopLevelItem(QTreeWidgetItem([uid, name, guild, str(level), last_seen]))
-            new_tree.addTopLevelItem(QTreeWidgetItem([uid, name, guild, str(level), last_seen]))
+        for uid, name, guild, level, pals_count, last_seen in player_data_list:
+            old_tree.addTopLevelItem(QTreeWidgetItem([uid, name, guild, str(level), str(pals_count), last_seen]))
+            new_tree.addTopLevelItem(QTreeWidgetItem([uid, name, guild, str(level), str(pals_count), last_seen]))
         old_tree.original_items = [old_tree.topLevelItem(i) for i in range(old_tree.topLevelItemCount())]
         new_tree.original_items = [new_tree.topLevelItem(i) for i in range(new_tree.topLevelItemCount())]
-        player_list_cache = [(u, n, g, l, ls) for u, n, g, l, ls in player_data_list]
+        player_list_cache = [(u, n, g, l, pc, ls) for u, n, g, l, pc, ls in player_data_list]
     run_with_loading(on_task_complete, task)
 def extract_guid_from_tree_selection(tree):
     selected = tree.selectedItems()
@@ -381,11 +419,11 @@ def fix_save_wrapper(window, level_sav_entry, old_tree, new_tree):
     folder_path = os.path.dirname(file_path)
     fix_save(folder_path, new_guid, old_guid)
     for i, entry in enumerate(player_list_cache):
-        uid, name, guild, level, last_seen = entry
+        uid, name, guild, level, pals_count, last_seen = entry
         if uid == old_guid:
-            player_list_cache[i] = (new_guid, name, guild, level, last_seen)
+            player_list_cache[i] = (new_guid, name, guild, level, pals_count, last_seen)
         elif uid == new_guid:
-            player_list_cache[i] = (old_guid, name, guild, level, last_seen)
+            player_list_cache[i] = (old_guid, name, guild, level, pals_count, last_seen)
     populate_player_tree(old_tree, folder_path)
     populate_player_tree(new_tree, folder_path)
 def center_window(win):
@@ -447,7 +485,7 @@ class FixHostSaveWindow(QWidget):
         old_search_row.addWidget(self.old_search_entry)
         old_panel_layout.addLayout(old_search_row)
         self.old_tree = QTreeWidget()
-        self.old_tree.setHeaderLabels([t('GUID'), t('Name'), t('Guild ID'), t('Level'), t('Last Seen')])
+        self.old_tree.setHeaderLabels([t('GUID'), t('Name'), t('Guild ID'), t('Level'), t('deletion.col.pals'), t('Last Seen')])
         self.old_tree.setSortingEnabled(True)
         self.old_tree.setSelectionMode(QTreeWidget.SingleSelection)
         old_panel_layout.addWidget(self.old_tree, 1)
@@ -472,7 +510,7 @@ class FixHostSaveWindow(QWidget):
         new_search_row.addWidget(self.new_search_entry)
         new_panel_layout.addLayout(new_search_row)
         self.new_tree = QTreeWidget()
-        self.new_tree.setHeaderLabels([t('GUID'), t('Name'), t('Guild ID'), t('Level'), t('Last Seen')])
+        self.new_tree.setHeaderLabels([t('GUID'), t('Name'), t('Guild ID'), t('Level'), t('deletion.col.pals'), t('Last Seen')])
         self.new_tree.setSortingEnabled(True)
         self.new_tree.setSelectionMode(QTreeWidget.SingleSelection)
         new_panel_layout.addWidget(self.new_tree, 1)
@@ -491,12 +529,14 @@ class FixHostSaveWindow(QWidget):
         old_header_widget.setSectionResizeMode(2, QHeaderView.Stretch)
         old_header_widget.setSectionResizeMode(3, QHeaderView.ResizeToContents)
         old_header_widget.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        old_header_widget.setSectionResizeMode(5, QHeaderView.ResizeToContents)
         new_header_widget = self.new_tree.header()
         new_header_widget.setSectionResizeMode(0, QHeaderView.Stretch)
         new_header_widget.setSectionResizeMode(1, QHeaderView.Stretch)
         new_header_widget.setSectionResizeMode(2, QHeaderView.Stretch)
         new_header_widget.setSectionResizeMode(3, QHeaderView.ResizeToContents)
         new_header_widget.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        new_header_widget.setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.browse_button.clicked.connect(lambda: choose_level_file(self, self.level_sav_entry, self.old_tree, self.new_tree))
         self.migrate_button.clicked.connect(lambda: fix_save_wrapper(self, self.level_sav_entry, self.old_tree, self.new_tree))
         self.old_search_entry.textChanged.connect(lambda: filter_treeview(self.old_tree, self.old_search_entry.text()))
