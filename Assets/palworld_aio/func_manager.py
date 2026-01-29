@@ -1,5 +1,6 @@
 import os
 import json
+import random
 from collections import defaultdict
 from palworld_save_tools.archive import UUID
 from PySide6.QtWidgets import QMessageBox, QInputDialog
@@ -1214,3 +1215,166 @@ def delete_orphaned_dynamic_items(parent=None):
     dynamic_items[:] = [di for di in dynamic_items if normalize_uid(di.get('RawData', {}).get('value', {}).get('id', {}).get('local_id_in_created_world', '')) not in orphaned_ids]
     deleted_count = initial_count - len(dynamic_items)
     return deleted_count
+def check_is_illegal_pal(raw):
+    try:
+        try:
+            sp = raw['value']['RawData']['value']['object']['SaveParameter']['value']
+        except:
+            sp = raw.get('SaveParameter', {}).get('value', {})
+            if not sp:
+                return False
+        level = extract_value(sp, 'Level', 1)
+        if level > 65:
+            return True
+        talent_hp = extract_value(sp, 'Talent_HP', 0)
+        talent_shot = extract_value(sp, 'Talent_Shot', 0)
+        talent_defense = extract_value(sp, 'Talent_Defense', 0)
+        if talent_hp > 100 or talent_shot > 100 or talent_defense > 100:
+            return True
+        rank_hp = extract_value(sp, 'Rank_HP', 0)
+        rank_attack = extract_value(sp, 'Rank_Attack', 0)
+        rank_defense = extract_value(sp, 'Rank_Defence', 0)
+        rank_craftspeed = extract_value(sp, 'Rank_CraftSpeed', 0)
+        if rank_hp > 20 or rank_attack > 20 or rank_defense > 20 or (rank_craftspeed > 20):
+            return True
+        return False
+    except:
+        return False
+def fix_illegal_pals_in_save(parent=None):
+    if not constants.current_save_path or not constants.loaded_level_json:
+        return 0
+    players_dir = os.path.join(constants.current_save_path, 'Players')
+    total_fixed = 0
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        exp_table_path = os.path.join(base_dir, 'resources', 'game_data', 'pal_exp_table.json')
+        PAL_EXP_TABLE = {}
+        try:
+            with open(exp_table_path, 'r', encoding='utf-8') as f:
+                PAL_EXP_TABLE = json.load(f)
+        except:
+            PAL_EXP_TABLE = {}
+        wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+        cmap = wsd.get('CharacterSaveParameterMap', {}).get('value', [])
+        for entry in cmap:
+            if check_is_illegal_pal(entry):
+                sp = entry['value']['RawData']['value']['object']['SaveParameter']['value']
+                level = extract_value(sp, 'Level', 1)
+                talent_hp = extract_value(sp, 'Talent_HP', 0)
+                talent_shot = extract_value(sp, 'Talent_Shot', 0)
+                talent_defense = extract_value(sp, 'Talent_Defense', 0)
+                rank_hp = extract_value(sp, 'Rank_HP', 0)
+                rank_attack = extract_value(sp, 'Rank_Attack', 0)
+                rank_defense = extract_value(sp, 'Rank_Defence', 0)
+                rank_craftspeed = extract_value(sp, 'Rank_CraftSpeed', 0)
+                changed = False
+                if level > 65:
+                    sp['Level'] = {'id': None, 'type': 'IntProperty', 'value': 65}
+                    try:
+                        exp = PAL_EXP_TABLE['65']['PalTotalEXP']
+                    except:
+                        exp = 0
+                    sp['Exp'] = {'id': None, 'type': 'Int64Property', 'value': exp}
+                    changed = True
+                if talent_hp > 100:
+                    sp['Talent_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
+                    changed = True
+                if talent_shot > 100:
+                    sp['Talent_Shot'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
+                    changed = True
+                if talent_defense > 100:
+                    sp['Talent_Defense'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
+                    changed = True
+                if rank_hp > 20:
+                    sp['Rank_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                    changed = True
+                if rank_attack > 20:
+                    sp['Rank_Attack'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                    changed = True
+                if rank_defense > 20:
+                    sp['Rank_Defence'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                    changed = True
+                if rank_craftspeed > 20:
+                    sp['Rank_CraftSpeed'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                    changed = True
+                friendship_point = extract_value(sp, 'FriendshipPoint', 0)
+                if friendship_point > 200000:
+                    sp['FriendshipPoint'] = {'id': None, 'type': 'IntProperty', 'value': 200000}
+                    changed = True
+                if changed:
+                    total_fixed += 1
+        if os.path.exists(players_dir):
+            for filename in os.listdir(players_dir):
+                if filename.endswith('.sav') and '_dps' in filename:
+                    file_path = os.path.join(players_dir, filename)
+                    try:
+                        p_json = sav_to_json(file_path)
+                        changed = False
+                        if 'properties' in p_json and 'SaveParameterArray' in p_json['properties']:
+                            save_param_array = p_json['properties']['SaveParameterArray'].get('value', {}).get('values', [])
+                        elif 'SaveParameterArray' in p_json:
+                            save_param_array = p_json.get('SaveParameterArray', {}).get('values', [])
+                        else:
+                            continue
+                        actual_pals = 0
+                        illegals_in_file = 0
+                        for idx, entry in enumerate(save_param_array):
+                            sp = entry.get('SaveParameter', {}).get('value', {})
+                            char_id = sp.get('CharacterID', {}).get('value', 'None')
+                            if char_id == 'None':
+                                continue
+                            actual_pals += 1
+                            if check_is_illegal_pal(entry):
+                                sp = entry['SaveParameter']['value']
+                                level = extract_value(sp, 'Level', 1)
+                                talent_hp = extract_value(sp, 'Talent_HP', 0)
+                                talent_shot = extract_value(sp, 'Talent_Shot', 0)
+                                talent_defense = extract_value(sp, 'Talent_Defense', 0)
+                                rank_hp = extract_value(sp, 'Rank_HP', 0)
+                                rank_attack = extract_value(sp, 'Rank_Attack', 0)
+                                rank_defense = extract_value(sp, 'Rank_Defence', 0)
+                                rank_craftspeed = extract_value(sp, 'Rank_CraftSpeed', 0)
+                                if level > 65:
+                                    sp['Level'] = {'id': None, 'type': 'IntProperty', 'value': 65}
+                                    try:
+                                        exp = PAL_EXP_TABLE['65']['PalTotalEXP']
+                                    except:
+                                        exp = 0
+                                    sp['Exp'] = {'id': None, 'type': 'Int64Property', 'value': exp}
+                                    changed = True
+                                if talent_hp > 100:
+                                    sp['Talent_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
+                                    changed = True
+                                if talent_shot > 100:
+                                    sp['Talent_Shot'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
+                                    changed = True
+                                if talent_defense > 100:
+                                    sp['Talent_Defense'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
+                                    changed = True
+                                if rank_hp > 20:
+                                    sp['Rank_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                                    changed = True
+                                if rank_attack > 20:
+                                    sp['Rank_Attack'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                                    changed = True
+                                if rank_defense > 20:
+                                    sp['Rank_Defence'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                                    changed = True
+                                if rank_craftspeed > 20:
+                                    sp['Rank_CraftSpeed'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                                    changed = True
+                                friendship_point = extract_value(sp, 'FriendshipPoint', 0)
+                                if friendship_point > 200000:
+                                    sp['FriendshipPoint'] = {'id': None, 'type': 'IntProperty', 'value': 200000}
+                                    changed = True
+                                if changed:
+                                    total_fixed += 1
+                                    illegals_in_file += 1
+                        if changed:
+                            json_to_sav(p_json, file_path)
+                            print(f'Found {actual_pals} pals, fixed {illegals_in_file} illegal pals in {filename}')
+                    except:
+                        pass
+    except Exception as e:
+        return 0
+    return total_fixed

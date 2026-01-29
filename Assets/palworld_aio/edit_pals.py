@@ -1,7 +1,7 @@
 import os
 import json
 import uuid
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox, QComboBox, QTextEdit, QFileDialog, QMessageBox, QGroupBox, QFormLayout, QCheckBox, QFrame, QTabWidget, QScrollArea, QWidget, QGridLayout, QListWidget, QInputDialog, QTableWidget, QApplication
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox, QComboBox, QTextEdit, QFileDialog, QMessageBox, QGroupBox, QFormLayout, QCheckBox, QFrame, QTabWidget, QScrollArea, QWidget, QGridLayout, QListWidget, QInputDialog, QTableWidget, QApplication, QProgressBar
 from PySide6.QtCore import Qt, QTimer, Signal, QPoint, QEvent, QSize
 from PySide6.QtGui import QIcon, QFont, QPixmap, QRegion, QCursor, QPainter, QPainterPath, QPen, QBrush, QFontMetrics, QPalette, QColor
 from i18n import t
@@ -583,11 +583,6 @@ class EditPalsDialog(FramelessDialog):
         self.palbox_tab = self._create_tab(t('edit_pals.palbox'))
         self.tabs.addTab(self.party_tab, t('edit_pals.party'))
         self.tabs.addTab(self.palbox_tab, t('edit_pals.palbox'))
-        save_tab = QWidget()
-        cancel_tab = QWidget()
-        self.tabs.addTab(save_tab, t('edit_pals.save'))
-        self.tabs.addTab(cancel_tab, t('edit_pals.cancel'))
-        self.tabs.currentChanged.connect(self._on_tab_changed)
         self.skill_filter_timer = QTimer(self)
         self.skill_filter_timer.setSingleShot(True)
         self.skill_filter_timer.timeout.connect(self._do_filter_skills)
@@ -595,12 +590,6 @@ class EditPalsDialog(FramelessDialog):
         self.current_filter_skill_type = None
         self._setup_ui()
         self._load_pals()
-    def _on_tab_changed(self, index):
-        tab_text = self.tabs.tabText(index)
-        if tab_text == t('edit_pals.save'):
-            self.accept()
-        elif tab_text == t('edit_pals.cancel'):
-            self.reject()
     def _get_container_ids(self):
         self.party_container = None
         self.palbox_container = None
@@ -799,9 +788,20 @@ class EditPalsDialog(FramelessDialog):
         layout.setSpacing(10)
         name_layout = QHBoxLayout()
         name_layout.addWidget(QLabel(t('edit_pals.name')))
+        name_container = QWidget()
+        name_container.setMinimumWidth(120)
+        name_layout_container = QVBoxLayout(name_container)
+        name_layout_container.setContentsMargins(0, 0, 0, 0)
+        name_layout_container.setSpacing(2)
         tab.pal_name_label = QLabel(t('edit_pals.no_pal_selected'))
         tab.pal_name_label.setObjectName('palNameLabel')
-        name_layout.addWidget(tab.pal_name_label)
+        tab.pal_name_label.setStyleSheet('font-weight: bold; font-size: 13px;')
+        name_layout_container.addWidget(tab.pal_name_label)
+        tab.pal_nickname_label = QLabel('')
+        tab.pal_nickname_label.setObjectName('palNicknameLabel')
+        tab.pal_nickname_label.setStyleSheet('font-size: 11px; color: #9CA3AF;')
+        name_layout_container.addWidget(tab.pal_nickname_label)
+        name_layout.addWidget(name_container)
         rename_btn = QPushButton(t('edit_pals.rename_pal'))
         rename_btn.setObjectName('editPalsActionButton')
         rename_btn.clicked.connect(self._rename_pal)
@@ -950,8 +950,64 @@ class EditPalsDialog(FramelessDialog):
         souls_layout.addLayout(work_soul_layout)
         souls_layout_outer.addLayout(souls_layout)
         layout.addWidget(souls_group)
+        trust_group = QGroupBox(t('edit_pals.trust'))
+        trust_group.setObjectName('editPalsGroup')
+        trust_layout_outer = QVBoxLayout(trust_group)
+        trust_layout_outer.setContentsMargins(10, 10, 10, 10)
+        trust_layout_outer.setSpacing(5)
+        trust_info_layout = QHBoxLayout()
+        trust_icon_label = QLabel('❤️')
+        trust_icon_label.setStyleSheet('font-size: 18px;')
+        trust_info_layout.addWidget(trust_icon_label)
+        tab.trust_level_label = QLabel('Lv. 0')
+        tab.trust_level_label.setStyleSheet('font-weight: bold; font-size: 14px; color: #db7c90;')
+        trust_info_layout.addWidget(tab.trust_level_label)
+        trust_info_layout.addStretch()
+        tab.trust_points_label = QLabel('0 pts')
+        tab.trust_points_label.setStyleSheet('font-size: 11px; color: #9CA3AF;')
+        trust_info_layout.addWidget(tab.trust_points_label)
+        trust_layout_outer.addLayout(trust_info_layout)
+        trust_progress = QProgressBar()
+        trust_progress.setRange(0, 10)
+        trust_progress.setValue(0)
+        trust_progress.setFixedHeight(12)
+        trust_progress.setTextVisible(False)
+        trust_progress.setStyleSheet('\n            QProgressBar {\n                background-color: #374151;\n                border: none;\n                border-radius: 6px;\n            }\n            QProgressBar::chunk {\n                background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,\n                            stop:0 #db7c90, stop:1 #f0a0b0);\n                border-radius: 6px;\n            }\n        ')
+        tab.trust_progress_bar = trust_progress
+        trust_layout_outer.addWidget(trust_progress)
+        trust_controls = QHBoxLayout()
+        trust_controls.setSpacing(5)
+        trust_down_btn = QPushButton('−')
+        trust_down_btn.setObjectName('editPalsActionButton')
+        trust_down_btn.setFixedSize(40, 28)
+        trust_down_btn.setStyleSheet('QPushButton { font-size: 18px; font-weight: bold; }')
+        trust_controls.addWidget(trust_down_btn)
+        tab.trust_spin = QSpinBox()
+        tab.trust_spin.setObjectName('editPalsSpin')
+        tab.trust_spin.setRange(0, 10)
+        tab.trust_spin.setValue(0)
+        tab.trust_spin.setSingleStep(1)
+        tab.trust_spin.setMinimumWidth(100)
+        trust_controls.addWidget(tab.trust_spin)
+        trust_up_btn = QPushButton('+')
+        trust_up_btn.setObjectName('editPalsActionButton')
+        trust_up_btn.setFixedSize(40, 28)
+        trust_up_btn.setStyleSheet('QPushButton { font-size: 18px; font-weight: bold; }')
+        trust_controls.addWidget(trust_up_btn)
+        max_trust_btn = QPushButton(t('edit_pals.max_trust'))
+        max_trust_btn.setObjectName('editPalsActionButton')
+        trust_controls.addWidget(max_trust_btn)
+        trust_controls.addStretch()
+        trust_layout_outer.addLayout(trust_controls)
+        layout.addWidget(trust_group)
         layout.addStretch()
         tab.boss_toggle_btn = boss_toggle_btn
+        tab.trust_down_btn = trust_down_btn
+        tab.trust_up_btn = trust_up_btn
+        tab.max_trust_btn = max_trust_btn
+        trust_down_btn.clicked.connect(lambda: self._adjust_trust_level(tab, -1))
+        trust_up_btn.clicked.connect(lambda: self._adjust_trust_level(tab, 1))
+        max_trust_btn.clicked.connect(lambda: self._max_trust(tab))
         boss_toggle_btn.clicked.connect(lambda: self._toggle_boss(tab))
         tab.rare_toggle_btn = rare_toggle_btn
         rare_toggle_btn.clicked.connect(lambda: self._toggle_rare(tab))
@@ -966,6 +1022,7 @@ class EditPalsDialog(FramelessDialog):
         tab.rank_attack_spin.valueChanged.connect(lambda v: self._update_soul(tab, 'attack', v))
         tab.rank_defense_spin.valueChanged.connect(lambda v: self._update_soul(tab, 'defense', v))
         tab.rank_craftspeed_spin.valueChanged.connect(lambda v: self._update_soul(tab, 'craftspeed', v))
+        tab.trust_spin.valueChanged.connect(lambda v: self._update_trust_level(tab, v))
         return panel
     def _load_pals(self):
         if not constants.loaded_level_json:
@@ -1079,11 +1136,12 @@ class EditPalsDialog(FramelessDialog):
             cid = extract_value(raw, 'CharacterID', '')
             nick = extract_value(raw, 'NickName', '')
             pal_name = PalFrame._NAMEMAP.get(cid.lower(), cid)
-            if nick:
-                pal_name = f'{pal_name}({nick})'
             tab.pal_name_label.setText(pal_name)
+            tab.pal_nickname_label.setText(nick if nick else '')
         else:
             tab.pal_name_label.setText(t('edit_pals.no_pal_selected'))
+            tab.pal_nickname_label.setText('')
+            tab.pal_nickname_label.setText('')
     def _on_pal_right_click(self, slot_index, tab_name, action):
         if tab_name == t('edit_pals.party'):
             tab = self.party_tab
@@ -1124,6 +1182,7 @@ class EditPalsDialog(FramelessDialog):
                     tab.selected_pal_index = -1
                     self._update_tab_pal_display(tab, -1)
                     tab.pal_name_label.setText(t('edit_pals.no_pal_selected'))
+            tab.pal_nickname_label.setText('')
         elif action == 'add_new':
             pal_data = self._show_create_pal_dialog(slot_index, tab_name)
             if pal_data:
@@ -1167,7 +1226,15 @@ class EditPalsDialog(FramelessDialog):
                 tab.rank_attack_spin.setValue(0)
                 tab.rank_defense_spin.setValue(0)
                 tab.rank_craftspeed_spin.setValue(0)
+            if hasattr(tab, 'trust_spin'):
+                tab.trust_spin.setValue(0)
+            if hasattr(tab, 'trust_level_label'):
+                tab.trust_level_label.setText('Lv. 0')
+                tab.trust_points_label.setText('0 pts')
+            if hasattr(tab, 'trust_progress_bar'):
+                tab.trust_progress_bar.setValue(0)
             tab.pal_name_label.setText(t('edit_pals.no_pal_selected'))
+            tab.pal_nickname_label.setText('')
             if hasattr(tab, 'rank_star_buttons'):
                 for btn in tab.rank_star_buttons:
                     btn.setText('☆')
@@ -1233,6 +1300,11 @@ class EditPalsDialog(FramelessDialog):
                 tab.rank_attack_spin.setValue(rank_attack)
                 tab.rank_defense_spin.setValue(rank_defense)
                 tab.rank_craftspeed_spin.setValue(extract_value(raw, 'Rank_CraftSpeed', 0))
+            if hasattr(tab, 'trust_spin'):
+                trust_points = extract_value(raw, 'FriendshipPoint', 0)
+                trust_level = self._get_trust_level(trust_points)
+                tab.trust_spin.setValue(trust_level)
+                self._update_trust_display(tab)
             if hasattr(tab, 'rank_star_buttons'):
                 for i in range(4):
                     if rank >= i + 2:
@@ -1843,6 +1915,83 @@ class EditPalsDialog(FramelessDialog):
             tab.rank_defense_spin.setValue(20)
             tab.rank_craftspeed_spin.setValue(20)
             self._update_tab_pal_display(tab, getattr(tab, 'selected_pal_index', -1))
+    def _load_friendship_data(self):
+        if not hasattr(self, '_friendship_data'):
+            try:
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                friendship_path = os.path.join(base_dir, 'resources', 'game_data', 'friendship.json')
+                with open(friendship_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self._friendship_data = {k: v for k, v in data.items() if v['rank'] >= 0}
+            except Exception as e:
+                print(f'Error loading friendship data: {e}')
+                self._friendship_data = {'Friendship_Rank_0': {'rank': 0, 'required_point': 0}}
+        return self._friendship_data
+    def _get_trust_level(self, trust_points):
+        friendship_data = self._load_friendship_data()
+        levels = sorted(friendship_data.values(), key=lambda x: x['rank'])
+        current_level = 0
+        for level_data in levels:
+            if trust_points >= level_data['required_point']:
+                current_level = level_data['rank']
+        return current_level
+    def _update_trust_display(self, tab):
+        if not hasattr(tab, 'trust_spin') or not hasattr(tab, 'selected_pal_index'):
+            return
+        pal_index = tab.selected_pal_index
+        if pal_index < 0:
+            return
+        try:
+            if not hasattr(tab, 'pal_data') or pal_index >= len(tab.pal_data):
+                return
+            pal_item = tab.pal_data[pal_index]
+            if 'data' in pal_item:
+                raw = pal_item['data']
+            else:
+                raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
+            trust_points = extract_value(raw, 'FriendshipPoint', 0)
+            current_level = self._get_trust_level(trust_points)
+            tab.trust_level_label.setText(f'Lv.{current_level}')
+            if current_level >= 10:
+                tab.trust_points_label.setText(f'{trust_points} pts (MAX)')
+            else:
+                tab.trust_points_label.setText(f'{trust_points} pts')
+            tab.trust_progress_bar.setValue(current_level)
+        except Exception as e:
+            print(f'Error updating trust display: {e}')
+    def _get_points_for_level(self, level):
+        friendship_data = self._load_friendship_data()
+        for level_data in friendship_data.values():
+            if level_data['rank'] == level:
+                return level_data['required_point']
+        return 0
+    def _update_trust_level(self, tab, level):
+        pal_index = getattr(tab, 'selected_pal_index', -1)
+        if pal_index < 0 or pal_index >= len(tab.pal_data):
+            return
+        pal_item = tab.pal_data[pal_index]
+        try:
+            if 'data' in pal_item:
+                raw = pal_item['data']
+            else:
+                raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
+            points = self._get_points_for_level(level)
+            raw['FriendshipPoint'] = {'id': None, 'type': 'IntProperty', 'value': points}
+            tab.trust_level_label.setText(f'Lv.{level}')
+            tab.trust_points_label.setText(f'{points} pts')
+            self._update_tab_pal_display(tab, pal_index)
+        except Exception as e:
+            print(f'Error updating trust level: {e}')
+    def _adjust_trust_level(self, tab, amount):
+        if not hasattr(tab, 'trust_spin'):
+            return
+        current_level = tab.trust_spin.value()
+        new_level = max(0, min(10, current_level + amount))
+        tab.trust_spin.setValue(new_level)
+    def _max_trust(self, tab):
+        if not hasattr(tab, 'trust_spin'):
+            return
+        tab.trust_spin.setValue(10)
     def _max_ivs(self):
         tab_index = self.tabs.currentIndex()
         if tab_index == 0:
@@ -1952,9 +2101,8 @@ class EditPalsDialog(FramelessDialog):
             cid_display = extract_value(raw, 'CharacterID', '')
             nick_display = extract_value(raw, 'NickName', '')
             pal_name = PalFrame._NAMEMAP.get(cid_display.lower(), cid_display)
-            if nick_display:
-                pal_name = f'{pal_name}({nick_display})'
             tab.pal_name_label.setText(pal_name)
+            tab.pal_nickname_label.setText(nick_display if nick_display else '')
         except Exception as e:
             print(f'Error setting rank: {e}')
     def _reset_rank_to_zero(self, tab, position):
@@ -1972,9 +2120,8 @@ class EditPalsDialog(FramelessDialog):
             cid_display = extract_value(raw, 'CharacterID', '')
             nick_display = extract_value(raw, 'NickName', '')
             pal_name = PalFrame._NAMEMAP.get(cid_display.lower(), cid_display)
-            if nick_display:
-                pal_name = f'{pal_name}({nick_display})'
             tab.pal_name_label.setText(pal_name)
+            tab.pal_nickname_label.setText(nick_display if nick_display else '')
         except Exception as e:
             print(f'Error resetting rank: {e}')
     def _set_gender(self, gender_value):
@@ -2084,9 +2231,8 @@ class EditPalsDialog(FramelessDialog):
             cid_display = extract_value(raw, 'CharacterID', '')
             nick_display = extract_value(raw, 'NickName', '')
             pal_name = PalFrame._NAMEMAP.get(cid_display.lower(), cid_display)
-            if nick_display:
-                pal_name = f'{pal_name}({nick_display})'
             tab.pal_name_label.setText(pal_name)
+            tab.pal_nickname_label.setText(nick_display if nick_display else '')
         except Exception as e:
             print(f'Error toggling boss: {e}')
     def _toggle_rare(self, tab):
@@ -2128,15 +2274,15 @@ class EditPalsDialog(FramelessDialog):
             cid_display = extract_value(raw, 'CharacterID', '')
             nick_display = extract_value(raw, 'NickName', '')
             pal_name = PalFrame._NAMEMAP.get(cid_display.lower(), cid_display)
-            if nick_display:
-                pal_name = f'{pal_name}({nick_display})'
             tab.pal_name_label.setText(pal_name)
+            tab.pal_nickname_label.setText(nick_display if nick_display else '')
         except Exception as e:
             print(f'Error toggling rare status: {e}')
     def _max_stats(self):
         self._max_ivs()
         self._max_souls()
         self._max_rank()
+        self._max_trust_all()
         tab_index = self.tabs.currentIndex()
         if tab_index == 0:
             tab = self.party_tab
@@ -2149,6 +2295,18 @@ class EditPalsDialog(FramelessDialog):
         if hasattr(tab, 'level_spin'):
             tab.level_spin.setValue(65)
             self._update_tab_pal_display(tab, getattr(tab, 'selected_pal_index', -1))
+    def _max_trust_all(self):
+        tab_index = self.tabs.currentIndex()
+        if tab_index == 0:
+            tab = self.party_tab
+        elif tab_index == 1:
+            tab = self.palbox_tab
+        elif tab_index == 2:
+            tab = self.dps_tab
+        else:
+            return
+        if hasattr(tab, 'trust_spin'):
+            tab.trust_spin.setValue(10)
     def _generate_pal_save_parameter(self, character_id, nickname, owner_uid, container_id, slot_index, group_id=None):
         if group_id is None:
             group_id = str(uuid.uuid4()).upper()
@@ -2512,9 +2670,8 @@ class EditPalsDialog(FramelessDialog):
                 cid = extract_value(raw, 'CharacterID', '')
                 nick = extract_value(raw, 'NickName', '')
                 pal_name = PalFrame._NAMEMAP.get(cid.lower(), cid)
-                if nick:
-                    pal_name = f'{pal_name}({nick})'
                 tab.pal_name_label.setText(pal_name)
+                tab.pal_nickname_label.setText(nick if nick else '')
                 tab.pal_name_label.repaint()
         except Exception as e:
             print(f'Error renaming pal: {e}')
