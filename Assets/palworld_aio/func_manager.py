@@ -4,7 +4,7 @@ import random
 import logging
 import shutil
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from palworld_save_tools.archive import UUID
 from PySide6.QtWidgets import QMessageBox, QInputDialog
 from i18n import t
