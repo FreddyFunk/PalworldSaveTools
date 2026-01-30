@@ -2,14 +2,13 @@ from import_libs import *
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QLineEdit, QFileDialog, QApplication, QFrame, QGridLayout
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QTimer
-def sav_to_json(filepath):
+def sav_to_gvasfile(filepath):
     with open(filepath, 'rb') as f:
         data = f.read()
         raw_gvas, save_type = decompress_sav_to_gvas(data)
-    gvas_file = GvasFile.read(raw_gvas, PALWORLD_TYPE_HINTS, SKP_PALWORLD_CUSTOM_PROPERTIES, allow_nan=True)
-    return gvas_file.dump()
-def json_to_sav(json_data, output_filepath):
-    gvas_file = GvasFile.load(json_data)
+    return GvasFile.read(raw_gvas, PALWORLD_TYPE_HINTS, SKP_PALWORLD_CUSTOM_PROPERTIES, allow_nan=True)
+def gvasfile_to_sav(gvas_file, output_filepath):
+    save_type = 50 if 'PalPalLocalWorldSaveGame' in gvas_file.header.save_game_class_name else 49
     save_type = 50 if 'Pal.PalworldSaveGame' in gvas_file.header.save_game_class_name or 'Pal.PalLocalWorldSaveGame' in gvas_file.header.save_game_class_name else 49
     sav_file = compress_gvas_to_sav(gvas_file.write(SKP_PALWORLD_CUSTOM_PROPERTIES), save_type)
     with open(output_filepath, 'wb') as f:
@@ -92,14 +91,14 @@ class SlotNumUpdaterApp(QDialog):
             QMessageBox.critical(self, t('error.title'), t('slot.invalid_file'))
             return
         def task():
-            return sav_to_json(fp)
+            return sav_to_gvasfile(fp)
         def on_finished(result):
-            self.level_json = result
+            self.gvas_file = result
             QMessageBox.information(self, t('slot.loaded_title'), t('slot.loaded_msg'))
         run_with_loading(on_finished, task)
     def apply_slotnum_update(self):
         filepath = self.file_entry.text()
-        if not hasattr(self, 'level_json'):
+        if not hasattr(self, 'gvas_file'):
             QMessageBox.critical(self, t('error.title'), t('slot.load_first'))
             return
         try:
@@ -111,9 +110,9 @@ class SlotNumUpdaterApp(QDialog):
             QMessageBox.critical(self, t('error.title'), t('slot.invalid_numbers'))
             return
         new_value = pages * slots
-        level_json = self.level_json
+        gvas_file = self.gvas_file
         def task():
-            container = level_json['properties']['worldSaveData']['value'].get('CharacterContainerSaveData', {}).get('value', [])
+            container = gvas_file.properties['worldSaveData']['value'].get('CharacterContainerSaveData', {}).get('value', [])
             if not isinstance(container, list):
                 raise ValueError(t('slot.invalid_structure'))
             PLAYER_SLOT_THRESHOLD = 960
@@ -124,7 +123,7 @@ class SlotNumUpdaterApp(QDialog):
             for entry in editable:
                 entry['value']['SlotNum']['value'] = new_value
             backup_whole_directory(os.path.dirname(filepath), 'Backups/Slot Injector')
-            json_to_sav(level_json, filepath)
+            gvasfile_to_sav(gvas_file, filepath)
             return ('success', total_players)
         def on_finished(result):
             status, count = result

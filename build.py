@@ -42,7 +42,7 @@ def build_with_cx_freeze():
         print(f'Removing {lib_folder}...')
         shutil.rmtree(lib_folder)
 def clean_build_artifacts():
-    items = ['build', 'PalworldSaveTools.egg-info', 'Backups', 'PST_standalone', 'Scan Save Logger', 'psp_windows', 'ppe_windows', 'updated_worldmap.png', 'PalDefender', 'XGP_converted_saves', 'saves']
+    items = ['build', 'PalworldSaveTools.egg-info', 'Backups', 'PST_standalone', 'Scan Save Logger', 'Illegal Pal Logger', 'psp_windows', 'ppe_windows', 'updated_worldmap.png', 'PalDefender', 'XGP_converted_saves', 'saves']
     for item in items:
         if os.path.exists(item):
             print(f'Removing {item}...')

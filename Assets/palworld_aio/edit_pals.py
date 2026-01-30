@@ -10,7 +10,7 @@ try:
 except ImportError:
     nf = None
 from palworld_aio import constants
-from palworld_aio.utils import sav_to_json, extract_value, format_character_key, json_to_sav, calculate_max_hp, get_pal_data
+from palworld_aio.utils import sav_to_json, sav_to_gvasfile, gvasfile_to_sav, extract_value, format_character_key, json_to_sav, calculate_max_hp, get_pal_data
 class FramelessDialog(QDialog):
     def __init__(self, title_key='edit_pals.title', parent=None):
         super().__init__(parent)
@@ -603,8 +603,8 @@ class EditPalsDialog(FramelessDialog):
                     if p_uid_raw == target_uid:
                         self.player_sav_path = os.path.join(players_dir, filename)
                         try:
-                            p_json = sav_to_json(self.player_sav_path)
-                            p_prop = p_json.get('properties', {}).get('SaveData', {}).get('value', {})
+                            p_gvas = sav_to_gvasfile(self.player_sav_path)
+                            p_prop = p_gvas.properties.get('SaveData', {}).get('value', {})
                             self.party_container = p_prop.get('OtomoCharacterContainerId', {}).get('value', {}).get('ID', {}).get('value')
                             self.palbox_container = p_prop.get('PalStorageContainerId', {}).get('value', {}).get('ID', {}).get('value')
                         except:
@@ -2463,8 +2463,8 @@ class EditPalsDialog(FramelessDialog):
                         break
             cmap.append(pal_data)
             if self.player_sav_path and os.path.exists(self.player_sav_path):
-                player_json = sav_to_json(self.player_sav_path)
-                save_data = player_json['properties']['SaveData']['value']
+                player_gvas = sav_to_gvasfile(self.player_sav_path)
+                save_data = player_gvas.properties.get('SaveData', {}).get('value', {})
                 empty_uuid = '00000000-0000-0000-0000-000000000000'
                 if 'RecordData' not in save_data:
                     save_data['RecordData'] = {'struct_type': 'PalLoggedinPlayerSaveDataRecordData', 'struct_id': empty_uuid, 'id': None, 'value': {}}
@@ -2511,7 +2511,7 @@ class EditPalsDialog(FramelessDialog):
                         break
                 if not found:
                     unlock_list.append({'key': pal_key, 'value': True})
-                json_to_sav(player_json, self.player_sav_path)
+                gvasfile_to_sav(player_gvas, self.player_sav_path)
             self._load_pals()
             pal_name = selected_pal['name']
             QMessageBox.information(self, 'Success', f'Created new {pal_name} in {container_name}.')
@@ -3030,8 +3030,8 @@ class EditPalsDialog(FramelessDialog):
                             break
                 cmap.append(pal_data)
                 if self.player_sav_path and os.path.exists(self.player_sav_path):
-                    player_json = sav_to_json(self.player_sav_path)
-                    save_data = player_json['properties']['SaveData']['value']
+                    player_gvas = sav_to_gvasfile(self.player_sav_path)
+                    save_data = player_gvas.properties.get('SaveData', {}).get('value', {})
                     empty_uuid = '00000000-0000-0000-0000-000000000000'
                     if 'RecordData' not in save_data:
                         save_data['RecordData'] = {'struct_type': 'PalLoggedinPlayerSaveDataRecordData', 'struct_id': empty_uuid, 'id': None, 'value': {}}
@@ -3078,7 +3078,7 @@ class EditPalsDialog(FramelessDialog):
                             break
                     if not found:
                         unlock_list.append({'key': pal_key, 'value': True})
-                    json_to_sav(player_json, self.player_sav_path)
+                    gvasfile_to_sav(player_gvas, self.player_sav_path)
                 self._load_pals()
                 if tab_name == t('edit_pals.party'):
                     tab = self.party_tab

@@ -1,17 +1,20 @@
 import os
 import json
 import random
+import logging
+import shutil
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from palworld_save_tools.archive import UUID
 from PySide6.QtWidgets import QMessageBox, QInputDialog
 from i18n import t
 try:
     from palworld_aio import constants
-    from palworld_aio.utils import sav_to_json, json_to_sav, are_equal_uuids, as_uuid, is_valid_level, extract_value, format_duration
+    from palworld_aio.utils import sav_to_json, json_to_sav, sav_to_gvasfile, gvasfile_to_sav, are_equal_uuids, as_uuid, is_valid_level, extract_value, format_duration, sanitize_filename
     from palworld_aio.data_manager import delete_base_camp
 except ImportError:
     from . import constants
-    from .utils import sav_to_json, json_to_sav, are_equal_uuids, as_uuid, is_valid_level, extract_value, format_duration
+    from .utils import sav_to_json, json_to_sav, sav_to_gvasfile, gvasfile_to_sav, are_equal_uuids, as_uuid, is_valid_level, extract_value, format_duration, sanitize_filename
     from .data_manager import delete_base_camp
 def build_player_levels():
     if not constants.loaded_level_json:
@@ -488,11 +491,12 @@ def delete_all_skins(parent=None):
     players_dir = os.path.join(constants.current_save_path, 'Players')
     fixed_player_files = 0
     if os.path.exists(players_dir):
-        for filename in os.listdir(players_dir):
-            if filename.endswith('.sav') and '_dps' not in filename:
+        player_files = [f for f in os.listdir(players_dir) if f.endswith('.sav') and '_dps' not in f]
+        if player_files:
+            def process_player_file(filename):
                 file_path = os.path.join(players_dir, filename)
                 try:
-                    p_json = sav_to_json(file_path)
+                    gvas = sav_to_gvasfile(file_path)
                     changed = False
                     def remove_skin_info(data):
                         nonlocal changed
@@ -505,12 +509,16 @@ def delete_all_skins(parent=None):
                         elif isinstance(data, list):
                             for item in data:
                                 remove_skin_info(item)
-                    remove_skin_info(p_json)
+                    remove_skin_info(gvas.properties)
                     if changed:
-                        json_to_sav(p_json, file_path)
-                        fixed_player_files += 1
+                        gvasfile_to_sav(gvas, file_path)
+                        return 1
                 except:
                     pass
+                return 0
+            with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+                results = list(executor.map(process_player_file, player_files))
+                fixed_player_files = sum(results)
     return removed_level_skins + fixed_player_files
 def unlock_all_private_chests(parent=None):
     if not constants.loaded_level_json:
@@ -630,17 +638,22 @@ def remove_invalid_items_from_save(parent=None):
                 if clean_craft_records(item, filename):
                     changed = True
         return changed
-    for filename in os.listdir(players_dir):
-        if filename.endswith('.sav') and '_dps' not in filename:
-            total_files += 1
+    player_files = [f for f in os.listdir(players_dir) if f.endswith('.sav') and '_dps' not in f]
+    total_files = len(player_files)
+    if player_files:
+        def process_player_file(filename):
             file_path = os.path.join(players_dir, filename)
             try:
-                p_json = sav_to_json(file_path)
-                if clean_craft_records(p_json, filename):
-                    json_to_sav(p_json, file_path)
-                    fixed_files += 1
+                gvas = sav_to_gvasfile(file_path)
+                if clean_craft_records(gvas.properties, filename):
+                    gvasfile_to_sav(gvas, file_path)
+                    return 1
             except Exception as e:
                 pass
+            return 0
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+            results = list(executor.map(process_player_file, player_files))
+            fixed_files = sum(results)
     remove_invalid_items_from_level(parent)
     return fixed_files
 def remove_invalid_pals_from_save(parent=None):
@@ -700,9 +713,9 @@ def fix_missions(parent=None):
     save_path = os.path.join(constants.current_save_path, 'Players')
     if not os.path.exists(save_path):
         return {'total': 0, 'fixed': 0, 'skipped': 0}
-    total = 0
-    fixed = 0
-    skipped = 0
+    player_files = [f for f in os.listdir(save_path) if f.endswith('.sav') and '_dps' not in f]
+    if not player_files:
+        return {'total': 0, 'fixed': 0, 'skipped': 0}
     def deep_delete_completed_quest_array(data):
         found = False
         if isinstance(data, dict):
@@ -717,23 +730,22 @@ def fix_missions(parent=None):
                 if deep_delete_completed_quest_array(item):
                     found = True
         return found
-    for filename in os.listdir(save_path):
-        if filename.endswith('.sav') and '_dps' not in filename:
-            total += 1
-            file_path = os.path.join(save_path, filename)
-            try:
-                player_json = sav_to_json(file_path)
-            except Exception as e:
-                skipped += 1
-                continue
-            if deep_delete_completed_quest_array(player_json):
-                try:
-                    json_to_sav(player_json, file_path)
-                    fixed += 1
-                except Exception as e:
-                    skipped += 1
+    def process_player_file(filename):
+        file_path = os.path.join(save_path, filename)
+        try:
+            gvas = sav_to_gvasfile(file_path)
+            if deep_delete_completed_quest_array(gvas.properties):
+                gvasfile_to_sav(gvas, file_path)
+                return (1, 1, 0)
             else:
-                skipped += 1
+                return (1, 0, 0)
+        except Exception as e:
+            return (1, 0, 1)
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        results = list(executor.map(process_player_file, player_files))
+    total = sum((r[0] for r in results))
+    fixed = sum((r[1] for r in results))
+    skipped = sum((r[2] for r in results))
     return {'total': total, 'fixed': fixed, 'skipped': skipped}
 def reset_anti_air_turrets(parent=None):
     if not constants.loaded_level_json:
@@ -781,7 +793,7 @@ def unlock_viewing_cage_for_player(player_uid, parent=None):
     if not os.path.exists(file_path):
         return False
     try:
-        p_json = sav_to_json(file_path)
+        gvas = sav_to_gvasfile(file_path)
         changed = False
         def inject_viewing_cage(data):
             nonlocal changed
@@ -796,9 +808,9 @@ def unlock_viewing_cage_for_player(player_uid, parent=None):
             elif isinstance(data, list):
                 for item in data:
                     inject_viewing_cage(item)
-        inject_viewing_cage(p_json)
+        inject_viewing_cage(gvas.properties)
         if changed:
-            json_to_sav(p_json, file_path)
+            gvasfile_to_sav(gvas, file_path)
             return True
         return False
     except Exception as e:
@@ -820,11 +832,12 @@ def detect_and_trim_overfilled_inventories(parent=None):
             player_uid = player_file.replace('.sav', '')
             try:
                 player_path = os.path.join(players_dir, player_file)
-                player_json = sav_to_json(player_path)
-                if 'properties' in player_json and 'SaveData' in player_json['properties']:
-                    inv_info = player_json['properties']['SaveData']['value']['InventoryInfo']['value']
-                elif 'SaveData' in player_json:
-                    inv_info = player_json['SaveData']['value']['InventoryInfo']['value']
+                player_gvas = sav_to_gvasfile(player_path)
+                player_props = player_gvas.properties
+                if 'properties' in player_props and 'SaveData' in player_props['properties']:
+                    inv_info = player_props['properties']['SaveData']['value']['InventoryInfo']['value']
+                elif 'SaveData' in player_props:
+                    inv_info = player_props['SaveData']['value']['InventoryInfo']['value']
                 else:
                     continue
                 main_id = str(inv_info['CommonContainerId']['value']['ID']['value'])
@@ -975,14 +988,16 @@ def remove_invalid_passives_from_save(parent=None):
         except:
             pass
     if os.path.exists(players_dir):
-        for filename in os.listdir(players_dir):
-            if filename.endswith('.sav') and '_dps' not in filename:
+        player_files = [f for f in os.listdir(players_dir) if f.endswith('.sav') and '_dps' not in f]
+        if player_files:
+            def process_player_file(filename):
                 file_path = os.path.join(players_dir, filename)
+                local_removed = 0
                 try:
-                    p_json = sav_to_json(file_path)
+                    gvas = sav_to_gvasfile(file_path)
                     changed = False
                     def remove_invalid_passives(data):
-                        nonlocal changed, removed_count
+                        nonlocal changed, local_removed
                         if isinstance(data, dict):
                             if 'PassiveSkills' in data and isinstance(data['PassiveSkills'], dict):
                                 skills = data['PassiveSkills'].get('value', [])
@@ -994,7 +1009,7 @@ def remove_invalid_passives_from_save(parent=None):
                                             new_skills.append(skill)
                                         else:
                                             changed = True
-                                            removed_count += 1
+                                            local_removed += 1
                                     if changed:
                                         data['PassiveSkills']['value'] = new_skills
                             for v in data.values():
@@ -1002,11 +1017,15 @@ def remove_invalid_passives_from_save(parent=None):
                         elif isinstance(data, list):
                             for item in data:
                                 remove_invalid_passives(item)
-                    remove_invalid_passives(p_json)
+                    remove_invalid_passives(gvas.properties)
                     if changed:
-                        json_to_sav(p_json, file_path)
+                        gvasfile_to_sav(gvas, file_path)
                 except:
                     pass
+                return local_removed
+            with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+                results = list(executor.map(process_player_file, player_files))
+                removed_count += sum(results)
     return removed_count
 def unlock_all_technologies_for_player(player_uid, parent=None):
     if not constants.current_save_path:
@@ -1021,7 +1040,7 @@ def unlock_all_technologies_for_player(player_uid, parent=None):
         with open(tech_file, 'r', encoding='utf-8') as f:
             tech_data = json.load(f)
         all_techs = [item['asset'] for item in tech_data.get('technology', [])]
-        p_json = sav_to_json(file_path)
+        gvas = sav_to_gvasfile(file_path)
         def inject_all_techs(data):
             if isinstance(data, dict):
                 if 'UnlockedRecipeTechnologyNames' in data:
@@ -1035,8 +1054,8 @@ def unlock_all_technologies_for_player(player_uid, parent=None):
             elif isinstance(data, list):
                 for item in data:
                     inject_all_techs(item)
-        inject_all_techs(p_json)
-        json_to_sav(p_json, file_path)
+        inject_all_techs(gvas.properties)
+        gvasfile_to_sav(gvas, file_path)
         return True
     except Exception as e:
         return False
@@ -1222,27 +1241,143 @@ def check_is_illegal_pal(raw):
         except:
             sp = raw.get('SaveParameter', {}).get('value', {})
             if not sp:
-                return False
+                return (False, [])
+        illegal_markers = []
         level = extract_value(sp, 'Level', 1)
         if level > 65:
-            return True
+            illegal_markers.append('Level')
         talent_hp = extract_value(sp, 'Talent_HP', 0)
         talent_shot = extract_value(sp, 'Talent_Shot', 0)
         talent_defense = extract_value(sp, 'Talent_Defense', 0)
-        if talent_hp > 100 or talent_shot > 100 or talent_defense > 100:
-            return True
+        if talent_hp > 100:
+            illegal_markers.append('HP IV')
+        if talent_shot > 100:
+            illegal_markers.append('ATK IV')
+        if talent_defense > 100:
+            illegal_markers.append('DEF IV')
         rank_hp = extract_value(sp, 'Rank_HP', 0)
         rank_attack = extract_value(sp, 'Rank_Attack', 0)
         rank_defense = extract_value(sp, 'Rank_Defence', 0)
         rank_craftspeed = extract_value(sp, 'Rank_CraftSpeed', 0)
-        if rank_hp > 20 or rank_attack > 20 or rank_defense > 20 or (rank_craftspeed > 20):
-            return True
-        return False
+        if rank_hp > 20:
+            illegal_markers.append('HP Soul')
+        if rank_attack > 20:
+            illegal_markers.append('ATK Soul')
+        if rank_defense > 20:
+            illegal_markers.append('DEF Soul')
+        if rank_craftspeed > 20:
+            illegal_markers.append('Craft Soul')
+        return (len(illegal_markers) > 0, illegal_markers)
     except:
-        return False
+        return (False, [])
+def _process_dps_file_worker(args):
+    filename, players_dir, PAL_EXP_TABLE, NAMEMAP = args
+    file_path = os.path.join(players_dir, filename)
+    result = {'filename': filename, 'actual_pals': 0, 'illegals_fixed': 0, 'illegal_entries': [], 'changed': False, 'gvas_file': None}
+    try:
+        from palworld_aio.utils import sav_to_gvasfile, gvasfile_to_sav
+        gvas_file = sav_to_gvasfile(file_path)
+        save_param_array = gvas_file.properties.get('SaveParameterArray', {}).get('value', {}).get('values', [])
+        if not save_param_array:
+            return result
+        actual_pals = 0
+        illegals_in_file = 0
+        changed = False
+        illegal_entries_list = []
+        player_uid_from_file = filename.replace('.sav', '').replace('_dps', '')
+        for idx, entry in enumerate(save_param_array):
+            sp = entry.get('SaveParameter', {}).get('value', {})
+            char_id = sp.get('CharacterID', {}).get('value', 'None')
+            if char_id == 'None':
+                continue
+            actual_pals += 1
+            is_illegal, illegal_markers = check_is_illegal_pal(entry)
+            if is_illegal:
+                sp = entry['SaveParameter']['value']
+                level = extract_value(sp, 'Level', 1)
+                talent_hp = extract_value(sp, 'Talent_HP', 0)
+                talent_shot = extract_value(sp, 'Talent_Shot', 0)
+                talent_defense = extract_value(sp, 'Talent_Defense', 0)
+                rank_hp = extract_value(sp, 'Rank_HP', 0)
+                rank_attack = extract_value(sp, 'Rank_Attack', 0)
+                rank_defense = extract_value(sp, 'Rank_Defence', 0)
+                rank_craftspeed = extract_value(sp, 'Rank_CraftSpeed', 0)
+                cid = extract_value(sp, 'CharacterID', '')
+                nick = extract_value(sp, 'NickName', '')
+                pal_name = NAMEMAP.get(cid.lower(), cid)
+                inst_id = sp.get('InstanceId', {}).get('value', 'Unknown')
+                slot_id_obj = sp.get('SlotId', {})
+                if isinstance(slot_id_obj, dict):
+                    slot_id_val = slot_id_obj.get('value', slot_id_obj)
+                    if isinstance(slot_id_val, dict):
+                        container_id_obj = slot_id_val.get('ContainerId', {})
+                        if isinstance(container_id_obj, dict):
+                            container_id_val = container_id_obj.get('value', container_id_obj)
+                            if isinstance(container_id_val, dict):
+                                container_id = container_id_val.get('ID', {}).get('value', 'Unknown')
+                            else:
+                                container_id = str(container_id_val) if container_id_val else 'Unknown'
+                        else:
+                            container_id = str(container_id_obj) if container_id_obj else 'Unknown'
+                    else:
+                        container_id = str(slot_id_val) if slot_id_val else 'Unknown'
+                else:
+                    container_id = str(slot_id_obj) if slot_id_obj else 'Unknown'
+                owner_uid = extract_value(sp, 'OwnerPlayerUId', '')
+                illegal_info = {'name': pal_name, 'nickname': nick, 'cid': cid, 'level': level, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'illegal_markers': illegal_markers, 'instance_id': inst_id, 'container_id': container_id, 'owner_uid': owner_uid, 'location': 'DPS Storage', 'filename': filename, 'player_uid_from_file': player_uid_from_file}
+                illegal_entries_list.append(illegal_info)
+                if level > 65:
+                    sp['Level'] = {'id': None, 'type': 'IntProperty', 'value': 65}
+                    try:
+                        exp = PAL_EXP_TABLE['65']['PalTotalEXP']
+                    except:
+                        exp = 0
+                    sp['Exp'] = {'id': None, 'type': 'Int64Property', 'value': exp}
+                    changed = True
+                if talent_hp > 100:
+                    sp['Talent_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
+                    changed = True
+                if talent_shot > 100:
+                    sp['Talent_Shot'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
+                    changed = True
+                if talent_defense > 100:
+                    sp['Talent_Defense'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
+                    changed = True
+                if rank_hp > 20:
+                    sp['Rank_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                    changed = True
+                if rank_attack > 20:
+                    sp['Rank_Attack'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                    changed = True
+                if rank_defense > 20:
+                    sp['Rank_Defence'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                    changed = True
+                if rank_craftspeed > 20:
+                    sp['Rank_CraftSpeed'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
+                    changed = True
+                if changed:
+                    illegals_in_file += 1
+        if changed:
+            gvasfile_to_sav(gvas_file, file_path)
+            result['changed'] = True
+            result['actual_pals'] = actual_pals
+            result['illegals_fixed'] = illegals_in_file
+            result['illegal_entries'] = illegal_entries_list
+        else:
+            result['actual_pals'] = actual_pals
+    except Exception as e:
+        print(f'Error processing {filename}: {e}')
+    return result
 def fix_illegal_pals_in_save(parent=None):
     if not constants.current_save_path or not constants.loaded_level_json:
         return 0
+    base_path = constants.get_base_path()
+    illegal_log_folder = os.path.join(base_path, 'Illegal Pal Logger')
+    if os.path.exists(illegal_log_folder):
+        try:
+            shutil.rmtree(illegal_log_folder)
+        except:
+            pass
     players_dir = os.path.join(constants.current_save_path, 'Players')
     total_fixed = 0
     try:
@@ -1254,11 +1389,64 @@ def fix_illegal_pals_in_save(parent=None):
                 PAL_EXP_TABLE = json.load(f)
         except:
             PAL_EXP_TABLE = {}
+        def load_map(fname, key):
+            try:
+                fp = os.path.join(base_dir, 'resources', 'game_data', fname)
+                with open(fp, 'r', encoding='utf-8') as f:
+                    js = json.load(f)
+                    return {x['asset'].lower(): x['name'] for x in js.get(key, [])}
+            except:
+                return {}
+        PALMAP = load_map('paldata.json', 'pals')
+        NPCMAP = load_map('npcdata.json', 'npcs')
+        NAMEMAP = {**PALMAP, **NPCMAP}
+        owner_nicknames = {}
+        player_containers = {}
+        players_dir = os.path.join(constants.current_save_path, 'Players')
+        if os.path.exists(players_dir):
+            player_files = [f for f in os.listdir(players_dir) if f.endswith('.sav') and '_dps' not in f]
+            if player_files:
+                def load_player_file(filename):
+                    try:
+                        from palworld_aio.utils import sav_to_gvasfile
+                        file_path = os.path.join(players_dir, filename)
+                        p_gvas = sav_to_gvasfile(file_path)
+                        p_prop = p_gvas.properties.get('SaveData', {}).get('value', {})
+                        p_uid_raw = filename.replace('.sav', '')
+                        p_uid = p_uid_raw.lower()
+                        p_box = p_prop.get('PalStorageContainerId', {}).get('value', {}).get('ID', {}).get('value')
+                        p_party = p_prop.get('OtomoCharacterContainerId', {}).get('value', {}).get('ID', {}).get('value')
+                        if p_box and p_party:
+                            return (p_uid, {'Party': str(p_party).lower(), 'PalBox': str(p_box).lower()})
+                    except:
+                        pass
+                    return None
+                from concurrent.futures import ThreadPoolExecutor
+                with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+                    results = executor.map(load_player_file, player_files)
+                    for result in results:
+                        if result:
+                            player_containers[result[0]] = result[1]
+        cmap = constants.loaded_level_json['properties']['worldSaveData']['value'].get('CharacterSaveParameterMap', {}).get('value', [])
+        for item in cmap:
+            try:
+                raw_p = item.get('value', {}).get('RawData', {}).get('value', {}).get('object', {}).get('SaveParameter', {}).get('value', {})
+                if 'IsPlayer' in raw_p:
+                    uid = item.get('key', {}).get('PlayerUId', {}).get('value')
+                    nn = raw_p.get('NickName', {}).get('value', 'Unknown')
+                    if uid:
+                        owner_nicknames[str(uid).replace('-', '').lower()] = nn
+            except:
+                pass
+        illegal_pals_by_owner = defaultdict(list)
+        illegal_pals_by_player_file = defaultdict(list)
         wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
         cmap = wsd.get('CharacterSaveParameterMap', {}).get('value', [])
         for entry in cmap:
-            if check_is_illegal_pal(entry):
-                sp = entry['value']['RawData']['value']['object']['SaveParameter']['value']
+            is_illegal, illegal_markers = check_is_illegal_pal(entry)
+            if is_illegal:
+                rawf = entry.get('value', {}).get('RawData', {}).get('value', {})
+                sp = rawf.get('object', {}).get('SaveParameter', {}).get('value', {})
                 level = extract_value(sp, 'Level', 1)
                 talent_hp = extract_value(sp, 'Talent_HP', 0)
                 talent_shot = extract_value(sp, 'Talent_Shot', 0)
@@ -1267,6 +1455,44 @@ def fix_illegal_pals_in_save(parent=None):
                 rank_attack = extract_value(sp, 'Rank_Attack', 0)
                 rank_defense = extract_value(sp, 'Rank_Defence', 0)
                 rank_craftspeed = extract_value(sp, 'Rank_CraftSpeed', 0)
+                cid = extract_value(sp, 'CharacterID', '')
+                nick = extract_value(sp, 'NickName', '')
+                pal_name = NAMEMAP.get(cid.lower(), cid)
+                inst_id = entry.get('key', {}).get('InstanceId', {}).get('value', 'Unknown')
+                slot_id_obj = sp.get('SlotId', {})
+                if isinstance(slot_id_obj, dict):
+                    slot_id_val = slot_id_obj.get('value', slot_id_obj)
+                    if isinstance(slot_id_val, dict):
+                        container_id_obj = slot_id_val.get('ContainerId', {})
+                        if isinstance(container_id_obj, dict):
+                            container_id_val = container_id_obj.get('value', container_id_obj)
+                            if isinstance(container_id_val, dict):
+                                container_id = container_id_val.get('ID', {}).get('value', 'Unknown')
+                            else:
+                                container_id = str(container_id_val) if container_id_val else 'Unknown'
+                        else:
+                            container_id = str(container_id_obj) if container_id_obj else 'Unknown'
+                    else:
+                        container_id = str(slot_id_val) if slot_id_val else 'Unknown'
+                else:
+                    container_id = str(slot_id_obj) if slot_id_obj else 'Unknown'
+                owner_uid = extract_value(sp, 'OwnerPlayerUId', '')
+                uid_str = str(owner_uid).replace('-', '').lower() if owner_uid else '00000000000000000000000000000000'
+                is_worker = uid_str == '00000000000000000000000000000000'
+                guild_id = str(rawf.get('group_id', 'Unknown')).lower()
+                base_id = str(container_id).lower() if container_id != 'Unknown' else 'unknown'
+                location = 'PalBox Storage'
+                if is_worker:
+                    location = 'Base Worker'
+                    uid_str = f'WORKER_{guild_id}_{base_id}'
+                elif owner_uid and str(owner_uid).replace('-', '').lower() in player_containers:
+                    containers = player_containers[str(owner_uid).replace('-', '').lower()]
+                    if str(container_id).lower() == containers['Party']:
+                        location = 'Current Party'
+                    elif str(container_id).lower() == containers['PalBox']:
+                        location = 'PalBox Storage'
+                illegal_info = {'name': pal_name, 'nickname': nick, 'cid': cid, 'level': level, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'illegal_markers': illegal_markers, 'instance_id': inst_id, 'container_id': container_id, 'owner_uid': owner_uid, 'location': location}
+                illegal_pals_by_owner[uid_str].append(illegal_info)
                 changed = False
                 if level > 65:
                     sp['Level'] = {'id': None, 'type': 'IntProperty', 'value': 65}
@@ -1297,84 +1523,204 @@ def fix_illegal_pals_in_save(parent=None):
                 if rank_craftspeed > 20:
                     sp['Rank_CraftSpeed'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
                     changed = True
-                friendship_point = extract_value(sp, 'FriendshipPoint', 0)
-                if friendship_point > 200000:
-                    sp['FriendshipPoint'] = {'id': None, 'type': 'IntProperty', 'value': 200000}
-                    changed = True
                 if changed:
                     total_fixed += 1
         if os.path.exists(players_dir):
-            for filename in os.listdir(players_dir):
-                if filename.endswith('.sav') and '_dps' in filename:
-                    file_path = os.path.join(players_dir, filename)
+            valid_player_uids = set()
+            wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+            group_data_list = wsd.get('GroupSaveDataMap', {}).get('value', [])
+            for group in group_data_list:
+                if group['value']['GroupType']['value']['value'] == 'EPalGroupType::Guild':
+                    raw = group['value']['RawData']['value']
+                    players = raw.get('players', [])
+                    for p in players:
+                        uid_obj = p.get('player_uid')
+                        if uid_obj:
+                            valid_player_uids.add(str(uid_obj).replace('-', '').lower())
+            dps_files = [f for f in os.listdir(players_dir) if f.endswith('.sav') and '_dps' in f and (f.replace('_dps.sav', '').lower() in valid_player_uids)]
+            if dps_files:
+                print(f'Processing {len(dps_files)} DPS files using {os.cpu_count()} CPU cores...')
+                args_list = [(f, players_dir, PAL_EXP_TABLE, NAMEMAP) for f in dps_files]
+                with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+                    futures = {executor.submit(_process_dps_file_worker, args): args[0] for args in args_list}
+                    for future in as_completed(futures):
+                        filename = futures[future]
+                        try:
+                            result = future.result()
+                            if result['illegals_fixed'] > 0:
+                                print(f"Found {result['actual_pals']} pals, fixed {result['illegals_fixed']} illegal pals in {filename}")
+                                total_fixed += result['illegals_fixed']
+                                for illegal_info in result['illegal_entries']:
+                                    illegal_pals_by_player_file[filename].append(illegal_info)
+                                    uid_str = str(illegal_info['owner_uid']).replace('-', '').lower() if illegal_info['owner_uid'] else illegal_info['player_uid_from_file'].lower()
+                                    illegal_pals_by_owner[uid_str].append(illegal_info)
+                        except Exception as e:
+                            print(f'Error collecting results from {filename}: {e}')
+        base_path = constants.get_base_path()
+        illegal_log_dir = os.path.join(base_path, 'Illegal Pal Logger')
+        os.makedirs(illegal_log_dir, exist_ok=True)
+        guild_illegals = defaultdict(list)
+        player_illegals = defaultdict(list)
+        for uid, illegals in illegal_pals_by_owner.items():
+            if not illegals:
+                continue
+            if uid.startswith('WORKER_'):
+                parts = uid.split('_')
+                if len(parts) >= 3:
+                    guild_id = parts[1]
+                    base_id = parts[2]
+                    guild_illegals[guild_id].append((uid, illegals))
+            else:
+                player_illegals[uid].append((uid, illegals))
+        if guild_illegals:
+            guilds_illegal_dir = os.path.join(illegal_log_dir, 'Guilds')
+            os.makedirs(guilds_illegal_dir, exist_ok=True)
+            guild_name_map = {}
+            if constants.srcGuildMapping and constants.srcGuildMapping.GroupSaveDataMap:
+                for gid_uuid, gdata in constants.srcGuildMapping.GroupSaveDataMap.items():
+                    gid = str(gid_uuid)
+                    guild_name = gdata['value']['RawData']['value'].get('guild_name', 'Unnamed Guild')
+                    guild_name_map[gid.lower()] = guild_name
+            else:
+                wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+                group_data_list = wsd.get('GroupSaveDataMap', {}).get('value', [])
+                for group in group_data_list:
+                    if group['value']['GroupType']['value']['value'] == 'EPalGroupType::Guild':
+                        raw = group['value']['RawData']['value']
+                        guild_id = str(group.get('key', {}).get('GroupID', {}).get('value', ''))
+                        guild_name = raw.get('guild_name', 'Unnamed Guild')
+                        if guild_id:
+                            guild_name_map[guild_id.lower()] = guild_name
+            for guild_id, base_illegals_list in guild_illegals.items():
+                guild_name = guild_name_map.get(guild_id.lower(), 'Unknown Guild')
+                guild_sname = sanitize_filename(guild_name.encode('utf-8', 'replace').decode('utf-8'))
+                base_count = len(base_illegals_list)
+                total_illegals = sum((len(illegals) for _, illegals in base_illegals_list))
+                guild_dir = os.path.join(guilds_illegal_dir, f'({guild_id})_({guild_sname})_({base_count})')
+                os.makedirs(guild_dir, exist_ok=True)
+                for uid, illegals in base_illegals_list:
+                    if not illegals:
+                        continue
+                    parts = uid.split('_')
+                    base_id = parts[2] if len(parts) >= 3 else uid
+                    pname = owner_nicknames.get(uid, f'Base_{base_id}')
+                    sname = sanitize_filename(pname.encode('utf-8', 'replace').decode('utf-8'))
+                    pal_count = len(illegals)
+                    log_file = os.path.join(guild_dir, f'({base_id})_({pal_count}_illegals).log')
+                    logger_name = ''.join((c if c.isalnum() or c in ('_', '-') else '_' for c in f'illegal_lg_{uid}'))
+                    logger = logging.getLogger(logger_name)
+                    logger.setLevel(logging.INFO)
+                    logger.propagate = False
+                    for h in logger.handlers[:]:
+                        h.flush()
+                        h.close()
+                        logger.removeHandler(h)
                     try:
-                        p_json = sav_to_json(file_path)
-                        changed = False
-                        if 'properties' in p_json and 'SaveParameterArray' in p_json['properties']:
-                            save_param_array = p_json['properties']['SaveParameterArray'].get('value', {}).get('values', [])
-                        elif 'SaveParameterArray' in p_json:
-                            save_param_array = p_json.get('SaveParameterArray', {}).get('values', [])
-                        else:
-                            continue
-                        actual_pals = 0
-                        illegals_in_file = 0
-                        for idx, entry in enumerate(save_param_array):
-                            sp = entry.get('SaveParameter', {}).get('value', {})
-                            char_id = sp.get('CharacterID', {}).get('value', 'None')
-                            if char_id == 'None':
-                                continue
-                            actual_pals += 1
-                            if check_is_illegal_pal(entry):
-                                sp = entry['SaveParameter']['value']
-                                level = extract_value(sp, 'Level', 1)
-                                talent_hp = extract_value(sp, 'Talent_HP', 0)
-                                talent_shot = extract_value(sp, 'Talent_Shot', 0)
-                                talent_defense = extract_value(sp, 'Talent_Defense', 0)
-                                rank_hp = extract_value(sp, 'Rank_HP', 0)
-                                rank_attack = extract_value(sp, 'Rank_Attack', 0)
-                                rank_defense = extract_value(sp, 'Rank_Defence', 0)
-                                rank_craftspeed = extract_value(sp, 'Rank_CraftSpeed', 0)
-                                if level > 65:
-                                    sp['Level'] = {'id': None, 'type': 'IntProperty', 'value': 65}
-                                    try:
-                                        exp = PAL_EXP_TABLE['65']['PalTotalEXP']
-                                    except:
-                                        exp = 0
-                                    sp['Exp'] = {'id': None, 'type': 'Int64Property', 'value': exp}
-                                    changed = True
-                                if talent_hp > 100:
-                                    sp['Talent_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
-                                    changed = True
-                                if talent_shot > 100:
-                                    sp['Talent_Shot'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
-                                    changed = True
-                                if talent_defense > 100:
-                                    sp['Talent_Defense'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 100}}
-                                    changed = True
-                                if rank_hp > 20:
-                                    sp['Rank_HP'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                                    changed = True
-                                if rank_attack > 20:
-                                    sp['Rank_Attack'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                                    changed = True
-                                if rank_defense > 20:
-                                    sp['Rank_Defence'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                                    changed = True
-                                if rank_craftspeed > 20:
-                                    sp['Rank_CraftSpeed'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
-                                    changed = True
-                                friendship_point = extract_value(sp, 'FriendshipPoint', 0)
-                                if friendship_point > 200000:
-                                    sp['FriendshipPoint'] = {'id': None, 'type': 'IntProperty', 'value': 200000}
-                                    changed = True
-                                if changed:
-                                    total_fixed += 1
-                                    illegals_in_file += 1
-                        if changed:
-                            json_to_sav(p_json, file_path)
-                            print(f'Found {actual_pals} pals, fixed {illegals_in_file} illegal pals in {filename}')
+                        handler = logging.FileHandler(log_file, mode='w', encoding='utf-8', errors='replace')
+                        handler.setFormatter(logging.Formatter('%(message)s'))
+                        logger.addHandler(handler)
                     except:
-                        pass
+                        continue
+                    logger.info('=' * 80)
+                    logger.info(f'ILLEGAL PALS LOG: {pname}')
+                    logger.info(f'Total Illegal Pals Found: {pal_count}')
+                    logger.info('=' * 80)
+                    logger.info('')
+                    by_location = defaultdict(list)
+                    for info in illegals:
+                        by_location[info['location']].append(info)
+                    prio = ['DPS Storage', 'Current Party', 'PalBox Storage', 'Base Worker']
+                    sorted_locations = prio + sorted([k for k in by_location.keys() if k not in prio])
+                    for location in sorted_locations:
+                        if location not in by_location:
+                            continue
+                        pals = by_location[location]
+                        logger.info(f'\n{location} (Count: {len(pals)})')
+                        logger.info('-' * 40)
+                        for info in pals:
+                            display_name = info['name']
+                            if info.get('nickname') and info['nickname'] not in ('Unknown', ''):
+                                display_name = f"{info['name']}(Nickname: {info['nickname']})"
+                            illegal_str = ', '.join(info['illegal_markers'])
+                            lvl_str = f"[!] {info['level']}" if 'Level' in info['illegal_markers'] else str(info['level'])
+                            iv_str = f"HP: {info['talent_hp']}(+0%),ATK: {info['talent_shot']}(+0%),DEF: {info['talent_defense']}(+0%)"
+                            soul_str = f"HP Soul: {info['rank_hp']}, ATK Soul: {info['rank_attack']}, DEF Soul: {info['rank_defense']}, Craft: {info['rank_craftspeed']}"
+                            info_block = f'\n[{display_name}]\n'
+                            info_block += f'  [!] ILLEGAL: {illegal_str}\n'
+                            info_block += f'  Level: {lvl_str}\n'
+                            info_block += f'  IVs:      {iv_str}\n'
+                            info_block += f'  Souls:    {soul_str}\n'
+                            info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                            logger.info(info_block)
+                            logger.info('-' * 20)
+                    for h in logger.handlers[:]:
+                        h.flush()
+                        h.close()
+                        logger.removeHandler(h)
+        if player_illegals:
+            players_illegal_dir = os.path.join(illegal_log_dir, 'Players')
+            os.makedirs(players_illegal_dir, exist_ok=True)
+            for uid, illegals_list in player_illegals.items():
+                for _, illegals in illegals_list:
+                    if not illegals:
+                        continue
+                    pname = owner_nicknames.get(uid, f'Player_{uid[:8]}')
+                    sname = sanitize_filename(pname.encode('utf-8', 'replace').decode('utf-8'))
+                    pal_count = len(illegals)
+                    log_file = os.path.join(players_illegal_dir, f'({uid})_({sname})_({pal_count}_illegals).log')
+                    logger_name = ''.join((c if c.isalnum() or c in ('_', '-') else '_' for c in f'illegal_lg_{uid}'))
+                    logger = logging.getLogger(logger_name)
+                    logger.setLevel(logging.INFO)
+                    logger.propagate = False
+                    for h in logger.handlers[:]:
+                        h.flush()
+                        h.close()
+                        logger.removeHandler(h)
+                    try:
+                        handler = logging.FileHandler(log_file, mode='w', encoding='utf-8', errors='replace')
+                        handler.setFormatter(logging.Formatter('%(message)s'))
+                        logger.addHandler(handler)
+                    except:
+                        continue
+                    logger.info('=' * 80)
+                    logger.info(f'ILLEGAL PALS LOG: {pname}')
+                    logger.info(f'Total Illegal Pals Found: {pal_count}')
+                    logger.info('=' * 80)
+                    logger.info('')
+                    by_location = defaultdict(list)
+                    for info in illegals:
+                        by_location[info['location']].append(info)
+                    prio = ['DPS Storage', 'Current Party', 'PalBox Storage', 'Base Worker']
+                    sorted_locations = prio + sorted([k for k in by_location.keys() if k not in prio])
+                    for location in sorted_locations:
+                        if location not in by_location:
+                            continue
+                        pals = by_location[location]
+                        logger.info(f'\n{location} (Count: {len(pals)})')
+                        logger.info('-' * 40)
+                        for info in pals:
+                            display_name = info['name']
+                            if info.get('nickname') and info['nickname'] not in ('Unknown', ''):
+                                display_name = f"{info['name']}(Nickname: {info['nickname']})"
+                            illegal_str = ', '.join(info['illegal_markers'])
+                            lvl_str = f"[!] {info['level']}" if 'Level' in info['illegal_markers'] else str(info['level'])
+                            iv_str = f"HP: {info['talent_hp']}(+0%),ATK: {info['talent_shot']}(+0%),DEF: {info['talent_defense']}(+0%)"
+                            soul_str = f"HP Soul: {info['rank_hp']}, ATK Soul: {info['rank_attack']}, DEF Soul: {info['rank_defense']}, Craft: {info['rank_craftspeed']}"
+                            info_block = f'\n[{display_name}]\n'
+                            info_block += f'  [!] ILLEGAL: {illegal_str}\n'
+                            info_block += f'  Level: {lvl_str}\n'
+                            info_block += f'  IVs:      {iv_str}\n'
+                            info_block += f'  Souls:    {soul_str}\n'
+                            info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                            logger.info(info_block)
+                            logger.info('-' * 20)
+                    for h in logger.handlers[:]:
+                        h.flush()
+                        h.close()
+                        logger.removeHandler(h)
+        print(f'Created illegal pal logs in: {illegal_log_dir}')
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return 0
     return total_fixed

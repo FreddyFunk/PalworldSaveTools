@@ -2,6 +2,12 @@ from import_libs import *
 from PySide6.QtWidgets import QHeaderView, QWidget, QTreeWidget, QTreeWidgetItem, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QFileDialog, QMessageBox, QApplication, QFrame
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon, QFont
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+try:
+    from palworld_aio.utils import sav_to_gvasfile, gvasfile_to_sav
+except ImportError:
+    from palworld_aio.utils import sav_to_gvasfile, gvasfile_to_sav
 player_list_cache = []
 def extract_value(data, key, default_value=''):
     value = data.get(key, default_value)
@@ -958,6 +964,29 @@ def get_val_safe(p):
         return p['value']['RawData']['value']['object']['SaveParameter']['value']
     except:
         return {}
+def _process_player_file_worker(args):
+    target_player, json_data, gvas_obj, source_guid, src_players_folder, tgt_players_folder = args
+    try:
+        t_host_sav_path = os.path.join(tgt_players_folder, target_player + '.sav')
+        os.makedirs(os.path.dirname(t_host_sav_path), exist_ok=True)
+        gvas_obj.properties = json_data
+        tmp_player = t_host_sav_path + '.tmp'
+        gvasfile_to_sav(gvas_obj, tmp_player)
+        os.replace(tmp_player, t_host_sav_path)
+        src_dps_path = os.path.join(src_players_folder, source_guid + '_dps.sav')
+        tgt_dps_path = os.path.join(tgt_players_folder, target_player + '_dps.sav')
+        if os.path.exists(src_dps_path):
+            pal_id = json_data['SaveData']['value']['PalStorageContainerId']['value']['ID']['value']
+            dps_gvas = sav_to_gvasfile(src_dps_path)
+            for pal in dps_gvas.properties.get('value', []):
+                if 'SlotId' in pal and 'ContainerId' in pal['SlotId']:
+                    pal['SlotId']['ContainerId']['ID']['value'] = pal_id
+            gvasfile_to_sav(dps_gvas, tgt_dps_path)
+            return (True, target_player, f'DPS save updated from {src_dps_path} to {tgt_dps_path}')
+        else:
+            return (True, target_player, f'DPS source file missing: {src_dps_path}')
+    except Exception as e:
+        return (False, target_player, f'Error processing {target_player}: {e}')
 def save_and_backup():
     def task():
         print(t('Now saving the data...'))
@@ -971,26 +1000,15 @@ def save_and_backup():
         os.replace(tmp_world, t_level_sav_path)
         src_players_folder = os.path.join(os.path.dirname(level_sav_path), 'Players')
         tgt_players_folder = os.path.join(os.path.dirname(t_level_sav_path), 'Players')
-        for target_player, (json_data, gvas_obj, source_guid) in modified_targets_data.items():
-            t_host_sav_path = os.path.join(tgt_players_folder, target_player + '.sav')
-            os.makedirs(os.path.dirname(t_host_sav_path), exist_ok=True)
-            gvas_obj.properties = json_data
-            tmp_player = t_host_sav_path + '.tmp'
-            gvas_to_sav(tmp_player, gvas_obj.write())
-            os.replace(tmp_player, t_host_sav_path)
-            src_dps_path = os.path.join(src_players_folder, source_guid + '_dps.sav')
-            tgt_dps_path = os.path.join(tgt_players_folder, target_player + '_dps.sav')
-            if os.path.exists(src_dps_path):
-                pal_id = json_data['SaveData']['value']['PalStorageContainerId']['value']['ID']['value']
-                raw_gvas, _ = load_file(src_dps_path)
-                dps = SkipGvasFile.read(raw_gvas)
-                for pal in dps.properties.get('value', []):
-                    if 'SlotId' in pal and 'ContainerId' in pal['SlotId']:
-                        pal['SlotId']['ContainerId']['ID']['value'] = pal_id
-                gvas_to_sav(tgt_dps_path, dps.write())
-                print(f'DPS save updated from {src_dps_path} to {tgt_dps_path}')
-            else:
-                print(f'DPS source file missing: {src_dps_path}')
+        args_list = [(target_player, json_data, gvas_obj, source_guid, src_players_folder, tgt_players_folder) for target_player, (json_data, gvas_obj, source_guid) in modified_targets_data.items()]
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+            futures = {executor.submit(_process_player_file_worker, args): args[0] for args in args_list}
+            for future in as_completed(futures):
+                success, player, msg = future.result()
+                if success:
+                    print(msg)
+                else:
+                    print(f'⚠ {msg}')
         return True
     def on_finished(success):
         if success:
@@ -1031,11 +1049,10 @@ def load_player_file(level_sav_path, player_uid, use_source_folder=False):
         if not os.path.exists(player_file_path):
             print(f'Error!', f'Player file {player_file_path} not present.')
             return None
-    raw_gvas, save_type = load_file(player_file_path)
-    if not raw_gvas:
+    if not os.path.exists(player_file_path):
         print(f'Error!', f'Invalid file {player_file_path}')
         return
-    return SkipGvasFile.read(raw_gvas)
+    return sav_to_gvasfile(player_file_path)
 def load_players(save_json, is_source):
     guild_dict = source_guild_dict if is_source else target_guild_dict
     if guild_dict:

@@ -4,11 +4,11 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from i18n import t
 try:
     from palworld_aio import constants
-    from palworld_aio.utils import are_equal_uuids, as_uuid, sav_to_json, json_to_sav
+    from palworld_aio.utils import are_equal_uuids, as_uuid, sav_to_gvasfile, gvasfile_to_sav
     from palworld_aio.data_manager import delete_player
 except ImportError:
     from . import constants
-    from .utils import are_equal_uuids, as_uuid, sav_to_json, json_to_sav
+    from .utils import are_equal_uuids, as_uuid, sav_to_gvasfile, gvasfile_to_sav
     from .data_manager import delete_player
 def _load_exp_data():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -84,12 +84,12 @@ def unlock_viewing_cage(player_uid):
     if not os.path.exists(sav_file):
         return False
     try:
-        p_json = sav_to_json(sav_file)
-        save_data = p_json.get('properties', {}).get('SaveData', {}).get('value', {})
+        gvas = sav_to_gvasfile(sav_file)
+        save_data = gvas.properties.get('SaveData', {}).get('value', {})
         if 'bIsViewingCageCanUse' not in save_data:
             return False
         save_data['bIsViewingCageCanUse']['value'] = True
-        json_to_sav(p_json, sav_file)
+        gvasfile_to_sav(gvas, sav_file)
         return True
     except Exception as e:
         print(f'Error unlocking viewing cage: {e}')

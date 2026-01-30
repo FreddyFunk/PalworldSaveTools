@@ -1,6 +1,19 @@
 import sys
 import os
 import traceback
+import multiprocessing
+if getattr(sys, 'frozen', False):
+    import subprocess
+    multiprocessing.set_executable(sys.executable)
+    _original_popen = subprocess.Popen
+    class _NoConsolePopen(_original_popen):
+        def __init__(self, *args, **kwargs):
+            if sys.platform == 'win32' and 'creationflags' not in kwargs:
+                kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+            super().__init__(*args, **kwargs)
+    subprocess.Popen = _NoConsolePopen
+if __name__ == '__main__':
+    multiprocessing.freeze_support()
 os.environ['QT_LOGGING_RULES'] = '*=false'
 os.environ['QT_DEBUG_PLUGINS'] = '0'
 if getattr(sys, 'frozen', False):
@@ -107,12 +120,12 @@ def run_aio():
         constants.current_save_path = d
         constants.backup_save_path = constants.current_save_path
         import time
-        from palworld_aio.utils import sav_to_json
+        from palworld_aio.utils import sav_to_gvas_wrapper
         from palobject import MappingCacheObject, toUUID
         t0 = time.perf_counter()
-        constants.loaded_level_json = sav_to_json(p)
+        constants.loaded_level_json = sav_to_gvas_wrapper(p)
         t1 = time.perf_counter()
-        print(f'Save loaded and converted to JSON in {t1 - t0:.2f} seconds')
+        print(f'Save loaded in {t1 - t0:.2f} seconds')
         save_manager._build_player_levels()
         if not constants.loaded_level_json:
             print('Error: Failed to load save')
@@ -160,11 +173,11 @@ def run_aio():
         print('Saving changes...')
         if constants.current_save_path and constants.loaded_level_json:
             from import_libs import backup_whole_directory
-            from palworld_aio.utils import json_to_sav
+            from palworld_aio.utils import wrapper_to_sav
             backup_whole_directory(constants.backup_save_path, 'Backups/AllinOneTools')
             level_sav_path = os.path.join(constants.current_save_path, 'Level.sav')
             t0 = time.perf_counter()
-            json_to_sav(constants.loaded_level_json, level_sav_path)
+            wrapper_to_sav(constants.loaded_level_json, level_sav_path)
             t1 = time.perf_counter()
             players_folder = os.path.join(constants.current_save_path, 'Players')
             for uid in constants.files_to_delete:

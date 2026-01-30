@@ -764,18 +764,18 @@ class MainWindow(QMainWindow):
             return
         save_manager.save_changes(parent=self)
     def _rename_world(self):
-        from ..utils import sav_to_json, json_to_sav
+        from ..utils import sav_to_gvasfile, gvasfile_to_sav
         if not constants.current_save_path:
             return
         meta_path = os.path.join(constants.current_save_path, 'LevelMeta.sav')
         if not os.path.exists(meta_path):
             return
-        meta_json = sav_to_json(meta_path)
-        old = meta_json['properties']['SaveData']['value'].get('WorldName', {}).get('value', 'Unknown World')
+        meta_gvas = sav_to_gvasfile(meta_path)
+        old = meta_gvas.properties.get('SaveData', {}).get('value', {}).get('WorldName', {}).get('value', 'Unknown World')
         new_name = InputDialog.get_text(t('world.rename.title'), t('world.rename.prompt', old=old), self)
         if new_name:
-            meta_json['properties']['SaveData']['value']['WorldName']['value'] = new_name
-            json_to_sav(meta_json, meta_path)
+            meta_gvas.properties['SaveData']['value']['WorldName']['value'] = new_name
+            gvasfile_to_sav(meta_gvas, meta_path)
             msg_box = self._create_message_box(QMessageBox.Information)
             msg_box.setWindowTitle(t('success.title'))
             msg_box.setText(t('world.rename.done'))

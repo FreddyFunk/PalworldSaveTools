@@ -7,7 +7,7 @@ import logging
 import threading
 import re
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 from PySide6.QtCore import QObject, Signal
 from palworld_save_tools.gvas import GvasFile
@@ -20,12 +20,14 @@ import palworld_coord
 from i18n import t
 try:
     from palworld_aio import constants
-    from palworld_aio.utils import sav_to_json, json_to_sav, extract_value, sanitize_filename, format_duration_short
+    from palworld_aio.utils import sav_to_json, json_to_sav, sav_to_gvas_wrapper, wrapper_to_sav, sav_to_gvasfile, extract_value, sanitize_filename, format_duration_short
     from palworld_aio.guild_manager import rebuild_all_guilds
+    from palworld_aio.func_manager import check_is_illegal_pal
 except ImportError:
     from . import constants
-    from .utils import sav_to_json, json_to_sav, extract_value, sanitize_filename, format_duration_short
+    from .utils import sav_to_json, json_to_sav, sav_to_gvas_wrapper, wrapper_to_sav, sav_to_gvasfile, extract_value, sanitize_filename, format_duration_short
     from .guild_manager import rebuild_all_guilds
+    from .func_manager import check_is_illegal_pal
 class SaveManager(QObject):
     load_started = Signal()
     load_finished = Signal(bool)
@@ -68,6 +70,7 @@ class SaveManager(QObject):
             constants.dps_futures = []
             constants.dps_tasks = []
             constants.original_loaded_level_json = None
+            self.dps_tasks.clear()
         try:
             from palobject import MappingCacheObject
             if hasattr(MappingCacheObject, '_MappingCacheInstances'):
@@ -84,7 +87,7 @@ class SaveManager(QObject):
         constants.backup_save_path = constants.current_save_path
         def load_task():
             t0 = time.perf_counter()
-            constants.loaded_level_json = sav_to_json(p)
+            constants.loaded_level_json = sav_to_gvas_wrapper(p)
             t1 = time.perf_counter()
             self._build_player_levels()
             if not constants.loaded_level_json:
@@ -117,22 +120,29 @@ class SaveManager(QObject):
                 except:
                     pass
             os.makedirs(log_folder, exist_ok=True)
+            illegal_log_folder = os.path.join(base_path, 'Illegal Pal Logger')
+            if os.path.exists(illegal_log_folder):
+                try:
+                    shutil.rmtree(illegal_log_folder)
+                except:
+                    pass
             player_pals_count = {}
-            self._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
+            illegal_pals_by_owner, owner_nicknames = self._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
             constants.PLAYER_PAL_COUNTS = player_pals_count
-            self._process_scan_log(data_source, playerdir, log_folder, guild_name_map)
+            self._process_scan_log(data_source, playerdir, log_folder, guild_name_map, base_path, illegal_pals_by_owner, owner_nicknames)
             self.load_finished.emit(True)
             return True
         run_with_loading(lambda _: None, load_task)
     def reload_current_save(self):
         if not constants.current_save_path:
             raise Exception('No save is currently loaded')
+        self.dps_tasks.clear()
         level_sav_path = os.path.join(constants.current_save_path, 'Level.sav')
         if not os.path.exists(level_sav_path):
             raise Exception(f'Level.sav not found at {level_sav_path}')
         base_path = constants.get_base_path()
         t0 = time.perf_counter()
-        constants.loaded_level_json = sav_to_json(level_sav_path)
+        constants.loaded_level_json = sav_to_gvas_wrapper(level_sav_path)
         t1 = time.perf_counter()
         self._build_player_levels()
         if not constants.loaded_level_json:
@@ -162,11 +172,17 @@ class SaveManager(QObject):
             except:
                 pass
         os.makedirs(log_folder, exist_ok=True)
+        illegal_log_folder = os.path.join(base_path, 'Illegal Pal Logger')
+        if os.path.exists(illegal_log_folder):
+            try:
+                shutil.rmtree(illegal_log_folder)
+            except:
+                pass
         player_pals_count = {}
-        self._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
+        illegal_pals_by_owner, owner_nicknames = self._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
         constants.PLAYER_PAL_COUNTS = player_pals_count
         playerdir = os.path.join(constants.current_save_path, 'Players')
-        self._process_scan_log(data_source, playerdir, log_folder, guild_name_map)
+        self._process_scan_log(data_source, playerdir, log_folder, guild_name_map, base_path, illegal_pals_by_owner, owner_nicknames)
         return True
     def save_changes(self, parent=None):
         if not constants.current_save_path or not constants.loaded_level_json:
@@ -177,7 +193,7 @@ class SaveManager(QObject):
         def save_task():
             t0 = time.perf_counter()
             rebuild_all_guilds()
-            json_to_sav(constants.loaded_level_json, level_sav_path)
+            wrapper_to_sav(constants.loaded_level_json, level_sav_path)
             t1 = time.perf_counter()
             players_folder = os.path.join(constants.current_save_path, 'Players')
             for uid in constants.files_to_delete:
@@ -218,8 +234,12 @@ class SaveManager(QObject):
             except Exception:
                 continue
         constants.player_levels = dict(uid_level_map)
-    def _count_pals_found(self, data, player_pals_count, log_folder, current_save_path, guild_name_map):
+    def _count_pals_found(self, data, player_pals_count, log_folder, current_save_path, guild_name_map, illegal_pals_by_owner=None):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if illegal_pals_by_owner is None:
+            illegal_pals_by_owner = defaultdict(lambda: defaultdict(list))
+        else:
+            illegal_pals_by_owner = defaultdict(lambda: defaultdict(list), illegal_pals_by_owner)
         def load_map(fname, key):
             try:
                 fp = os.path.join(base_dir, 'resources', 'game_data', fname)
@@ -237,36 +257,49 @@ class SaveManager(QObject):
         owner_pals_grouped = defaultdict(lambda: defaultdict(list))
         player_containers = {}
         owner_nicknames = {}
+        valid_player_uids = set()
+        if constants.srcGuildMapping and constants.srcGuildMapping.GroupSaveDataMap:
+            for gid, gdata in constants.srcGuildMapping.GroupSaveDataMap.items():
+                players = gdata['value']['RawData']['value'].get('players', [])
+                for p in players:
+                    uid = p.get('player_uid')
+                    if uid:
+                        valid_player_uids.add(str(uid).replace('-', '').lower())
         players_dir = os.path.join(current_save_path, 'Players')
         if os.path.exists(players_dir):
-            for filename in os.listdir(players_dir):
-                if filename.endswith('.sav') and '_dps' not in filename:
+            player_files = [f for f in os.listdir(players_dir) if f.endswith('.sav') and '_dps' not in f and (f.replace('.sav', '').lower() in valid_player_uids)]
+            if player_files:
+                def load_player_file(filename):
                     try:
-                        p_json = sav_to_json(os.path.join(players_dir, filename))
-                        p_prop = p_json.get('properties', {}).get('SaveData', {}).get('value', {})
+                        p_gvas = sav_to_gvasfile(os.path.join(players_dir, filename))
+                        p_prop = p_gvas.properties.get('SaveData', {}).get('value', {})
                         p_uid_raw = filename.replace('.sav', '')
                         p_uid = p_uid_raw.lower()
                         p_box = p_prop.get('PalStorageContainerId', {}).get('value', {}).get('ID', {}).get('value')
                         p_party = p_prop.get('OtomoCharacterContainerId', {}).get('value', {}).get('ID', {}).get('value')
                         if p_box and p_party:
-                            player_containers[p_uid] = {'Party': str(p_party).lower(), 'PalBox': str(p_box).lower()}
+                            return (p_uid, {'Party': str(p_party).lower(), 'PalBox': str(p_box).lower()})
                     except:
                         pass
+                    return None
+                with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+                    results = executor.map(load_player_file, player_files)
+                    for result in results:
+                        if result:
+                            player_containers[result[0]] = result[1]
         cmap = data.get('CharacterSaveParameterMap', {}).get('value', [])
-        for itm in cmap:
-            try:
-                raw_p = itm.get('value', {}).get('RawData', {}).get('value', {}).get('object', {}).get('SaveParameter', {}).get('value', {})
-                if 'IsPlayer' in raw_p:
-                    uid = itm.get('key', {}).get('PlayerUId', {}).get('value')
-                    nn = raw_p.get('NickName', {}).get('value', 'Unknown')
-                    if uid:
-                        owner_nicknames[str(uid).replace('-', '').lower()] = nn
-            except:
-                pass
         guild_bases = defaultdict(set)
         for item in cmap:
             rawf = item.get('value', {}).get('RawData', {}).get('value', {})
             raw = rawf.get('object', {}).get('SaveParameter', {}).get('value', {})
+            if not isinstance(raw, dict):
+                continue
+            if 'IsPlayer' in raw:
+                uid = item.get('key', {}).get('PlayerUId', {}).get('value')
+                nn = raw.get('NickName', {}).get('value', 'Unknown')
+                if uid:
+                    owner_nicknames[str(uid).replace('-', '').lower()] = nn
+                continue
             if not isinstance(raw, dict) or 'IsPlayer' in raw:
                 continue
             inst = item.get('key', {}).get('InstanceId', {}).get('value')
@@ -305,8 +338,15 @@ class SaveManager(QObject):
                 if w_short.lower() not in SKILLMAP:
                     miss['Skills'].add(w)
             learned = [SKILLMAP.get(w.split('::')[-1].lower(), w.split('::')[-1]) for w in m_list]
-            rh, ra, rd = (int(extract_value(raw, 'Rank_HP', 0)) * 3, int(extract_value(raw, 'Rank_Attack', 0)) * 3, int(extract_value(raw, 'Rank_Defence', 0)) * 3)
-            iv_str = f"HP: {extract_value(raw, 'Talent_HP', '0')}(+{rh}%),ATK: {extract_value(raw, 'Talent_Shot', '0')}(+{ra}%),DEF: {extract_value(raw, 'Talent_Defense', '0')}(+{rd}%)"
+            talent_hp = int(extract_value(raw, 'Talent_HP', 0))
+            talent_shot = int(extract_value(raw, 'Talent_Shot', 0))
+            talent_defense = int(extract_value(raw, 'Talent_Defense', 0))
+            rank_hp = int(extract_value(raw, 'Rank_HP', 0))
+            rank_attack = int(extract_value(raw, 'Rank_Attack', 0))
+            rank_defense = int(extract_value(raw, 'Rank_Defence', 0))
+            rank_craftspeed = int(extract_value(raw, 'Rank_CraftSpeed', 0))
+            rh, ra, rd = (rank_hp * 3, rank_attack * 3, rank_defense * 3)
+            iv_str = f'HP: {talent_hp}(+{rh}%),ATK: {talent_shot}(+{ra}%),DEF: {talent_defense}(+{rd}%)'
             nick = raw.get('NickName', {}).get('value', 'Unknown')
             dn = f'{name}(Nickname: {nick})' if nick != 'Unknown' else name
             info = f"\n[{dn}]\n  Level: {lvl} | Rank: {rk} | Gender: {ginfo}\n  IVs:      {iv_str}\n  Passives: {(','.join(pskills) if pskills else 'None')}\n  Active:   {(','.join(active) if active else 'None')}\n  Learned:  {(','.join(learned) if learned else 'None')}\n  IDs:      Container: {base} | Instance: {inst} | Guild: {gid}\n"
@@ -317,6 +357,10 @@ class SaveManager(QObject):
                 elif base == player_containers[u_str]['PalBox']:
                     lbl = 'PalBox Storage'
             owner_pals_grouped[target_id][lbl].append(info)
+            is_illegal, illegal_markers = check_is_illegal_pal(item)
+            if is_illegal:
+                illegal_info = {'name': name, 'nickname': nick, 'cid': cid, 'level': lvl, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'illegal_markers': illegal_markers, 'instance_id': inst, 'container_id': base, 'location': lbl}
+                illegal_pals_by_owner[target_id][lbl].append(illegal_info)
             if is_worker:
                 player_pals_count['worker_dropped'] = player_pals_count.get('worker_dropped', 0) + 1
             else:
@@ -368,7 +412,8 @@ class SaveManager(QObject):
                 h.flush()
                 h.close()
                 lg.removeHandler(h)
-    def _process_scan_log(self, data_source, playerdir, log_folder, guild_name_map):
+        return (dict(illegal_pals_by_owner), owner_nicknames)
+    def _process_scan_log(self, data_source, playerdir, log_folder, guild_name_map, base_path, illegal_pals_by_owner=None, owner_nicknames=None):
         def count_owned_pals(level_json):
             owned_count = {}
             try:
@@ -462,6 +507,176 @@ class SaveManager(QObject):
         for h in players_logger.handlers[:]:
             players_logger.removeHandler(h)
             h.close()
+        if self.dps_tasks:
+            dps_players_folder = os.path.join(log_folder, 'players')
+            os.makedirs(dps_players_folder, exist_ok=True)
+            if illegal_pals_by_owner is None:
+                illegal_pals_by_owner = defaultdict(lambda: defaultdict(list))
+            else:
+                illegal_pals_by_owner = defaultdict(lambda: defaultdict(list), illegal_pals_by_owner)
+            with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+                futures = {executor.submit(_process_dps_scan_worker, task): task for task in self.dps_tasks}
+                for future in as_completed(futures):
+                    try:
+                        uid, pname, pal_info_strings, illegal_pals = future.result()
+                        if pal_info_strings:
+                            clean_uid = str(uid).replace('-', '')
+                            pal_count = len(pal_info_strings)
+                            filename = f'({clean_uid})_({pname})_({pal_count})_dps.log'
+                            dps_log_path = os.path.join(dps_players_folder, filename)
+                            with open(dps_log_path, 'w', encoding='utf-8') as dps_log:
+                                dps_log.write(f"{pname}'s {pal_count} Pals\n")
+                                dps_log.write('=' * 40 + '\n')
+                                dps_log.write(f'\nDPS Storage(Count: {pal_count})\n')
+                                dps_log.write('-' * 40 + '\n')
+                                for pal_info in sorted(pal_info_strings):
+                                    dps_log.write(pal_info)
+                                    dps_log.write('-' * 20 + '\n')
+                        if illegal_pals:
+                            uid_str = str(uid).replace('-', '').lower()
+                            illegal_pals_by_owner[uid_str]['DPS Storage'].extend(illegal_pals)
+                    except Exception as e:
+                        print(f'Error processing DPS task: {e}')
+            self.dps_tasks.clear()
+        if illegal_pals_by_owner:
+            illegal_log_dir = os.path.join(base_path, 'Illegal Pal Logger')
+            os.makedirs(illegal_log_dir, exist_ok=True)
+            guild_illegals = defaultdict(list)
+            player_illegals = defaultdict(list)
+            for uid_str, location_groups in illegal_pals_by_owner.items():
+                all_pals = []
+                for loc_pals in location_groups.values():
+                    all_pals.extend(loc_pals)
+                if not all_pals:
+                    continue
+                if uid_str.startswith('WORKER_'):
+                    parts = uid_str.split('_')
+                    if len(parts) >= 3:
+                        guild_id = parts[1]
+                        guild_illegals[guild_id].append((uid_str, all_pals, location_groups))
+                else:
+                    player_illegals[uid_str].append((uid_str, all_pals, location_groups))
+            if guild_illegals:
+                guilds_illegal_dir = os.path.join(illegal_log_dir, 'Guilds')
+                os.makedirs(guilds_illegal_dir, exist_ok=True)
+                for guild_id, base_illegals_list in guild_illegals.items():
+                    guild_name = guild_name_map.get(guild_id.lower(), 'Unknown Guild')
+                    guild_sname = sanitize_filename(guild_name.encode('utf-8', 'replace').decode('utf-8'))
+                    base_count = len(base_illegals_list)
+                    total_illegals = sum((len(all_pals) for _, all_pals, _ in base_illegals_list))
+                    guild_dir = os.path.join(guilds_illegal_dir, f'({guild_id})_({guild_sname})_({base_count})')
+                    os.makedirs(guild_dir, exist_ok=True)
+                    for uid_str, all_pals, location_groups in base_illegals_list:
+                        if not all_pals:
+                            continue
+                        parts = uid_str.split('_')
+                        base_id = parts[2] if len(parts) >= 3 else uid_str
+                        pname = owner_nicknames.get(uid_str, f'Base_{base_id}') if owner_nicknames else f'Base_{base_id}'
+                        sname = sanitize_filename(pname.encode('utf-8', 'replace').decode('utf-8'))
+                        pal_count = len(all_pals)
+                        log_file = os.path.join(guild_dir, f'({base_id})_({pal_count}_illegals).log')
+                        lname = ''.join((c if c.isalnum() or c in ('_', '-') else '_' for c in f'lg_illegal_{uid_str}'))
+                        logger = logging.getLogger(lname)
+                        logger.setLevel(logging.INFO)
+                        logger.propagate = False
+                        if not logger.hasHandlers():
+                            try:
+                                h = logging.FileHandler(log_file, mode='w', encoding='utf-8', errors='replace')
+                                h.setFormatter(logging.Formatter('%(message)s'))
+                                logger.addHandler(h)
+                            except:
+                                continue
+                        logger.info('=' * 80)
+                        logger.info(f'ILLEGAL PALS LOG: {pname}')
+                        logger.info(f'Total Illegal Pals Found: {pal_count}')
+                        logger.info('=' * 80)
+                        logger.info('')
+                        prio = ['DPS Storage', 'Current Party', 'PalBox Storage', 'Base Worker']
+                        sorted_locations = prio + sorted([k for k in location_groups.keys() if k not in prio])
+                        for location in sorted_locations:
+                            if location not in location_groups or not location_groups[location]:
+                                continue
+                            pals_in_location = location_groups[location]
+                            logger.info(f'\n{location} (Count: {len(pals_in_location)})')
+                            logger.info('-' * 40)
+                            for info in sorted(pals_in_location, key=lambda x: x['name']):
+                                display_name = info['name']
+                                if info.get('nickname') and info['nickname'] not in ('Unknown', ''):
+                                    display_name = f"{info['name']}(Nickname: {info['nickname']})"
+                                illegal_str = ', '.join(info['illegal_markers'])
+                                lvl_str = f"[!] {info['level']}" if 'Level' in info['illegal_markers'] else str(info['level'])
+                                iv_str = f"HP: {info['talent_hp']}(+0%),ATK: {info['talent_shot']}(+0%),DEF: {info['talent_defense']}(+0%)"
+                                soul_str = f"HP Soul: {info['rank_hp']}, ATK Soul: {info['rank_attack']}, DEF Soul: {info['rank_defense']}, Craft: {info['rank_craftspeed']}"
+                                info_block = f'\n[{display_name}]\n'
+                                info_block += f'  [!] ILLEGAL: {illegal_str}\n'
+                                info_block += f'  Level: {lvl_str}\n'
+                                info_block += f'  IVs:      {iv_str}\n'
+                                info_block += f'  Souls:    {soul_str}\n'
+                                info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                                logger.info(info_block)
+                                logger.info('-' * 20)
+                        for h in logger.handlers[:]:
+                            h.flush()
+                            h.close()
+                            logger.removeHandler(h)
+            if player_illegals:
+                players_illegal_dir = os.path.join(illegal_log_dir, 'Players')
+                os.makedirs(players_illegal_dir, exist_ok=True)
+                for uid_str, illegals_list in player_illegals.items():
+                    for _, all_pals, location_groups in illegals_list:
+                        if not all_pals:
+                            continue
+                        if owner_nicknames is None:
+                            owner_nicknames = {}
+                        pname = owner_nicknames.get(uid_str, f'Player_{uid_str[:8]}')
+                        sname = sanitize_filename(pname.encode('utf-8', 'replace').decode('utf-8'))
+                        pal_count = len(all_pals)
+                        log_file = os.path.join(players_illegal_dir, f'({uid_str})_({sname})_({pal_count}_illegals).log')
+                        lname = ''.join((c if c.isalnum() or c in ('_', '-') else '_' for c in f'lg_illegal_{uid_str}'))
+                        logger = logging.getLogger(lname)
+                        logger.setLevel(logging.INFO)
+                        logger.propagate = False
+                        if not logger.hasHandlers():
+                            try:
+                                h = logging.FileHandler(log_file, mode='w', encoding='utf-8', errors='replace')
+                                h.setFormatter(logging.Formatter('%(message)s'))
+                                logger.addHandler(h)
+                            except:
+                                continue
+                        logger.info('=' * 80)
+                        logger.info(f'ILLEGAL PALS LOG: {pname}')
+                        logger.info(f'Total Illegal Pals Found: {pal_count}')
+                        logger.info('=' * 80)
+                        logger.info('')
+                        prio = ['DPS Storage', 'Current Party', 'PalBox Storage', 'Base Worker']
+                        sorted_locations = prio + sorted([k for k in location_groups.keys() if k not in prio])
+                        for location in sorted_locations:
+                            if location not in location_groups or not location_groups[location]:
+                                continue
+                            pals_in_location = location_groups[location]
+                            logger.info(f'\n{location} (Count: {len(pals_in_location)})')
+                            logger.info('-' * 40)
+                            for info in sorted(pals_in_location, key=lambda x: x['name']):
+                                display_name = info['name']
+                                if info.get('nickname') and info['nickname'] not in ('Unknown', ''):
+                                    display_name = f"{info['name']}(Nickname: {info['nickname']})"
+                                illegal_str = ', '.join(info['illegal_markers'])
+                                lvl_str = f"[!] {info['level']}" if 'Level' in info['illegal_markers'] else str(info['level'])
+                                iv_str = f"HP: {info['talent_hp']}(+0%),ATK: {info['talent_shot']}(+0%),DEF: {info['talent_defense']}(+0%)"
+                                soul_str = f"HP Soul: {info['rank_hp']}, ATK Soul: {info['rank_attack']}, DEF Soul: {info['rank_defense']}, Craft: {info['rank_craftspeed']}"
+                                info_block = f'\n[{display_name}]\n'
+                                info_block += f'  [!] ILLEGAL: {illegal_str}\n'
+                                info_block += f'  Level: {lvl_str}\n'
+                                info_block += f'  IVs:      {iv_str}\n'
+                                info_block += f'  Souls:    {soul_str}\n'
+                                info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                                logger.info(info_block)
+                                logger.info('-' * 20)
+                        for h in logger.handlers[:]:
+                            h.flush()
+                            h.close()
+                            logger.removeHandler(h)
+            print(f'Created illegal pal logs in: {illegal_log_dir}')
     def _top_process_player(self, p, playerdir, log_folder):
         uid = p.get('player_uid')
         pname = p.get('player_info', {}).get('player_name', 'Unknown')
@@ -473,20 +688,29 @@ class SaveManager(QObject):
         dps_file = os.path.join(playerdir, f'{clean_uid}_dps.sav')
         if os.path.isfile(sav_file):
             try:
-                with open(sav_file, 'rb') as f:
-                    data = f.read()
-                raw_gvas, _ = decompress_sav_to_gvas(data)
-                gvas_file = GvasFile.read(raw_gvas, PALWORLD_TYPE_HINTS, SKP_PALWORLD_CUSTOM_PROPERTIES, allow_nan=True)
-                json_data = gvas_file.dump()
-                pal_capture_count_list = json_data.get('properties', {}).get('SaveData', {}).get('value', {}).get('RecordData', {}).get('value', {}).get('PalCaptureCount', {}).get('value', [])
+                gvas_file = sav_to_gvasfile(sav_file)
+                save_data = gvas_file.properties.get('SaveData', {}).get('value', {})
+                record_data = save_data.get('RecordData', {}).get('value', {})
+                pal_capture_count_list = record_data.get('PalCaptureCount', {}).get('value', [])
                 uniques = len(pal_capture_count_list) if pal_capture_count_list else 0
                 caught = sum((e.get('value', 0) for e in pal_capture_count_list)) if pal_capture_count_list else 0
-                pal_deck_unlock_flag_list = json_data.get('properties', {}).get('SaveData', {}).get('value', {}).get('RecordData', {}).get('value', {}).get('PaldeckUnlockFlag', {}).get('value', [])
+                pal_deck_unlock_flag_list = record_data.get('PaldeckUnlockFlag', {}).get('value', [])
                 encounters = max(len(pal_deck_unlock_flag_list) if pal_deck_unlock_flag_list else 0, uniques)
             except:
                 pass
         if os.path.isfile(dps_file):
-            self.dps_tasks.append((uid, pname, dps_file, log_folder))
+            player_valid = False
+            if constants.srcGuildMapping and constants.srcGuildMapping.GroupSaveDataMap:
+                for gdata in constants.srcGuildMapping.GroupSaveDataMap.values():
+                    players = gdata['value']['RawData']['value'].get('players', [])
+                    for p in players:
+                        if str(p.get('player_uid', '')).replace('-', '').lower() == str(uid).replace('-', '').lower():
+                            player_valid = True
+                            break
+                    if player_valid:
+                        break
+            if player_valid:
+                self.dps_tasks.append((uid, pname, dps_file, log_folder))
         return (uid, pname, uniques, caught, encounters)
     def get_current_stats(self):
         if not constants.loaded_level_json:
@@ -555,4 +779,79 @@ class SaveManager(QObject):
                 admin_uid = as_uuid(g['value']['RawData']['value'].get('admin_player_uid', ''))
                 return admin_uid == player_uid
         return False
+def _process_dps_scan_worker(args):
+    uid, pname, dps_file, log_folder = args
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    def load_map(fname, key):
+        try:
+            fp = os.path.join(base_dir, 'resources', 'game_data', fname)
+            with open(fp, 'r', encoding='utf-8') as f:
+                js = json.load(f)
+                return {x['asset'].lower(): x['name'] for x in js.get(key, [])}
+        except:
+            return {}
+    PALMAP = load_map('paldata.json', 'pals')
+    NPCMAP = load_map('npcdata.json', 'npcs')
+    PASSMAP = load_map('passivedata.json', 'passives')
+    SKILLMAP = load_map('skilldata.json', 'skills')
+    NAMEMAP = {**PALMAP, **NPCMAP}
+    formatted_pals = []
+    illegal_pals = []
+    try:
+        gvas_file = sav_to_gvasfile(dps_file)
+        save_param_array = gvas_file.properties.get('SaveParameterArray', {}).get('value', {}).get('values', [])
+        if not save_param_array:
+            return (uid, pname, formatted_pals, illegal_pals)
+        for entry in save_param_array:
+            try:
+                sp = entry.get('SaveParameter', {}).get('value', {})
+                char_id = extract_value(sp, 'CharacterID', 'None')
+                if char_id == 'None' or not char_id:
+                    continue
+                nick = extract_value(sp, 'NickName', '')
+                level = extract_value(sp, 'Level', 1)
+                rank = extract_value(sp, 'Rank', 1)
+                inst_id = extract_value(sp, 'InstanceId', 'Unknown')
+                gender_val = sp.get('Gender', {})
+                if isinstance(gender_val, dict):
+                    gender_val = gender_val.get('value', {})
+                if isinstance(gender_val, dict):
+                    gender_val = gender_val.get('value', 'Unknown')
+                gender_str = str(gender_val) if gender_val else 'Unknown'
+                ginfo = {'EPalGenderType::Male': 'Male', 'EPalGenderType::Female': 'Female'}.get(gender_str, 'Unknown')
+                talent_hp = int(extract_value(sp, 'Talent_HP', 0))
+                talent_shot = int(extract_value(sp, 'Talent_Shot', 0))
+                talent_defense = int(extract_value(sp, 'Talent_Defense', 0))
+                rank_hp = int(extract_value(sp, 'Rank_HP', 0))
+                rank_attack = int(extract_value(sp, 'Rank_Attack', 0))
+                rank_defense = int(extract_value(sp, 'Rank_Defence', 0))
+                rank_craftspeed = int(extract_value(sp, 'Rank_CraftSpeed', 0))
+                rh = rank_hp * 3
+                ra = rank_attack * 3
+                rd = rank_defense * 3
+                iv_str = f'HP: {talent_hp}(+{rh}%),ATK: {talent_shot}(+{ra}%),DEF: {talent_defense}(+{rd}%)'
+                p_list = sp.get('PassiveSkillList', {}).get('value', {}).get('values', [])
+                pskills = [PASSMAP.get(s.lower(), s) for s in p_list]
+                e_list = sp.get('EquipWaza', {}).get('value', {}).get('values', [])
+                active = [SKILLMAP.get(w.split('::')[-1].lower(), w.split('::')[-1]) for w in e_list]
+                m_list = sp.get('MasteredWaza', {}).get('value', {}).get('values', [])
+                learned = [SKILLMAP.get(w.split('::')[-1].lower(), w.split('::')[-1]) for w in m_list]
+                slot_id = sp.get('SlotId', {}).get('value', {})
+                container_id = str(slot_id.get('ContainerId', {}).get('value', {}).get('ID', {}).get('value', 'Unknown')).lower()
+                raw_data_val = entry.get('value', {}).get('RawData', {}).get('value', {})
+                guild_id = str(raw_data_val.get('group_id', 'Unknown')).lower()
+                name = NAMEMAP.get(char_id.lower(), char_id)
+                dn = f'{name}(Nickname: {nick})' if nick != 'Unknown' and nick else name
+                info = f"\n[{dn}]\n  Level: {level} | Rank: {rank} | Gender: {ginfo}\n  IVs:      {iv_str}\n  Passives: {(','.join(pskills) if pskills else 'None')}\n  Active:   {(','.join(active) if active else 'None')}\n  Learned:  {(','.join(learned) if learned else 'None')}\n  IDs:      Container: {container_id} | Instance: {inst_id} | Guild: {guild_id}\n\n"
+                formatted_pals.append(info)
+                is_illegal, illegal_markers = check_is_illegal_pal(entry)
+                if is_illegal:
+                    illegal_info = {'name': name, 'nickname': nick, 'cid': char_id, 'level': level, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'illegal_markers': illegal_markers, 'instance_id': inst_id, 'container_id': container_id, 'location': 'DPS Storage'}
+                    illegal_pals.append(illegal_info)
+            except Exception as e:
+                print(f'Error processing pal in DPS file: {e}')
+                continue
+    except Exception as e:
+        print(f'Error processing DPS file {dps_file}: {e}')
+    return (uid, pname, formatted_pals, illegal_pals)
 save_manager = SaveManager()

@@ -60,6 +60,61 @@ def json_to_sav(j, path):
     data = compress_gvas_to_sav(g.write(SKP_PALWORLD_CUSTOM_PROPERTIES), t)
     with open(path, 'wb') as f:
         f.write(data)
+def sav_to_gvasfile(path):
+    file_size = os.path.getsize(path)
+    if file_size > 100 * 1024 * 1024:
+        print(f'Large file detected({file_size / (1024 * 1024):.1f}MB),using memory mapping for decompression...')
+        with open(path, 'rb') as f:
+            with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                raw_gvas, _ = decompress_sav_to_gvas(mm.read())
+    else:
+        with open(path, 'rb') as f:
+            data = f.read()
+        raw_gvas, _ = decompress_sav_to_gvas(data)
+    g = GvasFile.read(raw_gvas, PALWORLD_TYPE_HINTS, SKP_PALWORLD_CUSTOM_PROPERTIES, allow_nan=True)
+    return g
+def gvasfile_to_sav(gvas_file, path):
+    data = gvas_file.write(SKP_PALWORLD_CUSTOM_PROPERTIES)
+    t = 50 if 'Pal.PalworldSaveGame' in gvas_file.header.save_game_class_name else 49
+    compressed = compress_gvas_to_sav(data, t)
+    with open(path, 'wb') as f:
+        f.write(compressed)
+class GvasFileWrapper:
+    def __init__(self, gvas_file):
+        self._gvas_file = gvas_file
+    def __getitem__(self, key):
+        if key == 'properties':
+            return self._gvas_file.properties
+        elif key == 'header':
+            return self._gvas_file.header.dump()
+        elif key == 'trailer':
+            import base64
+            return base64.b64encode(self._gvas_file.trailer).decode('utf-8')
+        else:
+            raise KeyError(key)
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+    @property
+    def gvas_file(self):
+        return self._gvas_file
+def sav_to_gvas_wrapper(path):
+    file_size = os.path.getsize(path)
+    if file_size > 100 * 1024 * 1024:
+        print(f'Large file detected({file_size / (1024 * 1024):.1f}MB), using memory mapping for decompression...')
+        with open(path, 'rb') as f:
+            with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                raw_gvas, _ = decompress_sav_to_gvas(mm.read())
+    else:
+        with open(path, 'rb') as f:
+            data = f.read()
+        raw_gvas, _ = decompress_sav_to_gvas(data)
+    g = GvasFile.read(raw_gvas, PALWORLD_TYPE_HINTS, SKP_PALWORLD_CUSTOM_PROPERTIES, allow_nan=True)
+    return GvasFileWrapper(g)
+def wrapper_to_sav(wrapper, path):
+    gvasfile_to_sav(wrapper.gvas_file, path)
 def extract_value(data, key, default_value=''):
     value = data.get(key, default_value)
     if isinstance(value, dict):
@@ -70,7 +125,9 @@ def extract_value(data, key, default_value=''):
 def safe_str(s):
     return s.encode('utf-8', 'replace').decode('utf-8')
 def sanitize_filename(name):
-    return ''.join((c if c.isalnum() or c in (' ', '_', '-', '(', ')') else '_' for c in name))
+    invalid_chars = '<>:"/\\|?*'
+    control_chars = {chr(i) for i in range(32)}
+    return ''.join((c if c not in invalid_chars and c not in control_chars else '_' for c in name))
 def format_duration(s):
     d, h = divmod(int(s), 86400)
     hr, m = divmod(h, 3600)
