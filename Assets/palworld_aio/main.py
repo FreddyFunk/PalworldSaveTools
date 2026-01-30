@@ -60,7 +60,7 @@ try:
         from palworld_aio import constants
         from palworld_aio.ui import MainWindow
         from palworld_aio.save_manager import save_manager
-        from palworld_aio.func_manager import remove_invalid_items_from_save, remove_invalid_pals_from_save, remove_invalid_passives_from_save, delete_invalid_structure_map_objects, delete_unreferenced_data, delete_non_base_map_objects
+        from palworld_aio.func_manager import remove_invalid_items_from_save, remove_invalid_pals_from_save, remove_invalid_passives_from_save, delete_invalid_structure_map_objects, delete_unreferenced_data, delete_non_base_map_objects, fix_illegal_pals_in_save
         from loading_manager import show_error_screen
 except Exception:
     from PySide6.QtWidgets import QApplication
@@ -71,7 +71,7 @@ except Exception:
     from palworld_aio import constants
     from palworld_aio.ui import MainWindow
     from palworld_aio.save_manager import save_manager
-    from palworld_aio.func_manager import remove_invalid_items_from_save, remove_invalid_pals_from_save, delete_invalid_structure_map_objects, delete_unreferenced_data, delete_non_base_map_objects
+    from palworld_aio.func_manager import remove_invalid_items_from_save, remove_invalid_pals_from_save, remove_invalid_passives_from_save, delete_invalid_structure_map_objects, delete_unreferenced_data, delete_non_base_map_objects, fix_illegal_pals_in_save
     from loading_manager import show_error_screen
 def qt_message_handler(mode, context, message):
     if 'QThreadStorage' in str(message) and 'destroyed before end of thread' in str(message):
@@ -84,8 +84,25 @@ def run_aio():
     except Exception:
         init_language('en_US')
     if len(sys.argv) > 1 and (not sys.argv[1].startswith('--')):
-        path_arg = ' '.join(sys.argv[1:]).strip().strip('"')
+        path_arg = sys.argv[1].strip().strip('"')
+        options = {'logs': False, 'fix': False}
+        for arg in sys.argv[2:]:
+            if arg in ('-logs', '--logs', '-log'):
+                options['logs'] = True
+            elif arg in ('-fix', '--fix'):
+                options['fix'] = True
+        if not any(options.values()):
+            options['logs'] = True
+            options['fix'] = True
+        if options['fix']:
+            options['logs'] = True
         print(f'Processing save file: {path_arg}')
+        mode_desc = []
+        if options['logs']:
+            mode_desc.append('logs')
+        if options['fix']:
+            mode_desc.append('fix')
+        print(f"Mode: {', '.join(mode_desc)}")
         if constants.loaded_level_json is not None:
             constants.loaded_level_json = None
             constants.current_save_path = None
@@ -150,52 +167,57 @@ def run_aio():
                 for base_id_uuid in gdata['value']['RawData']['value'].get('base_ids', []):
                     constants.base_guild_lookup[str(base_id_uuid)] = {'GuildName': guild_name, 'GuildID': gid}
         print('Loading done')
-        base_path = constants.get_base_path()
-        log_folder = os.path.join(base_path, 'Scan Save Logger')
-        import shutil
-        if os.path.exists(log_folder):
-            try:
-                shutil.rmtree(log_folder)
-            except:
-                pass
-        os.makedirs(log_folder, exist_ok=True)
-        player_pals_count = {}
-        save_manager._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
-        constants.PLAYER_PAL_COUNTS = player_pals_count
-        save_manager._process_scan_log(data_source, playerdir, log_folder, guild_name_map)
-        print('Running cleanup operations...')
-        remove_invalid_items_from_save()
-        remove_invalid_pals_from_save()
-        remove_invalid_passives_from_save()
-        delete_invalid_structure_map_objects()
-        delete_unreferenced_data()
-        delete_non_base_map_objects()
-        print('Saving changes...')
-        if constants.current_save_path and constants.loaded_level_json:
-            from import_libs import backup_whole_directory
-            from palworld_aio.utils import wrapper_to_sav
-            backup_whole_directory(constants.backup_save_path, 'Backups/AllinOneTools')
-            level_sav_path = os.path.join(constants.current_save_path, 'Level.sav')
-            t0 = time.perf_counter()
-            wrapper_to_sav(constants.loaded_level_json, level_sav_path)
-            t1 = time.perf_counter()
-            players_folder = os.path.join(constants.current_save_path, 'Players')
-            for uid in constants.files_to_delete:
-                f = os.path.join(players_folder, uid + '.sav')
-                f_dps = os.path.join(players_folder, f'{uid}_dps.sav')
+        if options['logs']:
+            base_path = constants.get_base_path()
+            log_folder = os.path.join(base_path, 'Scan Save Logger')
+            import shutil
+            if os.path.exists(log_folder):
                 try:
-                    os.remove(f)
-                except FileNotFoundError:
+                    shutil.rmtree(log_folder)
+                except:
                     pass
-                try:
-                    os.remove(f_dps)
-                except FileNotFoundError:
-                    pass
-            constants.files_to_delete.clear()
-            duration = t1 - t0
-            print(f'Changes saved successfully in {duration:.2f} seconds')
-        else:
-            print('Error: No save file loaded')
+            os.makedirs(log_folder, exist_ok=True)
+            print('Generating logs...')
+            player_pals_count = {}
+            save_manager._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
+            constants.PLAYER_PAL_COUNTS = player_pals_count
+            save_manager._process_scan_log(data_source, playerdir, log_folder, guild_name_map, base_path)
+            print('Logs generated successfully')
+        if options['fix']:
+            print('Running cleanup operations...')
+            remove_invalid_items_from_save()
+            remove_invalid_pals_from_save()
+            remove_invalid_passives_from_save()
+            delete_invalid_structure_map_objects()
+            delete_unreferenced_data()
+            delete_non_base_map_objects()
+            fixed_count = fix_illegal_pals_in_save(parent=None)
+            print('Saving changes...')
+            if constants.current_save_path and constants.loaded_level_json:
+                from import_libs import backup_whole_directory
+                from palworld_aio.utils import wrapper_to_sav
+                backup_whole_directory(constants.backup_save_path, 'Backups/AllinOneTools')
+                level_sav_path = os.path.join(constants.current_save_path, 'Level.sav')
+                t0 = time.perf_counter()
+                wrapper_to_sav(constants.loaded_level_json, level_sav_path)
+                t1 = time.perf_counter()
+                players_folder = os.path.join(constants.current_save_path, 'Players')
+                for uid in constants.files_to_delete:
+                    f = os.path.join(players_folder, uid + '.sav')
+                    f_dps = os.path.join(players_folder, f'{uid}_dps.sav')
+                    try:
+                        os.remove(f)
+                    except FileNotFoundError:
+                        pass
+                    try:
+                        os.remove(f_dps)
+                    except FileNotFoundError:
+                        pass
+                constants.files_to_delete.clear()
+                duration = t1 - t0
+                print(f'Changes saved successfully in {duration:.2f} seconds')
+            else:
+                print('Error: No save file loaded')
         sys.exit(0)
     if '--test-loading-popup' in sys.argv:
         from palworld_aio.widgets import LoadingPopup
