@@ -528,6 +528,7 @@
   "map.opening_image": "Opening updated_worldmap.png...",
   "map.search.placeholder": "Type to search guild, leader, base ID or coords...",
   "map.show_players": "Show Players",
+  "map.show_bases": "Show Bases",
   "map.time.day": "d",
   "map.time.hour": "h",
   "map.time.minute": "m",

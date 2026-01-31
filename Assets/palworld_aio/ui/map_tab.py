@@ -31,9 +31,9 @@ class BaseMarker(QGraphicsPixmapItem):
             if not config['marker']['dot']['dynamic_sizing']:
                 self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
         else:
+            # Icon type always ignores view transforms for crisp rendering
+            self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
             self.current_size = config['marker']['icon']['base_size']
-            if not config['marker']['icon']['dynamic_sizing']:
-                self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
         self._update_icon_size(self.current_size)
         self.center_x = x
         self.center_y = y
@@ -63,9 +63,9 @@ class BaseMarker(QGraphicsPixmapItem):
             size_min = self.config['marker']['icon']['size_min']
             size_max = self.config['marker']['icon']['size_max']
             formula = self.config['marker']['icon']['dynamic_sizing_formula']
-        clamped_zoom = max(0.05, min(zoom_level, 10.0))
+        clamped_zoom = max(0.05, min(zoom_level, 30.0))
         if formula == 'sqrt':
-            raw_size = 25 / math.sqrt(clamped_zoom)
+            raw_size = 48 / math.sqrt(clamped_zoom)
         elif formula == 'linear':
             raw_size = 100 - zoom_level * 10
         elif formula == 'log':
@@ -140,15 +140,17 @@ class BaseMarker(QGraphicsPixmapItem):
 class PlayerMarker(QGraphicsPixmapItem):
     """Player marker using player icon for locations on the map."""
     PLAYER_GLOW_COLOR = [0, 255, 150]
-    SIZE_MIN = 20
-    SIZE_MAX = 40
-    BASE_SIZE = 28
+    SIZE_MIN = 32
+    SIZE_MAX = 64
+    BASE_SIZE = 48
 
     def __init__(self, player_data, x, y, player_icon_pixmap):
         super().__init__()
         self.player_data = player_data
         self.player_icon_original = player_icon_pixmap
         self.current_size = self.BASE_SIZE
+        # Ignore view transforms for crisp rendering at any zoom level
+        self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
         self._update_icon_size(self.current_size)
         self.center_x = x
         self.center_y = y
@@ -162,6 +164,7 @@ class PlayerMarker(QGraphicsPixmapItem):
 
     def _update_icon_size(self, size):
         self.current_size = size
+        # Use high-quality smooth transformation for sharp rendering
         scaled = self.player_icon_original.scaled(int(size), int(size), Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.scaled_pixmap = scaled
         self.setPixmap(scaled)
@@ -169,8 +172,9 @@ class PlayerMarker(QGraphicsPixmapItem):
 
     def scale_to_zoom(self, zoom_level):
         import math
-        clamped_zoom = max(0.05, min(zoom_level, 10.0))
-        raw_size = 25 / math.sqrt(clamped_zoom)
+        clamped_zoom = max(0.05, min(zoom_level, 30.0))
+        # Use same formula as base markers but adjusted for larger base size
+        raw_size = 48 / math.sqrt(clamped_zoom)
         new_size = max(self.SIZE_MIN, min(self.SIZE_MAX, int(raw_size)))
         if new_size != self.current_size:
             self._update_icon_size(new_size)
@@ -516,6 +520,7 @@ class MapTab(QWidget):
         self.active_effects = []
         self.search_text = ''
         self.show_players = True
+        self.show_bases = True
         self.players_data = {}
         self._map_widget = None
         self._splitter = None
@@ -542,7 +547,7 @@ class MapTab(QWidget):
     def _load_config(self):
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         config_path = os.path.join(base_dir, 'data', 'configs', 'map_viewer.json')
-        default_config = {'marker': {'type': 'icon', 'dot': {'size': 24, 'color': [255, 0, 0], 'border_width': 3, 'border_color': [180, 0, 0], 'size_min': 24, 'size_max': 24, 'dynamic_sizing': False, 'dynamic_sizing_formula': 'sqrt'}, 'icon': {'path': 'resources/baseicon.png', 'size_min': 28, 'size_max': 28, 'base_size': 28, 'dynamic_sizing': False, 'dynamic_sizing_formula': 'sqrt'}}, 'glow': {'enabled': True, 'color': [59, 142, 208], 'selected_alpha_min': 80, 'selected_alpha_max': 180, 'animation_speed': 8, 'hover_alpha': 80, 'radius_multiplier': 1.5}, 'zoom': {'factor': 1.15, 'min': 1.0, 'max': 20.0, 'double_click_target': 6.5, 'animation_speed': 0.2, 'animation_fps': 60}, 'effects': {'delete': {'enabled': True, 'duration': 1000, 'max_radius': 150, 'colors': {'outer': [255, 80, 80], 'inner': [255, 150, 0], 'flash': [255, 200, 0]}}, 'import': {'enabled': True, 'duration': 1000, 'pulse_count': 3, 'color': [0, 255, 150], 'sparkle_color': [100, 255, 200]}, 'export': {'enabled': True, 'duration': 1000, 'color': [100, 200, 255]}}}
+        default_config = {'marker': {'type': 'icon', 'dot': {'size': 24, 'color': [255, 0, 0], 'border_width': 3, 'border_color': [180, 0, 0], 'size_min': 24, 'size_max': 24, 'dynamic_sizing': False, 'dynamic_sizing_formula': 'sqrt'}, 'icon': {'path': 'resources/baseicon.png', 'size_min': 32, 'size_max': 64, 'base_size': 48, 'dynamic_sizing': True, 'dynamic_sizing_formula': 'sqrt'}}, 'glow': {'enabled': True, 'color': [59, 142, 208], 'selected_alpha_min': 80, 'selected_alpha_max': 180, 'animation_speed': 8, 'hover_alpha': 80, 'radius_multiplier': 1.5}, 'zoom': {'factor': 1.15, 'min': 1.0, 'max': 30.0, 'double_click_target': 6.5, 'animation_speed': 0.2, 'animation_fps': 60}, 'effects': {'delete': {'enabled': True, 'duration': 1000, 'max_radius': 150, 'colors': {'outer': [255, 80, 80], 'inner': [255, 150, 0], 'flash': [255, 200, 0]}}, 'import': {'enabled': True, 'duration': 1000, 'pulse_count': 3, 'color': [0, 255, 150], 'sparkle_color': [100, 255, 200]}, 'export': {'enabled': True, 'duration': 1000, 'color': [100, 200, 255]}}}
         if os.path.exists(config_path):
             try:
                 import json
@@ -633,6 +638,11 @@ class MapTab(QWidget):
         self.show_players_checkbox.setChecked(True)
         self.show_players_checkbox.toggled.connect(self._on_players_toggled)
         sidebar_layout.addWidget(self.show_players_checkbox)
+        self.show_bases_checkbox = QCheckBox()
+        self.show_bases_checkbox.setText(t('map.show_bases') if t else 'Show Bases')
+        self.show_bases_checkbox.setChecked(True)
+        self.show_bases_checkbox.toggled.connect(self._on_bases_toggled)
+        sidebar_layout.addWidget(self.show_bases_checkbox)
         self.guild_tree = QTreeWidget()
         self.guild_tree.setObjectName('searchTree')
         self.guild_tree.setHeaderLabels([t('map.header.guild') if t else 'Guild', t('map.header.leader') if t else 'Leader', t('map.header.lastseen') if t else 'Last Seen', t('map.header.bases') if t else 'Bases'])
@@ -812,13 +822,15 @@ class MapTab(QWidget):
             marker_pixmap = self._create_dot_pixmap(int(self.config['marker']['dot']['size']))
         else:
             marker_pixmap = self.base_icon_pixmap
-        for guild in self.filtered_guilds.values():
-            for base in guild['bases']:
-                img_x, img_y = base['img_coords']
-                marker = BaseMarker(base, img_x, img_y, marker_pixmap, self.config)
-                marker.scale_to_zoom(self.view.current_zoom)
-                self.scene.addItem(marker)
-                self.base_markers.append(marker)
+        # Add base markers
+        if self.show_bases:
+            for guild in self.filtered_guilds.values():
+                for base in guild['bases']:
+                    img_x, img_y = base['img_coords']
+                    marker = BaseMarker(base, img_x, img_y, marker_pixmap, self.config)
+                    marker.scale_to_zoom(self.view.current_zoom)
+                    self.scene.addItem(marker)
+                    self.base_markers.append(marker)
         # Add player markers
         if self.show_players:
             print(f"[DEBUG] Adding player markers. Total players: {len(self.players_data)}")
@@ -875,6 +887,9 @@ class MapTab(QWidget):
         self._update_tree()
     def _on_players_toggled(self, checked):
         self.show_players = checked
+        self._update_markers()
+    def _on_bases_toggled(self, checked):
+        self.show_bases = checked
         self._update_markers()
     def _on_item_expanded(self, item):
         pass
