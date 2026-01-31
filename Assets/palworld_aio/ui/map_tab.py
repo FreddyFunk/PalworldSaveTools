@@ -2,9 +2,9 @@ import os
 import json
 import math
 import random
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsEllipseItem, QMenu, QLineEdit, QTreeWidget, QTreeWidgetItem, QSplitter, QLabel, QMessageBox, QFileDialog, QInputDialog, QGraphicsItem, QGraphicsObject
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMenu, QLineEdit, QTreeWidget, QTreeWidgetItem, QSplitter, QLabel, QMessageBox, QFileDialog, QInputDialog, QGraphicsItem, QGraphicsObject, QCheckBox
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint, Signal, QTimer, QPropertyAnimation, QEasingCurve, Property, QParallelAnimationGroup
-from PySide6.QtGui import QPixmap, QPen, QBrush, QColor, QPainter, QTransform, QRadialGradient, QFont, QCursor
+from PySide6.QtGui import QPixmap, QPen, QColor, QPainter, QTransform, QRadialGradient, QFont, QCursor
 from i18n import t
 import palworld_coord
 try:
@@ -12,13 +12,13 @@ try:
     from palworld_aio.data_manager import delete_base_camp, get_tick
     from palworld_aio.base_manager import export_base_json, import_base_json
     from palworld_aio.guild_manager import rename_guild
-    from palworld_aio.widgets import BaseHoverOverlay
+    from palworld_aio.widgets import BaseHoverOverlay, PlayerHoverOverlay
 except ImportError:
     from .. import constants
     from ..data_manager import delete_base_camp, get_tick
     from ..base_manager import export_base_json, import_base_json
     from ..guild_manager import rename_guild
-    from ..widgets import BaseHoverOverlay
+    from ..widgets import BaseHoverOverlay, PlayerHoverOverlay
 class BaseMarker(QGraphicsPixmapItem):
     def __init__(self, base_data, x, y, base_icon_pixmap, config):
         super().__init__()
@@ -122,6 +122,111 @@ class BaseMarker(QGraphicsPixmapItem):
         alpha_min = glow_config['selected_alpha_min']
         alpha_max = glow_config['selected_alpha_max']
         speed = glow_config['animation_speed']
+        if self.isSelected():
+            if self.glow_increasing:
+                self.glow_alpha += speed
+                if self.glow_alpha >= alpha_max:
+                    self.glow_increasing = False
+            else:
+                self.glow_alpha -= speed
+                if self.glow_alpha <= alpha_min:
+                    self.glow_increasing = True
+        elif self.glow_alpha > 0:
+            self.glow_alpha -= speed * 1.5
+            if self.glow_alpha < 0:
+                self.glow_alpha = 0
+        self.shine_pos = (self.shine_pos + 2) % 100
+        self.update()
+class PlayerMarker(QGraphicsPixmapItem):
+    """Player marker using player icon for locations on the map."""
+    PLAYER_GLOW_COLOR = [0, 255, 150]
+    SIZE_MIN = 20
+    SIZE_MAX = 40
+    BASE_SIZE = 28
+
+    def __init__(self, player_data, x, y, player_icon_pixmap):
+        super().__init__()
+        self.player_data = player_data
+        self.player_icon_original = player_icon_pixmap
+        self.current_size = self.BASE_SIZE
+        self._update_icon_size(self.current_size)
+        self.center_x = x
+        self.center_y = y
+        self.setPos(x, y)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setAcceptHoverEvents(True)
+        self.glow_alpha = 0
+        self.glow_increasing = True
+        self.is_hovered = False
+        self.shine_pos = 0
+
+    def _update_icon_size(self, size):
+        self.current_size = size
+        scaled = self.player_icon_original.scaled(int(size), int(size), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.scaled_pixmap = scaled
+        self.setPixmap(scaled)
+        self.setOffset(-size / 2, -size / 2)
+
+    def scale_to_zoom(self, zoom_level):
+        import math
+        clamped_zoom = max(0.05, min(zoom_level, 10.0))
+        raw_size = 25 / math.sqrt(clamped_zoom)
+        new_size = max(self.SIZE_MIN, min(self.SIZE_MAX, int(raw_size)))
+        if new_size != self.current_size:
+            self._update_icon_size(new_size)
+
+    def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+
+        # Shine effect
+        shine_pixmap = self.scaled_pixmap.copy()
+        mask_pixmap = QPixmap(self.current_size, self.current_size)
+        mask_pixmap.fill(QColor(0, 0, 0, 0))
+        mask_painter = QPainter(mask_pixmap)
+        mask_painter.setPen(Qt.NoPen)
+        mask_painter.setBrush(QColor(255, 255, 255, 120))
+        shine_pos = self.shine_pos - 50
+        points = [QPointF(shine_pos, 0), QPointF(shine_pos + 15, 0), QPointF(shine_pos - 5, self.current_size), QPointF(shine_pos - 20, self.current_size)]
+        mask_painter.drawPolygon(points)
+        mask_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
+        mask_painter.drawPixmap(0, 0, self.scaled_pixmap)
+        mask_painter.end()
+        shine_painter = QPainter(shine_pixmap)
+        shine_painter.setCompositionMode(QPainter.CompositionMode_Plus)
+        shine_painter.drawPixmap(0, 0, mask_pixmap)
+        shine_painter.end()
+        self.setPixmap(shine_pixmap)
+
+        # Glow effect
+        if self.isSelected() or self.glow_alpha > 0 or self.is_hovered:
+            alpha = max(self.glow_alpha, 80 if self.is_hovered else 0)
+            glow_radius = self.current_size * 1.5
+            gradient = QRadialGradient(0, 0, glow_radius)
+            color = QColor(*self.PLAYER_GLOW_COLOR)
+            gradient.setColorAt(0, QColor(color.red(), color.green(), color.blue(), alpha))
+            gradient.setColorAt(0.5, QColor(color.red(), color.green(), color.blue(), alpha // 2))
+            gradient.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 0))
+            painter.setBrush(gradient)
+            painter.setPen(Qt.NoPen)
+            painter.drawEllipse(QRectF(-glow_radius, -glow_radius, glow_radius * 2, glow_radius * 2))
+        super().paint(painter, option, widget)
+
+    def hoverEnterEvent(self, event):
+        self.is_hovered = True
+        self.update()
+
+    def hoverLeaveEvent(self, event):
+        self.is_hovered = False
+        self.update()
+
+    def start_glow(self):
+        self.glow_alpha = 180
+
+    def update_glow(self):
+        alpha_min = 80
+        alpha_max = 180
+        speed = 8
         if self.isSelected():
             if self.glow_increasing:
                 self.glow_alpha += speed
@@ -287,6 +392,13 @@ class MapGraphicsView(QGraphicsView):
             elif event.button() == Qt.RightButton:
                 self.marker_right_clicked.emit(item.base_data, event.globalPosition())
                 return
+        elif isinstance(item, PlayerMarker):
+            if event.button() == Qt.LeftButton:
+                self.scene().clearSelection()
+                item.setSelected(True)
+                item.start_glow()
+                self.marker_clicked.emit(item.player_data)
+            # Ignore right-click on player markers
         elif event.button() == Qt.LeftButton:
             self.scene().clearSelection()
         super().mousePressEvent(event)
@@ -308,6 +420,13 @@ class MapGraphicsView(QGraphicsView):
                 self._hovered_marker = item
                 global_pos = self.mapToGlobal(event.pos())
                 self.marker_hover_entered.emit(item.base_data, QPointF(global_pos.x(), global_pos.y()))
+        elif isinstance(item, PlayerMarker):
+            if self._hovered_marker != item:
+                if self._hovered_marker is not None:
+                    self.marker_hover_left.emit()
+                self._hovered_marker = item
+                global_pos = self.mapToGlobal(event.pos())
+                self.marker_hover_entered.emit(item.player_data, QPointF(global_pos.x(), global_pos.y()))
         elif self._hovered_marker is not None:
             self._hovered_marker = None
             self.marker_hover_left.emit()
@@ -393,8 +512,11 @@ class MapTab(QWidget):
         self.guilds_data = {}
         self.filtered_guilds = {}
         self.base_markers = []
+        self.player_markers = []
         self.active_effects = []
         self.search_text = ''
+        self.show_players = True
+        self.players_data = {}
         self._map_widget = None
         self._splitter = None
         self._sidebar_widget = None
@@ -402,6 +524,7 @@ class MapTab(QWidget):
         self.map_width = 2048
         self.map_height = 2048
         self._load_base_icon()
+        self._load_player_icon()
         self._setup_ui()
         self._setup_animation()
     def refresh_labels(self):
@@ -469,6 +592,15 @@ class MapTab(QWidget):
                 self.base_icon_pixmap = QPixmap(alt_icon_path)
             else:
                 self.base_icon_pixmap = self._create_dot_pixmap(32)
+    def _load_player_icon(self):
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        icon_path = os.path.join(base_dir, 'resources', 'playericon.png')
+        if os.path.exists(icon_path):
+            pixmap = QPixmap(icon_path)
+            if not pixmap.isNull():
+                self.player_icon_pixmap = pixmap
+                return
+        self.player_icon_pixmap = None
     def _setup_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -484,6 +616,7 @@ class MapTab(QWidget):
         self.view.marker_right_clicked.connect(self._on_marker_right_clicked)
         self.view.zoom_changed.connect(self._on_zoom_changed)
         self.hover_overlay = BaseHoverOverlay()
+        self.player_hover_overlay = PlayerHoverOverlay()
         self.view.marker_hover_entered.connect(self._on_marker_hover_enter)
         self.view.marker_hover_left.connect(self._on_marker_hover_leave)
         self._load_map()
@@ -495,6 +628,11 @@ class MapTab(QWidget):
         self.search_input.setPlaceholderText(t('map.search.placeholder') if t else 'Search guilds,leaders,bases...')
         self.search_input.textChanged.connect(self._on_search_changed)
         sidebar_layout.addWidget(self.search_input)
+        self.show_players_checkbox = QCheckBox()
+        self.show_players_checkbox.setText(t('map.show_players') if t else 'Show Players')
+        self.show_players_checkbox.setChecked(True)
+        self.show_players_checkbox.toggled.connect(self._on_players_toggled)
+        sidebar_layout.addWidget(self.show_players_checkbox)
         self.guild_tree = QTreeWidget()
         self.guild_tree.setObjectName('searchTree')
         self.guild_tree.setHeaderLabels([t('map.header.guild') if t else 'Guild', t('map.header.leader') if t else 'Leader', t('map.header.lastseen') if t else 'Last Seen', t('map.header.bases') if t else 'Bases'])
@@ -540,10 +678,17 @@ class MapTab(QWidget):
             self.view.current_zoom = 1.0
             self.view.zoom_label.setText((t('zoom') if t else 'Zoom') + f': {int(1.0 * 100)}%')
             self.view.zoom_changed.emit(1.0)
-    def _on_marker_hover_enter(self, base_data, global_pos):
-        self.hover_overlay.show_for_base(base_data, QPoint(int(global_pos.x()), int(global_pos.y())))
+    def _on_marker_hover_enter(self, data, global_pos):
+        # Check if data is for a player or a base
+        if 'uid' in data and 'nickname' in data:
+            # Player data
+            self.player_hover_overlay.show_for_player(data, QPoint(int(global_pos.x()), int(global_pos.y())))
+        else:
+            # Base data
+            self.hover_overlay.show_for_base(data, QPoint(int(global_pos.x()), int(global_pos.y())))
     def _on_marker_hover_leave(self):
         self.hover_overlay.hide_overlay()
+        self.player_hover_overlay.hide_overlay()
     def _load_map(self):
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         map_path = os.path.join(base_dir, 'resources', 'worldmap.png')
@@ -572,13 +717,17 @@ class MapTab(QWidget):
         self.anim_timer.timeout.connect(self._update_animations)
         self.anim_timer.start(50)
     def _update_animations(self):
-        for marker in self.base_markers:
+        for marker in self.base_markers + self.player_markers:
             marker.update_glow()
     def refresh(self):
         if not constants.loaded_level_json:
             return
         self.guilds_data = self._get_guild_bases()
         self.filtered_guilds = self.guilds_data
+        self.players_data = constants.player_locations if hasattr(constants, 'player_locations') else {}
+        print(f"[DEBUG] refresh(): Loaded {len(self.players_data)} players from constants.player_locations")
+        for uid, p in list(self.players_data.items())[:3]:  # Show first 3
+            print(f"[DEBUG]   Player: {p.get('nickname', 'Unknown')} at {p.get('coords')}")
         self._update_markers()
         self._update_tree()
     def _get_guild_bases(self):
@@ -655,9 +804,10 @@ class MapTab(QWidget):
         img_y = int((y_max - y_world) * y_scale)
         return (img_x, img_y)
     def _update_markers(self):
-        for marker in self.base_markers:
+        for marker in self.base_markers + self.player_markers:
             self.scene.removeItem(marker)
         self.base_markers.clear()
+        self.player_markers.clear()
         if self.config['marker']['type'] == 'dot':
             marker_pixmap = self._create_dot_pixmap(int(self.config['marker']['dot']['size']))
         else:
@@ -669,6 +819,29 @@ class MapTab(QWidget):
                 marker.scale_to_zoom(self.view.current_zoom)
                 self.scene.addItem(marker)
                 self.base_markers.append(marker)
+        # Add player markers
+        if self.show_players:
+            print(f"[DEBUG] Adding player markers. Total players: {len(self.players_data)}")
+            for player in self.players_data.values():
+                # Use new_coords for image conversion (like bases do)
+                new_map_x, new_map_y = player.get('new_coords', player['coords'])
+                old_map_x, old_map_y = player['coords']
+                print(f"[DEBUG] Player {player.get('nickname', 'Unknown')}: old_coords=({old_map_x}, {old_map_y}) new_coords=({new_map_x}, {new_map_y})")
+                # Skip if out of bounds (player could be off the map, which is valid)
+                if not (-1000 <= new_map_x <= 1000 and -1000 <= new_map_y <= 1000):
+                    print(f"[DEBUG]   Player {player.get('nickname', 'Unknown')} is out of bounds, skipping marker")
+                    continue
+                img_x, img_y = self._to_image_coordinates(
+                    new_map_x, new_map_y,
+                    self.map_width, self.map_height
+                )
+                print(f"[DEBUG]   img_coords=({img_x}, {img_y})")
+                marker = PlayerMarker(player, img_x, img_y, self.player_icon_pixmap)
+                self.scene.addItem(marker)
+                self.player_markers.append(marker)
+            print(f"[DEBUG] Added {len(self.player_markers)} player markers")
+        else:
+            print(f"[DEBUG] Show players is False, skipping player markers")
     def _update_tree(self):
         self.guild_tree.clear()
         for gid, guild in self.filtered_guilds.items():
@@ -700,6 +873,9 @@ class MapTab(QWidget):
             self.filtered_guilds = filtered
         self._update_markers()
         self._update_tree()
+    def _on_players_toggled(self, checked):
+        self.show_players = checked
+        self._update_markers()
     def _on_item_expanded(self, item):
         pass
     def _on_tree_item_clicked(self, item, column):

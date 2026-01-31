@@ -6,6 +6,7 @@ import json
 import logging
 import threading
 import re
+import glob
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 from PySide6.QtWidgets import QFileDialog, QMessageBox
@@ -62,6 +63,8 @@ class SaveManager(QObject):
             constants.files_to_delete = set()
             constants.PLAYER_PAL_COUNTS = {}
             constants.player_levels = {}
+            constants.player_names = {}
+            constants.player_locations = {}
             constants.PLAYER_DETAILS_CACHE = {}
             constants.PLAYER_REMAPS = {}
             constants.exclusions = {}
@@ -90,6 +93,7 @@ class SaveManager(QObject):
             constants.loaded_level_json = sav_to_gvas_wrapper(p)
             t1 = time.perf_counter()
             self._build_player_levels()
+            constants.player_locations = self._get_player_locations()
             if not constants.loaded_level_json:
                 self.load_finished.emit(False)
                 return False
@@ -145,6 +149,7 @@ class SaveManager(QObject):
         constants.loaded_level_json = sav_to_gvas_wrapper(level_sav_path)
         t1 = time.perf_counter()
         self._build_player_levels()
+        constants.player_locations = self._get_player_locations()
         if not constants.loaded_level_json:
             raise Exception('Failed to parse Level.sav')
         data_source = constants.loaded_level_json['properties']['worldSaveData']['value']
@@ -217,6 +222,7 @@ class SaveManager(QObject):
     def _build_player_levels(self):
         char_map = constants.loaded_level_json['properties']['worldSaveData']['value'].get('CharacterSaveParameterMap', {}).get('value', [])
         uid_level_map = defaultdict(lambda: '?')
+        uid_name_map = {}
         for entry in char_map:
             try:
                 sp = entry['value']['RawData']['value']['object']['SaveParameter']
@@ -229,11 +235,97 @@ class SaveManager(QObject):
                 uid_obj = key.get('PlayerUId', {})
                 uid = str(uid_obj.get('value', '') if isinstance(uid_obj, dict) else uid_obj)
                 level = extract_value(sp_val, 'Level', '?')
+                nickname = extract_value(sp_val, 'NickName', '')
                 if uid:
-                    uid_level_map[uid.replace('-', '')] = level
+                    clean_uid = uid.replace('-', '').lower()
+                    uid_level_map[clean_uid] = level
+                    if nickname:
+                        uid_name_map[clean_uid] = nickname
             except Exception:
                 continue
         constants.player_levels = dict(uid_level_map)
+        constants.player_names = uid_name_map
+    def _get_player_locations(self):
+        """Extract player locations from individual player .sav files in the Players folder."""
+        players = {}
+        if not constants.current_save_path:
+            print("[DEBUG] _get_player_locations: No current_save_path")
+            return players
+
+        players_dir = os.path.join(constants.current_save_path, 'Players')
+        if not os.path.exists(players_dir):
+            print(f"[DEBUG] _get_player_locations: Players folder not found: {players_dir}")
+            return players
+
+        import glob
+        from palworld_aio.utils import sav_to_gvasfile
+
+        player_files = glob.glob(os.path.join(players_dir, '*.sav'))
+        # Filter out DPS files
+        player_files = [f for f in player_files if not f.endswith('_dps.sav')]
+        print(f"[DEBUG] _get_player_locations: Found {len(player_files)} player files")
+
+        for player_file in player_files:
+            try:
+                # Get UID from filename
+                basename = os.path.basename(player_file)
+                uid = basename.replace('.sav', '')
+                clean_uid = uid.replace('-', '').lower()
+
+                # Skip if not a valid player UID
+                if clean_uid == '00000000000000000000000000000000':
+                    continue
+
+                # Check if this is a valid player (has entry in player_levels)
+                if clean_uid not in constants.player_levels:
+                    continue
+
+                # Load the player file
+                p_gvas = sav_to_gvasfile(player_file)
+                save_data = p_gvas.properties.get('SaveData', {}).get('value', {})
+
+                # Get LastTransform - contains Translation with x, y, z coordinates
+                last_transform = save_data.get('LastTransform', {})
+                if isinstance(last_transform, dict):
+                    transform_value = last_transform.get('value', {})
+                    if isinstance(transform_value, dict):
+                        translation = transform_value.get('Translation', {})
+                        if isinstance(translation, dict):
+                            trans_value = translation.get('value', {})
+                            if isinstance(trans_value, dict):
+                                x = trans_value.get('x', 0)
+                                y = trans_value.get('y', 0)
+
+                                # Convert to map coordinates (new system for img_coords)
+                                new_map_x, new_map_y = palworld_coord.sav_to_map(x, y, new=True)
+
+                                # Convert to old coordinates for display (like bases do)
+                                save_x, save_y = palworld_coord.map_to_sav(new_map_x, new_map_y, new=True)
+                                old_map_x, old_map_y = palworld_coord.sav_to_map(save_x, save_y, new=False)
+
+                                # Get player name and level from Level.sav data
+                                nickname = constants.player_names.get(clean_uid, f'Player_{clean_uid[:8]}')
+                                level = constants.player_levels.get(clean_uid, '?')
+
+                                players[clean_uid] = {
+                                    'uid': clean_uid,
+                                    'nickname': nickname,
+                                    'level': level,
+                                    'coords': (old_map_x, old_map_y),  # Old coords for display
+                                    'new_coords': (new_map_x, new_map_y),  # New coords for image conversion
+                                    'raw_coords': (x, y)
+                                }
+                                print(f"[DEBUG]   Player: {nickname} at raw=({x:.1f}, {y:.1f}) -> new_map=({new_map_x}, {new_map_y}) -> old_map=({old_map_x}, {old_map_y})")
+                else:
+                    print(f"[DEBUG]   Player {clean_uid}: LastTransform.value not a dict")
+            except Exception as e:
+                print(f"[DEBUG]   Exception processing player file: {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+
+        print(f"[DEBUG] _get_player_locations: Returning {len(players)} players")
+        return players
     def _count_pals_found(self, data, player_pals_count, log_folder, current_save_path, guild_name_map, illegal_pals_by_owner=None):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if illegal_pals_by_owner is None:
