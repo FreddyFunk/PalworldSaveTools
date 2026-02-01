@@ -244,6 +244,60 @@ class ConfirmDialog(QDialog):
     def confirm(title, message, parent=None):
         dialog = ConfirmDialog(title, message, parent)
         return dialog.exec() == QDialog.Accepted
+class RadiusInputDialog(QDialog):
+    def __init__(self, title, prompt, current_radius, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setModal(True)
+        self.setMinimumWidth(400)
+        if os.path.exists(constants.ICON_PATH):
+            self.setWindowIcon(QIcon(constants.ICON_PATH))
+        layout = QVBoxLayout(self)
+        label = QLabel(prompt)
+        layout.addWidget(label)
+        self.spin_box = QSpinBox()
+        self.spin_box.setMinimum(100)
+        self.spin_box.setMaximum(999999)
+        self.spin_box.setValue(int(current_radius))
+        layout.addWidget(self.spin_box)
+        warning_label = QLabel(t('base.radius.warning') if t else '⚠ Note: You must load this save in-game for the game to reassign structures within the new radius.')
+        warning_label.setWordWrap(True)
+        warning_label.setStyleSheet('color: #f59e0b; font-style: italic; padding: 8px; background-color: rgba(245, 158, 11, 0.1); border-radius: 4px;')
+        layout.addWidget(warning_label)
+        button_layout = QHBoxLayout()
+        reset_btn = QPushButton(t('base.radius.reset') if t else 'Reset to Default')
+        reset_btn.clicked.connect(self._reset_to_default)
+        ok_btn = QPushButton(t('button.ok') if t else 'OK')
+        ok_btn.clicked.connect(self.accept)
+        cancel_btn = QPushButton(t('button.cancel') if t else 'Cancel')
+        cancel_btn.clicked.connect(self.reject)
+        button_layout.addWidget(reset_btn)
+        button_layout.addWidget(ok_btn)
+        button_layout.addWidget(cancel_btn)
+        layout.addLayout(button_layout)
+        self.result_value = None
+    def _reset_to_default(self):
+        self.spin_box.setValue(3500)
+    def accept(self):
+        self.result_value = float(self.spin_box.value())
+        super().accept()
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not event.spontaneous():
+            try:
+                from palworld_aio.ui.tools_tab import center_on_parent
+                center_on_parent(self)
+            except ImportError:
+                from ..ui.tools_tab import center_on_parent
+                center_on_parent(self)
+            self.activateWindow()
+            self.raise_()
+    @staticmethod
+    def get_radius(title, prompt, current_radius, parent=None):
+        dialog = RadiusInputDialog(title, prompt, current_radius, parent)
+        if dialog.exec() == QDialog.Accepted:
+            return dialog.result_value
+        return None
 class PalDefenderDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)

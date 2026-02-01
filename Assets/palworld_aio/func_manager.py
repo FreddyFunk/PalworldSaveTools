@@ -800,6 +800,8 @@ def unlock_viewing_cage_for_player(player_uid, parent=None):
             if isinstance(data, dict):
                 if 'UnlockedRecipeTechnologyNames' in data:
                     values_list = data['UnlockedRecipeTechnologyNames']['value']['values']
+                    if 'DisplayCharacter' in values_list:
+                        return
                     if 'DisplayCharacter' not in values_list:
                         values_list.append('DisplayCharacter')
                         changed = True
@@ -812,7 +814,7 @@ def unlock_viewing_cage_for_player(player_uid, parent=None):
         if changed:
             gvasfile_to_sav(gvas, file_path)
             return True
-        return False
+        return True
     except Exception as e:
         return False
 def detect_and_trim_overfilled_inventories(parent=None):

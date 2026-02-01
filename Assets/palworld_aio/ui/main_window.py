@@ -23,10 +23,10 @@ try:
     from palworld_aio.data_manager import get_guilds, get_guild_members, get_bases, delete_guild, delete_player, load_exclusions, save_exclusions, delete_base_camp
     from palworld_aio.func_manager import delete_empty_guilds, delete_inactive_players, delete_inactive_bases, delete_duplicated_players, delete_unreferenced_data, delete_non_base_map_objects, delete_invalid_structure_map_objects, delete_all_skins, unlock_all_private_chests, remove_invalid_items_from_save, remove_invalid_pals_from_save, remove_invalid_passives_from_save, fix_missions, reset_anti_air_turrets, reset_dungeons, unlock_viewing_cage_for_player, fix_all_negative_timestamps, reset_selected_player_timestamp, detect_and_trim_overfilled_inventories, unlock_all_technologies_for_player, unlock_all_lab_research_for_guild, modify_container_slots, fix_illegal_pals_in_save
     from palworld_aio.guild_manager import move_player_to_guild, rebuild_all_guilds, make_member_leader, rename_guild, max_guild_level
-    from palworld_aio.base_manager import export_base_json, import_base_json, clone_base_complete
+    from palworld_aio.base_manager import export_base_json, import_base_json, clone_base_complete, update_base_area_range
     from palworld_aio.player_manager import rename_player
     from palworld_aio.map_generator import generate_world_map
-    from palworld_aio.dialogs import InputDialog, DaysInputDialog, LevelInputDialog, PalDefenderDialog
+    from palworld_aio.dialogs import InputDialog, DaysInputDialog, LevelInputDialog, RadiusInputDialog, PalDefenderDialog
     from palworld_aio.widgets import SearchPanel, StatsPanel
 except ImportError:
     from .. import constants
@@ -35,10 +35,10 @@ except ImportError:
     from ..data_manager import get_guilds, get_guild_members, get_bases, delete_guild, delete_player, load_exclusions, save_exclusions, delete_base_camp
     from ..func_manager import delete_empty_guilds, delete_inactive_players, delete_inactive_bases, delete_duplicated_players, delete_unreferenced_data, delete_non_base_map_objects, delete_invalid_structure_map_objects, delete_all_skins, unlock_all_private_chests, remove_invalid_items_from_save, remove_invalid_pals_from_save, remove_invalid_passives_from_save, fix_missions, reset_anti_air_turrets, reset_dungeons, unlock_viewing_cage_for_player, fix_all_negative_timestamps, reset_selected_player_timestamp, detect_and_trim_overfilled_inventories, modify_container_slots, fix_illegal_pals_in_save
     from ..guild_manager import move_player_to_guild, rebuild_all_guilds, make_member_leader, rename_guild, max_guild_level
-    from ..base_manager import export_base_json, import_base_json, clone_base_complete
+    from ..base_manager import export_base_json, import_base_json, clone_base_complete, update_base_area_range
     from ..player_manager import rename_player
     from ..map_generator import generate_world_map
-    from ..dialogs import InputDialog, DaysInputDialog, LevelInputDialog, PalDefenderDialog
+    from ..dialogs import InputDialog, DaysInputDialog, LevelInputDialog, RadiusInputDialog, PalDefenderDialog
 from ..widgets import SearchPanel, StatsPanel
 class DetachedStatusWindow(QWidget):
     def __init__(self, parent=None):
@@ -741,6 +741,7 @@ class MainWindow(QMainWindow):
         menu.addAction(self._create_action(t('guild.rename.menu'), lambda: self._rename_guild_action(item.text(1), item.text(2))))
         menu.addAction(self._create_action(t('guild.menu.max_level'), lambda: self._max_guild_level(item.text(1))))
         menu.addAction(self._create_action(t('export.base'), lambda: self._export_base(item.text(0))))
+        menu.addAction(self._create_action(t('base.radius.menu') if t else 'Adjust Radius', lambda: self._adjust_base_radius(item.text(0))))
         menu.addAction(self._create_action(t('import.base'), lambda: self._import_base(item.text(1))))
         menu.addAction(self._create_action(t('clone.base'), lambda: self._clone_base(item.text(0), item.text(1))))
         menu.exec(self.bases_panel.tree.viewport().mapToGlobal(pos))
@@ -1371,6 +1372,24 @@ class MainWindow(QMainWindow):
             self._show_info(t('success.title') if t else 'Success', t('base.export.success') if t else 'Base exported successfully')
         except Exception as e:
             self._show_error(t('error.title') if t else 'Error', t('base.export.failed') if t else f'Failed to export base: {str(e)}')
+    def _adjust_base_radius(self, bid):
+        if not constants.loaded_level_json:
+            self._show_warning(t('Error') if t else 'Error', t('error.no_save_loaded') if t else 'No save file loaded.')
+            return
+        wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+        base_camp_data = wsd.get('BaseCampSaveData', {}).get('value', [])
+        src_base_entry = next((b for b in base_camp_data if str(b['key']).replace('-', '').lower() == bid.replace('-', '').lower()), None)
+        if not src_base_entry:
+            self._show_warning(t('error.title') if t else 'Error', t('base.export.not_found') if t else f'Could not find base data for ID: {bid}')
+            return
+        current_radius = src_base_entry['value']['RawData']['value'].get('area_range', 3500.0)
+        new_radius = RadiusInputDialog.get_radius(t('base.radius.title') if t else 'Adjust Base Radius', t('base.radius.prompt') if t else f'Current radius: {int(current_radius)}\nEnter new radius (100-999999):', current_radius, self)
+        if new_radius is not None and new_radius != current_radius:
+            if update_base_area_range(constants.loaded_level_json, bid, new_radius):
+                self.refresh_all()
+                self._show_info(t('success.title') if t else 'Success', t('base.radius.updated') if t else f'Base radius updated to {new_radius}\n\n⚠ Load this save in-game for structures to be reassigned.')
+            else:
+                self._show_error(t('error.title') if t else 'Error', t('base.radius.failed') if t else 'Failed to update base radius')
     def _import_base(self, gid):
         self._import_base_to_guild(gid)
     def _trim_overfilled_inventories(self):

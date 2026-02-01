@@ -2,23 +2,29 @@ import os
 import json
 import math
 import random
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMenu, QLineEdit, QTreeWidget, QTreeWidgetItem, QSplitter, QLabel, QMessageBox, QFileDialog, QInputDialog, QGraphicsItem, QGraphicsObject, QCheckBox
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsEllipseItem, QMenu, QLineEdit, QTreeWidget, QTreeWidgetItem, QSplitter, QLabel, QMessageBox, QFileDialog, QInputDialog, QGraphicsItem, QGraphicsObject, QCheckBox, QPushButton
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint, Signal, QTimer, QPropertyAnimation, QEasingCurve, Property, QParallelAnimationGroup
-from PySide6.QtGui import QPixmap, QPen, QColor, QPainter, QTransform, QRadialGradient, QFont, QCursor
+from PySide6.QtGui import QPixmap, QPen, QBrush, QColor, QPainter, QTransform, QRadialGradient, QFont, QCursor
 from i18n import t
 import palworld_coord
 try:
     from palworld_aio import constants
     from palworld_aio.data_manager import delete_base_camp, get_tick
-    from palworld_aio.base_manager import export_base_json, import_base_json
+    from palworld_aio.base_manager import export_base_json, import_base_json, update_base_area_range
     from palworld_aio.guild_manager import rename_guild
-    from palworld_aio.widgets import BaseHoverOverlay, PlayerHoverOverlay
+    from palworld_aio.widgets import BaseHoverOverlay
+    from palworld_aio.dialogs import RadiusInputDialog
+    from palworld_aio.utils import sav_to_gvasfile
+    from palworld_aio.save_manager import save_manager
 except ImportError:
     from .. import constants
     from ..data_manager import delete_base_camp, get_tick
-    from ..base_manager import export_base_json, import_base_json
+    from ..base_manager import export_base_json, import_base_json, update_base_area_range
     from ..guild_manager import rename_guild
-    from ..widgets import BaseHoverOverlay, PlayerHoverOverlay
+    from ..widgets import BaseHoverOverlay
+    from ..dialogs import RadiusInputDialog
+    from ..utils import sav_to_gvasfile
+    from ..save_manager import save_manager
 class BaseMarker(QGraphicsPixmapItem):
     def __init__(self, base_data, x, y, base_icon_pixmap, config):
         super().__init__()
@@ -31,7 +37,6 @@ class BaseMarker(QGraphicsPixmapItem):
             if not config['marker']['dot']['dynamic_sizing']:
                 self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
         else:
-            # Icon type always ignores view transforms for crisp rendering
             self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
             self.current_size = config['marker']['icon']['base_size']
         self._update_icon_size(self.current_size)
@@ -138,18 +143,15 @@ class BaseMarker(QGraphicsPixmapItem):
         self.shine_pos = (self.shine_pos + 2) % 100
         self.update()
 class PlayerMarker(QGraphicsPixmapItem):
-    """Player marker using player icon for locations on the map."""
     PLAYER_GLOW_COLOR = [0, 255, 150]
     SIZE_MIN = 32
     SIZE_MAX = 64
     BASE_SIZE = 48
-
     def __init__(self, player_data, x, y, player_icon_pixmap):
         super().__init__()
         self.player_data = player_data
         self.player_icon_original = player_icon_pixmap
         self.current_size = self.BASE_SIZE
-        # Ignore view transforms for crisp rendering at any zoom level
         self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
         self._update_icon_size(self.current_size)
         self.center_x = x
@@ -161,29 +163,21 @@ class PlayerMarker(QGraphicsPixmapItem):
         self.glow_increasing = True
         self.is_hovered = False
         self.shine_pos = 0
-
     def _update_icon_size(self, size):
         self.current_size = size
-        # Use high-quality smooth transformation for sharp rendering
         scaled = self.player_icon_original.scaled(int(size), int(size), Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.scaled_pixmap = scaled
         self.setPixmap(scaled)
         self.setOffset(-size / 2, -size / 2)
-
     def scale_to_zoom(self, zoom_level):
-        import math
         clamped_zoom = max(0.05, min(zoom_level, 30.0))
-        # Use same formula as base markers but adjusted for larger base size
         raw_size = 48 / math.sqrt(clamped_zoom)
         new_size = max(self.SIZE_MIN, min(self.SIZE_MAX, int(raw_size)))
         if new_size != self.current_size:
             self._update_icon_size(new_size)
-
     def paint(self, painter, option, widget=None):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
-
-        # Shine effect
         shine_pixmap = self.scaled_pixmap.copy()
         mask_pixmap = QPixmap(self.current_size, self.current_size)
         mask_pixmap.fill(QColor(0, 0, 0, 0))
@@ -201,8 +195,6 @@ class PlayerMarker(QGraphicsPixmapItem):
         shine_painter.drawPixmap(0, 0, mask_pixmap)
         shine_painter.end()
         self.setPixmap(shine_pixmap)
-
-        # Glow effect
         if self.isSelected() or self.glow_alpha > 0 or self.is_hovered:
             alpha = max(self.glow_alpha, 80 if self.is_hovered else 0)
             glow_radius = self.current_size * 1.5
@@ -215,18 +207,14 @@ class PlayerMarker(QGraphicsPixmapItem):
             painter.setPen(Qt.NoPen)
             painter.drawEllipse(QRectF(-glow_radius, -glow_radius, glow_radius * 2, glow_radius * 2))
         super().paint(painter, option, widget)
-
     def hoverEnterEvent(self, event):
         self.is_hovered = True
         self.update()
-
     def hoverLeaveEvent(self, event):
         self.is_hovered = False
         self.update()
-
     def start_glow(self):
         self.glow_alpha = 180
-
     def update_glow(self):
         alpha_min = 80
         alpha_max = 180
@@ -402,7 +390,9 @@ class MapGraphicsView(QGraphicsView):
                 item.setSelected(True)
                 item.start_glow()
                 self.marker_clicked.emit(item.player_data)
-            # Ignore right-click on player markers
+            elif event.button() == Qt.RightButton:
+                self.marker_right_clicked.emit(item.player_data, event.globalPosition())
+                return
         elif event.button() == Qt.LeftButton:
             self.scene().clearSelection()
         super().mousePressEvent(event)
@@ -517,11 +507,10 @@ class MapTab(QWidget):
         self.filtered_guilds = {}
         self.base_markers = []
         self.player_markers = []
+        self.players_data = []
+        self.filtered_players_data = []
         self.active_effects = []
         self.search_text = ''
-        self.show_players = True
-        self.show_bases = True
-        self.players_data = {}
         self._map_widget = None
         self._splitter = None
         self._sidebar_widget = None
@@ -621,7 +610,6 @@ class MapTab(QWidget):
         self.view.marker_right_clicked.connect(self._on_marker_right_clicked)
         self.view.zoom_changed.connect(self._on_zoom_changed)
         self.hover_overlay = BaseHoverOverlay()
-        self.player_hover_overlay = PlayerHoverOverlay()
         self.view.marker_hover_entered.connect(self._on_marker_hover_enter)
         self.view.marker_hover_left.connect(self._on_marker_hover_leave)
         self._load_map()
@@ -633,16 +621,17 @@ class MapTab(QWidget):
         self.search_input.setPlaceholderText(t('map.search.placeholder') if t else 'Search guilds,leaders,bases...')
         self.search_input.textChanged.connect(self._on_search_changed)
         sidebar_layout.addWidget(self.search_input)
-        self.show_players_checkbox = QCheckBox()
-        self.show_players_checkbox.setText(t('map.show_players') if t else 'Show Players')
-        self.show_players_checkbox.setChecked(True)
-        self.show_players_checkbox.toggled.connect(self._on_players_toggled)
-        sidebar_layout.addWidget(self.show_players_checkbox)
-        self.show_bases_checkbox = QCheckBox()
-        self.show_bases_checkbox.setText(t('map.show_bases') if t else 'Show Bases')
-        self.show_bases_checkbox.setChecked(True)
-        self.show_bases_checkbox.toggled.connect(self._on_bases_toggled)
-        sidebar_layout.addWidget(self.show_bases_checkbox)
+        toggle_layout = QHBoxLayout()
+        self.toggle_bases = QCheckBox(t('map.toggle.bases') if t else 'Bases')
+        self.toggle_bases.setChecked(True)
+        self.toggle_bases.stateChanged.connect(self._on_toggle_changed)
+        toggle_layout.addWidget(self.toggle_bases)
+        self.toggle_players = QCheckBox(t('map.toggle.players') if t else 'Players')
+        self.toggle_players.setChecked(False)
+        self.toggle_players.stateChanged.connect(self._on_toggle_changed)
+        toggle_layout.addWidget(self.toggle_players)
+        toggle_layout.addStretch()
+        sidebar_layout.addLayout(toggle_layout)
         self.guild_tree = QTreeWidget()
         self.guild_tree.setObjectName('searchTree')
         self.guild_tree.setHeaderLabels([t('map.header.guild') if t else 'Guild', t('map.header.leader') if t else 'Leader', t('map.header.lastseen') if t else 'Last Seen', t('map.header.bases') if t else 'Bases'])
@@ -689,16 +678,12 @@ class MapTab(QWidget):
             self.view.zoom_label.setText((t('zoom') if t else 'Zoom') + f': {int(1.0 * 100)}%')
             self.view.zoom_changed.emit(1.0)
     def _on_marker_hover_enter(self, data, global_pos):
-        # Check if data is for a player or a base
-        if 'uid' in data and 'nickname' in data:
-            # Player data
-            self.player_hover_overlay.show_for_player(data, QPoint(int(global_pos.x()), int(global_pos.y())))
-        else:
-            # Base data
+        if 'base_id' in data:
             self.hover_overlay.show_for_base(data, QPoint(int(global_pos.x()), int(global_pos.y())))
+        elif 'player_uid' in data:
+            self.hover_overlay.show_for_player(data, QPoint(int(global_pos.x()), int(global_pos.y())))
     def _on_marker_hover_leave(self):
         self.hover_overlay.hide_overlay()
-        self.player_hover_overlay.hide_overlay()
     def _load_map(self):
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         map_path = os.path.join(base_dir, 'resources', 'worldmap.png')
@@ -727,17 +712,29 @@ class MapTab(QWidget):
         self.anim_timer.timeout.connect(self._update_animations)
         self.anim_timer.start(50)
     def _update_animations(self):
-        for marker in self.base_markers + self.player_markers:
+        for marker in self.base_markers:
             marker.update_glow()
+        for marker in self.player_markers:
+            marker.update_glow()
+    def _on_toggle_changed(self):
+        sender = self.sender()
+        if sender == self.toggle_bases and self.toggle_bases.isChecked():
+            self.toggle_players.blockSignals(True)
+            self.toggle_players.setChecked(False)
+            self.toggle_players.blockSignals(False)
+        elif sender == self.toggle_players and self.toggle_players.isChecked():
+            self.toggle_bases.blockSignals(True)
+            self.toggle_bases.setChecked(False)
+            self.toggle_bases.blockSignals(False)
+        self._update_markers()
+        self._update_tree()
     def refresh(self):
         if not constants.loaded_level_json:
             return
         self.guilds_data = self._get_guild_bases()
         self.filtered_guilds = self.guilds_data
-        self.players_data = constants.player_locations if hasattr(constants, 'player_locations') else {}
-        print(f"[DEBUG] refresh(): Loaded {len(self.players_data)} players from constants.player_locations")
-        for uid, p in list(self.players_data.items())[:3]:  # Show first 3
-            print(f"[DEBUG]   Player: {p.get('nickname', 'Unknown')} at {p.get('coords')}")
+        self.players_data = self._get_players()
+        self.filtered_players_data = self.players_data
         self._update_markers()
         self._update_tree()
     def _get_guild_bases(self):
@@ -805,6 +802,42 @@ class MapTab(QWidget):
         except Exception as e:
             print(f'Error getting guild bases: {e}')
         return guilds
+    def _get_players(self):
+        players = []
+        if not constants.loaded_level_json:
+            return players
+        players_data = save_manager.get_players()
+        if not players_data:
+            return players
+        players_dir = os.path.join(constants.current_save_path, 'Players')
+        if not os.path.exists(players_dir):
+            return players
+        for uid, name, gid, lastseen, level in players_data:
+            player_uid = uid.replace('-', '').lower()
+            if not player_uid:
+                continue
+            sav_file = os.path.join(players_dir, f'{player_uid}.sav')
+            if not os.path.exists(sav_file):
+                continue
+            try:
+                gvas = sav_to_gvasfile(sav_file)
+                save_data = gvas.properties.get('SaveData', {}).get('value', {})
+                last_transform = save_data.get('LastTransform', {}).get('value', {})
+                translation = last_transform.get('Translation', {}).get('value', {})
+                if not translation or 'x' not in translation:
+                    continue
+                x, y, z = (translation.get('x', 0), translation.get('y', 0), translation.get('z', 0))
+                bx, by = palworld_coord.sav_to_map(x, y, new=True)
+                if bx is not None:
+                    img_x, img_y = self._to_image_coordinates(bx, by, self.map_width, self.map_height)
+                    save_x, save_y = palworld_coord.map_to_sav(bx, by, new=True)
+                    old_bx, old_by = palworld_coord.sav_to_map(save_x, save_y, new=False)
+                    pal_count = constants.PLAYER_PAL_COUNTS.get(player_uid, 0)
+                    guild_name = save_manager.get_guild_name_by_id(gid)
+                    players.append({'player_uid': player_uid, 'player_name': name, 'level': level, 'coords': (old_bx, old_by), 'img_coords': (img_x, img_y), 'save_coords': (x, y, z), 'guild_name': guild_name, 'guild_id': gid, 'last_seen': lastseen, 'pal_count': pal_count})
+            except Exception as e:
+                continue
+        return players
     def _to_image_coordinates(self, x_world, y_world, width, height):
         x_min, x_max = (-1000, 1000)
         y_min, y_max = (-1000, 1000)
@@ -814,83 +847,98 @@ class MapTab(QWidget):
         img_y = int((y_max - y_world) * y_scale)
         return (img_x, img_y)
     def _update_markers(self):
-        for marker in self.base_markers + self.player_markers:
+        for marker in self.base_markers:
             self.scene.removeItem(marker)
         self.base_markers.clear()
+        for marker in self.player_markers:
+            self.scene.removeItem(marker)
         self.player_markers.clear()
-        if self.config['marker']['type'] == 'dot':
-            marker_pixmap = self._create_dot_pixmap(int(self.config['marker']['dot']['size']))
-        else:
-            marker_pixmap = self.base_icon_pixmap
-        # Add base markers
-        if self.show_bases:
+        if self.toggle_bases.isChecked():
+            if self.config['marker']['type'] == 'dot':
+                marker_pixmap = self._create_dot_pixmap(int(self.config['marker']['dot']['size']))
+            else:
+                marker_pixmap = self.base_icon_pixmap
             for guild in self.filtered_guilds.values():
                 for base in guild['bases']:
                     img_x, img_y = base['img_coords']
                     marker = BaseMarker(base, img_x, img_y, marker_pixmap, self.config)
                     marker.scale_to_zoom(self.view.current_zoom)
+                    marker.setZValue(0)
                     self.scene.addItem(marker)
                     self.base_markers.append(marker)
-        # Add player markers
-        if self.show_players:
-            print(f"[DEBUG] Adding player markers. Total players: {len(self.players_data)}")
-            for player in self.players_data.values():
-                # Use new_coords for image conversion (like bases do)
-                new_map_x, new_map_y = player.get('new_coords', player['coords'])
-                old_map_x, old_map_y = player['coords']
-                print(f"[DEBUG] Player {player.get('nickname', 'Unknown')}: old_coords=({old_map_x}, {old_map_y}) new_coords=({new_map_x}, {new_map_y})")
-                # Skip if out of bounds (player could be off the map, which is valid)
-                if not (-1000 <= new_map_x <= 1000 and -1000 <= new_map_y <= 1000):
-                    print(f"[DEBUG]   Player {player.get('nickname', 'Unknown')} is out of bounds, skipping marker")
-                    continue
-                img_x, img_y = self._to_image_coordinates(
-                    new_map_x, new_map_y,
-                    self.map_width, self.map_height
-                )
-                print(f"[DEBUG]   img_coords=({img_x}, {img_y})")
+        if self.toggle_players.isChecked():
+            for player in self.filtered_players_data:
+                img_x, img_y = player['img_coords']
                 marker = PlayerMarker(player, img_x, img_y, self.player_icon_pixmap)
+                marker.scale_to_zoom(self.view.current_zoom)
+                marker.setZValue(1)
                 self.scene.addItem(marker)
                 self.player_markers.append(marker)
-            print(f"[DEBUG] Added {len(self.player_markers)} player markers")
-        else:
-            print(f"[DEBUG] Show players is False, skipping player markers")
     def _update_tree(self):
         self.guild_tree.clear()
-        for gid, guild in self.filtered_guilds.items():
-            guild_item = QTreeWidgetItem([guild['guild_name'], guild['leader_name'], guild['last_seen'], str(len(guild['bases']))])
-            guild_item.setData(0, Qt.UserRole, ('guild', gid))
-            for base in guild['bases']:
-                base_item = QTreeWidgetItem([f"X:{int(base['coords'][0])} Y:{int(base['coords'][1])}", str(base['base_id'])[:12] + '...', '', ''])
-                base_item.setData(0, Qt.UserRole, ('base', base))
-                base_item.setForeground(0, QColor(0, 180, 255))
-                guild_item.addChild(base_item)
-            self.guild_tree.addTopLevelItem(guild_item)
+        if self.toggle_bases.isChecked():
+            self.info_label.setText(t('map.info.select_base') if t else 'Click on a base marker or list item to view details')
+            self.guild_tree.setHeaderLabels([t('map.header.guild') if t else 'Guild', t('map.header.leader') if t else 'Leader', t('map.header.lastseen') if t else 'Last Seen', t('map.header.bases') if t else 'Bases'])
+            for gid, guild in self.filtered_guilds.items():
+                guild_item = QTreeWidgetItem([guild['guild_name'], guild['leader_name'], guild['last_seen'], str(len(guild['bases']))])
+                guild_item.setData(0, Qt.UserRole, ('guild', gid))
+                for base in guild['bases']:
+                    base_item = QTreeWidgetItem([f"X:{int(base['coords'][0])} Y:{int(base['coords'][1])}", str(base['base_id'])[:12] + '...', '', ''])
+                    base_item.setData(0, Qt.UserRole, ('base', base))
+                    base_item.setForeground(0, QColor(0, 180, 255))
+                    guild_item.addChild(base_item)
+                self.guild_tree.addTopLevelItem(guild_item)
+        elif self.toggle_players.isChecked():
+            self.info_label.setText(t('map.info.select_player') if t else 'Click on a player marker or list item to view details')
+            self.guild_tree.setHeaderLabels([t('map.header.player') if t else 'Player', t('map.info.level') if t else 'Level', t('map.header.lastseen') if t else 'Last Seen', t('player.pals') if t else 'Pals'])
+            filtered_players = self._filter_players(self.search_text)
+            for player in filtered_players:
+                player_item = QTreeWidgetItem([player['player_name'], str(player['level']), player['last_seen'], str(player['pal_count'])])
+                player_item.setData(0, Qt.UserRole, ('player', player))
+                player_item.setForeground(0, QColor(0, 150, 255))
+                self.guild_tree.addTopLevelItem(player_item)
+    def _filter_players(self, search_text):
+        if not search_text:
+            return self.players_data
+        terms = search_text.lower().split()
+        filtered = []
+        for player in self.players_data:
+            pn = player['player_name'].lower()
+            pl = str(player['level']).lower()
+            ls = player['last_seen'].lower()
+            gn = player['guild_name'].lower()
+            coords_str = f"x:{int(player['coords'][0])},y:{int(player['coords'][1])}"
+            if all((any((term in field for field in [pn, pl, ls, gn, coords_str])) for term in terms)):
+                filtered.append(player)
+        return filtered
     def _on_search_changed(self, text):
         self.search_text = text.lower()
-        if not text:
-            self.filtered_guilds = self.guilds_data
-        else:
-            terms = text.lower().split()
-            filtered = {}
-            for gid, guild in self.guilds_data.items():
-                gn = guild['guild_name'].lower()
-                ln = guild['leader_name'].lower()
-                ls = guild['last_seen'].lower()
-                guild_matches = all((any((term in field for field in [gn, ln, ls])) for term in terms))
-                matching_bases = [b for b in guild['bases'] if all((any((term in field for field in [str(b['base_id']).lower(), f"x:{int(b['coords'][0])},y:{int(b['coords'][1])}", gn, ln, ls])) for term in terms))]
-                if guild_matches or matching_bases:
-                    filtered[gid] = dict(guild)
-                    if not guild_matches:
-                        filtered[gid]['bases'] = matching_bases
-            self.filtered_guilds = filtered
-        self._update_markers()
-        self._update_tree()
-    def _on_players_toggled(self, checked):
-        self.show_players = checked
-        self._update_markers()
-    def _on_bases_toggled(self, checked):
-        self.show_bases = checked
-        self._update_markers()
+        if self.toggle_bases.isChecked():
+            if not text:
+                self.filtered_guilds = self.guilds_data
+            else:
+                terms = text.lower().split()
+                filtered = {}
+                for gid, guild in self.guilds_data.items():
+                    gn = guild['guild_name'].lower()
+                    ln = guild['leader_name'].lower()
+                    ls = guild['last_seen'].lower()
+                    guild_matches = all((any((term in field for field in [gn, ln, ls])) for term in terms))
+                    matching_bases = [b for b in guild['bases'] if all((any((term in field for field in [str(b['base_id']).lower(), f"x:{int(b['coords'][0])},y:{int(b['coords'][1])}", gn, ln, ls])) for term in terms))]
+                    if guild_matches or matching_bases:
+                        filtered[gid] = dict(guild)
+                        if not guild_matches:
+                            filtered[gid]['bases'] = matching_bases
+                self.filtered_guilds = filtered
+            self._update_markers()
+            self._update_tree()
+        elif self.toggle_players.isChecked():
+            if not text:
+                self.filtered_players_data = self.players_data
+            else:
+                self.filtered_players_data = self._filter_players(text)
+            self._update_markers()
+            self._update_tree()
     def _on_item_expanded(self, item):
         pass
     def _on_tree_item_clicked(self, item, column):
@@ -901,6 +949,9 @@ class MapTab(QWidget):
         if item_type == 'base':
             self._update_info(item_data)
             self._highlight_base(item_data)
+        elif item_type == 'player':
+            self._update_player_info(item_data)
+            self._highlight_player(item_data)
     def _on_tree_item_double_clicked(self, item, column):
         data = item.data(0, Qt.UserRole)
         if not data:
@@ -909,6 +960,9 @@ class MapTab(QWidget):
         if item_type == 'base':
             self._update_info(item_data)
             self._zoom_to_base(item_data, zoom_level=self.config['zoom']['double_click_target'])
+        elif item_type == 'player':
+            self._update_player_info(item_data)
+            self._zoom_to_player(item_data, zoom_level=self.config['zoom']['double_click_target'])
     def _highlight_base(self, base_data):
         for marker in self.base_markers:
             if marker.base_data == base_data:
@@ -919,6 +973,36 @@ class MapTab(QWidget):
     def _zoom_to_base(self, base_data, zoom_level=6.0):
         for marker in self.base_markers:
             if marker.base_data['base_id'] == base_data['base_id']:
+                self.scene.clearSelection()
+                marker.setSelected(True)
+                marker.start_glow()
+                self.view.animate_to_marker(marker, zoom_level=zoom_level)
+                break
+    def _update_player_info(self, player_data):
+        player_name = player_data.get('player_name', 'Unknown')
+        level = player_data.get('level', '?')
+        last_seen = player_data.get('last_seen', 'Unknown')
+        pal_count = player_data.get('pal_count', 0)
+        guild_name = player_data.get('guild_name', '')
+        guild_id = player_data.get('guild_id', '')
+        coords = player_data.get('coords', (0, 0))
+        save_coords = player_data.get('save_coords', (0, 0, 0))
+        player_uid = player_data.get('player_uid', '')
+        info_lines = [f'<b>{player_name}</b>', f'UID: {player_uid}', f'Level: {level}']
+        if guild_name:
+            info_lines.append(f'Guild: {guild_name}')
+        info_lines.extend([f'Pals: {pal_count}', f'Last Seen: {last_seen}', f'Location: X:{int(coords[0])},Y:{int(coords[1])}'])
+        self.info_label.setText('<br>'.join(info_lines))
+    def _highlight_player(self, player_data):
+        for marker in self.player_markers:
+            if marker.player_data == player_data:
+                self.scene.clearSelection()
+                marker.setSelected(True)
+                marker.start_glow()
+                break
+    def _zoom_to_player(self, player_data, zoom_level=6.0):
+        for marker in self.player_markers:
+            if marker.player_data['player_uid'] == player_data['player_uid']:
                 self.scene.clearSelection()
                 marker.setSelected(True)
                 marker.start_glow()
@@ -947,29 +1031,56 @@ class MapTab(QWidget):
         member_count = base_data.get('member_count', 0)
         total_bases = base_data.get('total_bases', 0)
         base_position = base_data.get('base_position', 1)
-        base_id = str(base_data.get('base_id', ''))[:16] + '...'
+        base_id = str(base_data.get('base_id', ''))
         coords = base_data.get('coords', (0, 0))
         info = f"\n        <b>{guild_name}</b><br>\n        {(t('map.info.level') if t else 'Level:')} {guild_level}<br>\n        {(t('map.info.admin') if t else 'Admin:')} {leader_name}<br>\n        {(t('map.info.members') if t else 'Members:')} {member_count}<br>\n        {(t('map.info.base_camps') if t else 'Base Camps:')} {base_position}/{total_bases}<br>\n        {(t('map.info.base_id') if t else 'Base ID:')} {base_id}<br>\n        {(t('map.info.location') if t else 'Location:')} X:{int(coords[0])},Y:{int(coords[1])}\n        "
         self.info_label.setText(info.strip())
-    def _on_marker_clicked(self, base_data):
-        self._update_info(base_data)
-    def _on_marker_double_clicked(self, base_data):
-        self._update_info(base_data)
-        self._highlight_base(base_data)
+    def _on_marker_clicked(self, data):
+        if 'player_uid' in data:
+            self._update_player_info(data)
+        else:
+            self._update_info(data)
+    def _on_marker_double_clicked(self, data):
+        if 'player_uid' in data:
+            self._update_player_info(data)
+            self._highlight_player(data)
+        else:
+            self._update_info(data)
+            self._highlight_base(data)
     def _on_zoom_changed(self, zoom_level):
         for marker in self.base_markers:
             marker.scale_to_zoom(zoom_level)
-    def _on_marker_right_clicked(self, base_data, global_pos):
-        self._zoom_to_base(base_data)
+    def _on_marker_right_clicked(self, data, global_pos):
         menu = QMenu(self)
         menu.setStyleSheet('\n            QMenu {\n                background-color: rgba(18,20,24,0.95);\n                border: 1px solid rgba(125,211,252,0.3);\n                border-radius: 4px;\n                color: #e2e8f0;\n                padding: 4px;\n            }\n            QMenu::item {\n                padding: 6px 12px;\n                border-radius: 3px;\n            }\n            QMenu::item:selected {\n                background-color: rgba(59,142,208,0.3);\n            }\n        ')
-        delete_action = menu.addAction(t('delete.base') if t else 'Delete Base')
-        export_action = menu.addAction(t('button.export') if t else 'Export Base')
-        action = menu.exec(global_pos.toPoint())
-        if action == delete_action:
-            self._delete_base(base_data)
-        elif action == export_action:
-            self._export_base(base_data)
+        if 'player_uid' in data:
+            self._zoom_to_player(data)
+            delete_action = menu.addAction(t('deletion.ctx.delete_player') if t else 'Delete Player')
+            menu.addSeparator()
+            rename_action = menu.addAction(t('player.rename.menu') if t else 'Rename Player')
+            unlock_cage_action = menu.addAction(t('player.viewing_cage.menu') if t else 'Unlock Viewing Cage')
+            unlock_tech_action = menu.addAction(t('player.unlock_technologies.menu') if t else 'Unlock Technologies')
+            action = menu.exec(global_pos.toPoint())
+            if action == delete_action:
+                self._delete_player(data)
+            elif action == rename_action:
+                self._rename_player(data)
+            elif action == unlock_cage_action:
+                self._unlock_viewing_cage(data)
+            elif action == unlock_tech_action:
+                self._unlock_technologies(data)
+        else:
+            self._zoom_to_base(data)
+            delete_action = menu.addAction(t('delete.base') if t else 'Delete Base')
+            export_action = menu.addAction(t('button.export') if t else 'Export Base')
+            radius_action = menu.addAction(t('base.radius.menu') if t else 'Adjust Radius')
+            action = menu.exec(global_pos.toPoint())
+            if action == delete_action:
+                self._delete_base(data)
+            elif action == export_action:
+                self._export_base(data)
+            elif action == radius_action:
+                self._adjust_base_radius(data)
     def _on_tree_context_menu(self, pos):
         item = self.guild_tree.itemAt(pos)
         if not item:
@@ -984,11 +1095,14 @@ class MapTab(QWidget):
             self._zoom_to_base(item_data)
             delete_action = menu.addAction(t('delete.base') if t else 'Delete Base')
             export_action = menu.addAction(t('button.export') if t else 'Export Base')
+            radius_action = menu.addAction(t('base.radius.menu') if t else 'Adjust Radius')
             action = menu.exec(self.guild_tree.viewport().mapToGlobal(pos))
             if action == delete_action:
                 self._delete_base(item_data)
             elif action == export_action:
                 self._export_base(item_data)
+            elif action == radius_action:
+                self._adjust_base_radius(item_data)
         elif item_type == 'guild':
             rename_action = menu.addAction(t('guild.rename.title') if t else 'Rename Guild')
             delete_action = menu.addAction(t('delete.guild') if t else 'Delete Guild')
@@ -1004,6 +1118,22 @@ class MapTab(QWidget):
                 self._export_bases_for_guild(item_data)
             elif action == import_action:
                 self._import_base_to_guild(item_data)
+        elif item_type == 'player':
+            self._zoom_to_player(item_data)
+            delete_action = menu.addAction(t('deletion.ctx.delete_player') if t else 'Delete Player')
+            menu.addSeparator()
+            rename_action = menu.addAction(t('player.rename.menu') if t else 'Rename Player')
+            unlock_cage_action = menu.addAction(t('player.viewing_cage.menu') if t else 'Unlock Viewing Cage')
+            unlock_tech_action = menu.addAction(t('player.unlock_technologies.menu') if t else 'Unlock Technologies')
+            action = menu.exec(self.guild_tree.viewport().mapToGlobal(pos))
+            if action == delete_action:
+                self._delete_player(item_data)
+            elif action == rename_action:
+                self._rename_player(item_data)
+            elif action == unlock_cage_action:
+                self._unlock_viewing_cage(item_data)
+            elif action == unlock_tech_action:
+                self._unlock_technologies(item_data)
     def _delete_base(self, base_data):
         if str(base_data['base_id']) in constants.exclusions.get('bases', []):
             QMessageBox.warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_base') if t else f"Base {base_data['base_id']} is in exclusion list and cannot be deleted.")
@@ -1044,6 +1174,27 @@ class MapTab(QWidget):
                 QMessageBox.information(self, t('success.title') if t else 'Success', t('base.export.success') if t else 'Base exported successfully')
         except Exception as e:
             QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to export base: {str(e)}')
+    def _adjust_base_radius(self, base_data):
+        try:
+            bid = str(base_data['base_id'])
+            wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+            base_camp_data = wsd.get('BaseCampSaveData', {}).get('value', [])
+            src_base_entry = next((b for b in base_camp_data if str(b['key']).replace('-', '').lower() == bid.replace('-', '').lower()), None)
+            if not src_base_entry:
+                QMessageBox.warning(self, t('error.title') if t else 'Error', t('base.export.not_found') if t else 'Base data not found')
+                return
+            current_radius = src_base_entry['value']['RawData']['value'].get('area_range', 3500.0)
+            new_radius = RadiusInputDialog.get_radius(t('base.radius.title') if t else 'Adjust Base Radius', t('base.radius.prompt') if t else f'Current radius: {int(current_radius)}\nEnter new radius (100-999999):', current_radius, self)
+            if new_radius is not None and new_radius != current_radius:
+                if update_base_area_range(constants.loaded_level_json, bid, new_radius):
+                    self.refresh()
+                    if self.parent_window:
+                        self.parent_window.refresh_all()
+                    QMessageBox.information(self, t('success.title') if t else 'Success', t('base.radius.updated') if t else f'Base radius updated to {new_radius}\n\n⚠ Load this save in-game for structures to be reassigned.')
+                else:
+                    QMessageBox.critical(self, t('error.title') if t else 'Error', t('base.radius.failed') if t else 'Failed to update base radius')
+        except Exception as e:
+            QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to adjust base radius: {str(e)}')
     def _rename_guild(self, guild_id):
         current_name = self.guilds_data.get(guild_id, {}).get('guild_name', '')
         new_name, ok = QInputDialog.getText(self, t('guild.rename.title') if t else 'Rename Guild', t('guild.rename.prompt') if t else 'Enter new guild name:', text=current_name)
@@ -1195,3 +1346,63 @@ class MapTab(QWidget):
             QMessageBox.information(self, t('success.title'), msg)
         else:
             QMessageBox.warning(self, t('error.title'), f'Failed to export any bases for guild "{guild_name}".\n' + '\n'.join(failed_bases))
+    def _delete_player(self, player_data):
+        from ..data_manager import load_exclusions
+        player_uid = player_data.get('player_uid', '')
+        player_name = player_data.get('player_name', 'Unknown')
+        load_exclusions()
+        uid_clean = str(player_uid).replace('-', '').lower()
+        if uid_clean in [ex.replace('-', '').lower() for ex in constants.exclusions.get('players', [])]:
+            QMessageBox.warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_player') if t else f'Player "{player_name}" is in exclusion list and cannot be deleted.')
+            return
+        reply = QMessageBox.question(self, t('confirm.title') if t else 'Confirm', t('confirm.delete_player') if t else f'Delete player "{player_name}"?\n\nThis will delete the player and all their characters.', QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            try:
+                from ..data_manager import delete_player
+                if delete_player(player_uid):
+                    self.refresh()
+                    if self.parent_window:
+                        self.parent_window.refresh_all()
+                    QMessageBox.information(self, t('success.title') if t else 'Success', t('player.delete.success') if t else 'Player deleted successfully')
+                else:
+                    QMessageBox.warning(self, t('error.title') if t else 'Error', 'Failed to delete player - player not found')
+            except Exception as e:
+                QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to delete player: {str(e)}')
+    def _rename_player(self, player_data):
+        player_uid = player_data.get('player_uid', '')
+        current_name = player_data.get('player_name', 'Unknown')
+        new_name, ok = QInputDialog.getText(self, t('player.rename.title') if t else 'Rename Player', t('player.rename.prompt') if t else 'Enter new player name:', text=current_name)
+        if ok and new_name:
+            try:
+                from ..player_manager import rename_player
+                if rename_player(player_uid, new_name):
+                    self.refresh()
+                    if self.parent_window:
+                        self.parent_window.refresh_all()
+                    QMessageBox.information(self, t('success.title') if t else 'Success', t('player.rename.success') if t else 'Player renamed successfully')
+                else:
+                    QMessageBox.warning(self, t('error.title') if t else 'Error', 'Failed to rename player')
+            except Exception as e:
+                QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to rename player: {str(e)}')
+    def _unlock_viewing_cage(self, player_data):
+        player_uid = player_data.get('player_uid', '')
+        player_name = player_data.get('player_name', 'Unknown')
+        try:
+            from ..func_manager import unlock_viewing_cage_for_player
+            if unlock_viewing_cage_for_player(player_uid, self):
+                QMessageBox.information(self, t('success.title') if t else 'Success', t('player.viewing_cage.unlocked') if t else 'Viewing Cage unlocked successfully.')
+            else:
+                QMessageBox.warning(self, t('error.title') if t else 'Error', t('player.viewing_cage.failed') if t else 'Failed to unlock viewing cage')
+        except Exception as e:
+            QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to unlock viewing cage: {str(e)}')
+    def _unlock_technologies(self, player_data):
+        player_uid = player_data.get('player_uid', '')
+        player_name = player_data.get('player_name', 'Unknown')
+        try:
+            from ..func_manager import unlock_all_technologies_for_player
+            if unlock_all_technologies_for_player(player_uid, self):
+                QMessageBox.information(self, t('success.title') if t else 'Success', t('player.unlock_technologies.success') if t else 'Unlock All Technologies completed')
+            else:
+                QMessageBox.warning(self, t('error.title') if t else 'Error', t('player.unlock_technologies.failed') if t else 'Unlock All Technologies failed')
+        except Exception as e:
+            QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to unlock technologies: {str(e)}')

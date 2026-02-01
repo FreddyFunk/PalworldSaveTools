@@ -88,6 +88,8 @@ def unlock_viewing_cage(player_uid):
         save_data = gvas.properties.get('SaveData', {}).get('value', {})
         if 'bIsViewingCageCanUse' not in save_data:
             return False
+        if save_data['bIsViewingCageCanUse']['value']:
+            return True
         save_data['bIsViewingCageCanUse']['value'] = True
         gvasfile_to_sav(gvas, sav_file)
         return True
