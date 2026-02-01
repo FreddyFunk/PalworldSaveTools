@@ -12,7 +12,7 @@ try:
     from palworld_aio.data_manager import delete_base_camp, get_tick
     from palworld_aio.base_manager import export_base_json, import_base_json, update_base_area_range
     from palworld_aio.guild_manager import rename_guild
-    from palworld_aio.widgets import BaseHoverOverlay
+    from palworld_aio.widgets import BaseHoverOverlay, PlayerHoverOverlay
     from palworld_aio.dialogs import RadiusInputDialog
     from palworld_aio.utils import sav_to_gvasfile
     from palworld_aio.save_manager import save_manager
@@ -21,7 +21,7 @@ except ImportError:
     from ..data_manager import delete_base_camp, get_tick
     from ..base_manager import export_base_json, import_base_json, update_base_area_range
     from ..guild_manager import rename_guild
-    from ..widgets import BaseHoverOverlay
+    from ..widgets import BaseHoverOverlay, PlayerHoverOverlay
     from ..dialogs import RadiusInputDialog
     from ..utils import sav_to_gvasfile
     from ..save_manager import save_manager
@@ -610,6 +610,7 @@ class MapTab(QWidget):
         self.view.marker_right_clicked.connect(self._on_marker_right_clicked)
         self.view.zoom_changed.connect(self._on_zoom_changed)
         self.hover_overlay = BaseHoverOverlay()
+        self.player_hover_overlay = PlayerHoverOverlay()
         self.view.marker_hover_entered.connect(self._on_marker_hover_enter)
         self.view.marker_hover_left.connect(self._on_marker_hover_leave)
         self._load_map()
@@ -681,9 +682,10 @@ class MapTab(QWidget):
         if 'base_id' in data:
             self.hover_overlay.show_for_base(data, QPoint(int(global_pos.x()), int(global_pos.y())))
         elif 'player_uid' in data:
-            self.hover_overlay.show_for_player(data, QPoint(int(global_pos.x()), int(global_pos.y())))
+            self.player_hover_overlay.show_for_player(data, QPoint(int(global_pos.x()), int(global_pos.y())))
     def _on_marker_hover_leave(self):
         self.hover_overlay.hide_overlay()
+        self.player_hover_overlay.hide_overlay()
     def _load_map(self):
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         map_path = os.path.join(base_dir, 'resources', 'worldmap.png')
@@ -870,8 +872,6 @@ class MapTab(QWidget):
             for player in self.filtered_players_data:
                 img_x, img_y = player['img_coords']
                 marker = PlayerMarker(player, img_x, img_y, self.player_icon_pixmap)
-                marker.scale_to_zoom(self.view.current_zoom)
-                marker.setZValue(1)
                 self.scene.addItem(marker)
                 self.player_markers.append(marker)
     def _update_tree(self):
@@ -895,7 +895,7 @@ class MapTab(QWidget):
             for player in filtered_players:
                 player_item = QTreeWidgetItem([player['player_name'], str(player['level']), player['last_seen'], str(player['pal_count'])])
                 player_item.setData(0, Qt.UserRole, ('player', player))
-                player_item.setForeground(0, QColor(0, 150, 255))
+                player_item.setForeground(0, QColor(0, 200, 120))
                 self.guild_tree.addTopLevelItem(player_item)
     def _filter_players(self, search_text):
         if not search_text:
@@ -1050,6 +1050,8 @@ class MapTab(QWidget):
     def _on_zoom_changed(self, zoom_level):
         for marker in self.base_markers:
             marker.scale_to_zoom(zoom_level)
+        for marker in self.player_markers:
+            marker.scale_to_zoom(zoom_level)
     def _on_marker_right_clicked(self, data, global_pos):
         menu = QMenu(self)
         menu.setStyleSheet('\n            QMenu {\n                background-color: rgba(18,20,24,0.95);\n                border: 1px solid rgba(125,211,252,0.3);\n                border-radius: 4px;\n                color: #e2e8f0;\n                padding: 4px;\n            }\n            QMenu::item {\n                padding: 6px 12px;\n                border-radius: 3px;\n            }\n            QMenu::item:selected {\n                background-color: rgba(59,142,208,0.3);\n            }\n        ')
@@ -1184,13 +1186,15 @@ class MapTab(QWidget):
                 QMessageBox.warning(self, t('error.title') if t else 'Error', t('base.export.not_found') if t else 'Base data not found')
                 return
             current_radius = src_base_entry['value']['RawData']['value'].get('area_range', 3500.0)
-            new_radius = RadiusInputDialog.get_radius(t('base.radius.title') if t else 'Adjust Base Radius', t('base.radius.prompt') if t else f'Current radius: {int(current_radius)}\nEnter new radius (100-999999):', current_radius, self)
+            current_percent = int(round(current_radius / 35.0))
+            new_radius = RadiusInputDialog.get_radius(t('base.radius.title') if t else 'Adjust Base Radius', t('base.radius.prompt') if t else f'Current radius: {current_percent}% ({int(current_radius)})\nEnter new radius percentage:', current_radius, self)
             if new_radius is not None and new_radius != current_radius:
                 if update_base_area_range(constants.loaded_level_json, bid, new_radius):
                     self.refresh()
                     if self.parent_window:
                         self.parent_window.refresh_all()
-                    QMessageBox.information(self, t('success.title') if t else 'Success', t('base.radius.updated') if t else f'Base radius updated to {new_radius}\n\n⚠ Load this save in-game for structures to be reassigned.')
+                    new_percent = int(round(new_radius / 35.0))
+                    QMessageBox.information(self, t('success.title') if t else 'Success', t('base.radius.updated') if t else f'Base radius updated to {new_percent}% ({int(new_radius)})\n\n⚠ Load this save in-game for structures to be reassigned.')
                 else:
                     QMessageBox.critical(self, t('error.title') if t else 'Error', t('base.radius.failed') if t else 'Failed to update base radius')
         except Exception as e:

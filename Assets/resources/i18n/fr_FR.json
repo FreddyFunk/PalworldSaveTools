@@ -794,7 +794,7 @@
   "edit_pals.max_trust": "Confiance Max",
   "base.radius.menu": "Ajuster le rayon",
   "base.radius.title": "Ajuster le rayon de la base",
-  "base.radius.prompt": "Rayon actuel : {current_radius}\nEntrez le nouveau rayon (100-999999) :",
+  "base.radius.prompt": "Rayon actuel : {current_radius}\nEntrez le nouveau rayon (50% -1000%) :",
   "base.radius.warning": "⚠ Remarque : Vous devez charger cette sauvegarde dans le jeu pour que le jeu réattribue les structures dans le nouveau rayon.",
   "base.radius.updated": "Rayon de la base mis à jour à {radius}\n\n⚠ Chargez cette sauvegarde dans le jeu pour réattribuer les structures.",
   "base.radius.failed": "Échec de la mise à jour du rayon de la base",

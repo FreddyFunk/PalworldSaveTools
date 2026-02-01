@@ -814,7 +814,7 @@
   "edit_pals.max_trust": "最大信頼",
   "base.radius.menu": "半径を調整",
   "base.radius.title": "ベースキャンプ半径の調整",
-  "base.radius.prompt": "現在の半径: {current_radius}\n新しい半径を入力してください (100-999999):",
+  "base.radius.prompt": "現在の半径: {current_radius}\n新しい半径を入力してください (50% -1000%):",
   "base.radius.warning": "⚠ 注意: 新しい半径内の構造物をゲームが再割り当てするには、ゲーム内でこのセーブデータをロードする必要があります。",
   "base.radius.updated": "ベースキャンプの半径を {radius} に更新しました\n\n⚠ 構造物を再割り当てするには、ゲーム内でこのセーブデータをロードしてください。",
   "base.radius.failed": "ベースキャンプ半径の更新に失敗しました",

@@ -871,7 +871,7 @@
   "menu.file.load_levelmeta": "Load LevelMeta",
   "base.radius.menu": "Adjust Radius",
   "base.radius.title": "Adjust Base Radius",
-  "base.radius.prompt": "Current radius: {current_radius}\nEnter new radius (100-999999):",
+  "base.radius.prompt": "Current radius: {current_radius}\nEnter new radius (50% -1000%):",
   "base.radius.warning": "⚠ Note: You must load this save in-game for the game to reassign structures within the new radius.",
   "base.radius.updated": "Base radius updated to {radius}\n\n⚠ Load this save in-game for structures to be reassigned.",
   "base.radius.failed": "Failed to update base radius",

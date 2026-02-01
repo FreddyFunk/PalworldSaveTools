@@ -245,42 +245,75 @@ class ConfirmDialog(QDialog):
         dialog = ConfirmDialog(title, message, parent)
         return dialog.exec() == QDialog.Accepted
 class RadiusInputDialog(QDialog):
+    DEFAULT_RADIUS = 3500.0  # 100%
+
     def __init__(self, title, prompt, current_radius, parent=None):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setMinimumWidth(400)
+        self.setMinimumWidth(450)
         if os.path.exists(constants.ICON_PATH):
             self.setWindowIcon(QIcon(constants.ICON_PATH))
+        self.current_actual_radius = current_radius
         layout = QVBoxLayout(self)
         label = QLabel(prompt)
         layout.addWidget(label)
+
+        # Input row with spinbox and actual value display
+        input_layout = QHBoxLayout()
         self.spin_box = QSpinBox()
-        self.spin_box.setMinimum(100)
-        self.spin_box.setMaximum(999999)
-        self.spin_box.setValue(int(current_radius))
-        layout.addWidget(self.spin_box)
+        self.spin_box.setMinimum(50)  # 50% minimum for base
+        self.spin_box.setMaximum(1000)  # 1000% maximum
+        self.spin_box.setSuffix('%')
+        # Convert actual radius to percentage
+        current_percent = int(round(current_radius / 35.0))
+        self.spin_box.setValue(current_percent)
+        input_layout.addWidget(self.spin_box)
+
+        # Actual value display (read-only)
+        self.actual_value_label = QLabel(f'= {int(current_radius)}')
+        self.actual_value_label.setMinimumWidth(80)
+        self.actual_value_label.setStyleSheet('color: #a0aec0; font-size: 11px; padding: 4px; background-color: rgba(255,255,255,0.05); border-radius: 4px;')
+        input_layout.addWidget(self.actual_value_label)
+        layout.addLayout(input_layout)
+
+        # Warning label
         warning_label = QLabel(t('base.radius.warning') if t else '⚠ Note: You must load this save in-game for the game to reassign structures within the new radius.')
         warning_label.setWordWrap(True)
         warning_label.setStyleSheet('color: #f59e0b; font-style: italic; padding: 8px; background-color: rgba(245, 158, 11, 0.1); border-radius: 4px;')
         layout.addWidget(warning_label)
+
+        # Buttons
         button_layout = QHBoxLayout()
-        reset_btn = QPushButton(t('base.radius.reset') if t else 'Reset to Default')
+        reset_btn = QPushButton(t('base.radius.reset') if t else 'Reset to Default (100%)')
         reset_btn.clicked.connect(self._reset_to_default)
         ok_btn = QPushButton(t('button.ok') if t else 'OK')
         ok_btn.clicked.connect(self.accept)
         cancel_btn = QPushButton(t('button.cancel') if t else 'Cancel')
         cancel_btn.clicked.connect(self.reject)
         button_layout.addWidget(reset_btn)
+        button_layout.addStretch()
         button_layout.addWidget(ok_btn)
         button_layout.addWidget(cancel_btn)
         layout.addLayout(button_layout)
+
         self.result_value = None
+        self.spin_box.valueChanged.connect(self._update_actual_value)
+
+    def _update_actual_value(self):
+        percent = self.spin_box.value()
+        actual = int(round(percent * 35.0))
+        self.actual_value_label.setText(f'= {actual}')
+
     def _reset_to_default(self):
-        self.spin_box.setValue(3500)
+        self.spin_box.setValue(100)  # 100%
+
     def accept(self):
-        self.result_value = float(self.spin_box.value())
+        # Convert percentage back to actual value
+        percent = self.spin_box.value()
+        self.result_value = float(percent * 35.0)
         super().accept()
+
     def showEvent(self, event):
         super().showEvent(event)
         if not event.spontaneous():
@@ -292,6 +325,7 @@ class RadiusInputDialog(QDialog):
                 center_on_parent(self)
             self.activateWindow()
             self.raise_()
+
     @staticmethod
     def get_radius(title, prompt, current_radius, parent=None):
         dialog = RadiusInputDialog(title, prompt, current_radius, parent)

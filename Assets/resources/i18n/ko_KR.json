@@ -813,7 +813,7 @@
   "edit_pals.max_trust": "최대 신뢰",
   "base.radius.menu": "반경 조정",
   "base.radius.title": "기지 반경 조정",
-  "base.radius.prompt": "현재 반경: {current_radius}\n새 반경 입력 (100-999999):",
+  "base.radius.prompt": "현재 반경: {current_radius}\n새 반경 입력 (50% -1000%):",
   "base.radius.warning": "⚠ 참고: 새 반경 내의 구조물을 게임이 재할당하려면 게임에서 이 저장 파일을 로드해야 합니다.",
   "base.radius.updated": "기지 반경이 {radius}로 업데이트되었습니다\n\n⚠ 구조물을 재할당하려면 게임에서 이 저장 파일을 로드하세요.",
   "base.radius.failed": "기지 반경 업데이트 실패",

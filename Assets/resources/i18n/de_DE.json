@@ -835,7 +835,7 @@
   "edit_pals.max_trust": "Max. Vertrauen",
   "base.radius.menu": "Radius anpassen",
   "base.radius.title": "Basisradius anpassen",
-  "base.radius.prompt": "Aktueller Radius: {current_radius}\nNeuen Radius eingeben (100-999999):",
+  "base.radius.prompt": "Aktueller Radius: {current_radius}\nNeuen Radius eingeben (50% -1000%):",
   "base.radius.warning": "⚠ Hinweis: Sie müssen diesen Speicherstand im Spiel laden, damit das Spiel Strukturen innerhalb des neuen Radius neu zuweisen kann.",
   "base.radius.updated": "Basisradius auf {radius} aktualisiert\n\n⚠ Laden Sie diesen Speicherstand im Spiel, um Strukturen neu zuzuweisen.",
   "base.radius.failed": "Basisradius konnte nicht aktualisiert werden",

@@ -805,7 +805,7 @@
   "edit_pals.max_trust": "Confianza Máx",
   "base.radius.menu": "Ajustar radio",
   "base.radius.title": "Ajustar radio de la base",
-  "base.radius.prompt": "Radio actual: {current_radius}\nIntroduce el nuevo radio (100-999999):",
+  "base.radius.prompt": "Radio actual: {current_radius}\nIntroduce el nuevo radio (50% -1000%):",
   "base.radius.warning": "⚠ Nota: Debes cargar esta partida en el juego para que el juego reasigne las estructuras dentro del nuevo radio.",
   "base.radius.updated": "Radio de la base actualizado a {radius}\n\n⚠ Carga esta partida en el juego para reasignar las estructuras.",
   "base.radius.failed": "Error al actualizar el radio de la base",

@@ -1383,7 +1383,7 @@ class MainWindow(QMainWindow):
             self._show_warning(t('error.title') if t else 'Error', t('base.export.not_found') if t else f'Could not find base data for ID: {bid}')
             return
         current_radius = src_base_entry['value']['RawData']['value'].get('area_range', 3500.0)
-        new_radius = RadiusInputDialog.get_radius(t('base.radius.title') if t else 'Adjust Base Radius', t('base.radius.prompt') if t else f'Current radius: {int(current_radius)}\nEnter new radius (100-999999):', current_radius, self)
+        new_radius = RadiusInputDialog.get_radius(t('base.radius.title') if t else 'Adjust Base Radius', t('base.radius.prompt') if t else f'Current radius: {int(current_radius)}\nEnter new radius (50% -1000%):', current_radius, self)
         if new_radius is not None and new_radius != current_radius:
             if update_base_area_range(constants.loaded_level_json, bid, new_radius):
                 self.refresh_all()

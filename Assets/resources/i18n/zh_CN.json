@@ -814,7 +814,7 @@
   "player.level.minimum_level": "无法设置玩家等级 - 最低等级为 2",
   "base.radius.menu": "调整半径",
   "base.radius.title": "调整基地半径",
-  "base.radius.prompt": "当前半径: {current_radius}\n输入新半径 (100-999999):",
+  "base.radius.prompt": "当前半径: {current_radius}\n输入新半径 (50% -1000%):",
   "base.radius.warning": "⚠ 注意：您必须在游戏中加载此存档，以便游戏重新分配新半径内的建筑。",
   "base.radius.updated": "基地半径已更新为 {radius}\n\n⚠ 请在游戏中加载此存档以重新分配建筑。",
   "base.radius.failed": "更新基地半径失败",
