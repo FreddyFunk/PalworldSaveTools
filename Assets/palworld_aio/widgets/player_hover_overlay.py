@@ -6,7 +6,6 @@ try:
     from palworld_aio import constants
 except ImportError:
     from .. import constants
-
 class PlayerHoverOverlay(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -18,7 +17,6 @@ class PlayerHoverOverlay(QWidget):
         self._hide_timer = QTimer(self)
         self._hide_timer.setSingleShot(True)
         self._hide_timer.timeout.connect(self._do_hide)
-
     def _setup_ui(self):
         self.container = QFrame(self)
         self.container.setObjectName('hoverOverlayContainer')
@@ -61,21 +59,7 @@ class PlayerHoverOverlay(QWidget):
         shadow.setOffset(2, 2)
         shadow.setColor(QColor(0, 0, 0, 100))
         self.container.setGraphicsEffect(shadow)
-        # Green accent styling for player overlay
-        self.container.setStyleSheet('''
-            QFrame#hoverOverlayContainer {
-                background: rgba(18,20,24,0.95);
-                border: 1px solid rgba(0, 200, 120, 0.5);
-                border-radius: 8px;
-            }
-            QLabel#hoverNameLabel {
-                color: #00C878;
-            }
-            QLabel#hoverDetailLabel {
-                color: #a0aec0;
-            }
-        ''')
-
+        self.container.setStyleSheet('\n            QFrame#hoverOverlayContainer {\n                background: rgba(18,20,24,0.95);\n                border: 1px solid rgba(0, 200, 120, 0.5);\n                border-radius: 8px;\n            }\n            QLabel#hoverNameLabel {\n                color: #00C878;\n            }\n            QLabel#hoverDetailLabel {\n                color: #a0aec0;\n            }\n        ')
     def show_for_player(self, player_data: dict, global_pos: QPoint):
         self._hide_timer.stop()
         player_name = player_data.get('player_name', 'Unknown')
@@ -85,31 +69,23 @@ class PlayerHoverOverlay(QWidget):
         pal_count = player_data.get('pal_count', 0)
         guild_name = player_data.get('guild_name', '')
         coords = player_data.get('coords', (0, 0))
-
         self.name_label.setText(player_name)
         self.name_label.show()
-
         self.uid_label.setText(f'UID: {player_uid}')
         self.uid_label.show()
-
         self.level_label.setText(f'Level: {player_level}')
         self.level_label.show()
-
         if guild_name:
             self.guild_label.setText(f'Guild: {guild_name}')
             self.guild_label.show()
         else:
             self.guild_label.hide()
-
         self.pals_label.setText(f'Pals: {pal_count}')
         self.pals_label.show()
-
         self.last_seen_label.setText(f'Last Seen: {last_seen}')
         self.last_seen_label.show()
-
         self.coords_label.setText(f'Location: X:{int(coords[0])},Y:{int(coords[1])}')
         self.coords_label.show()
-
         self.adjustSize()
         offset_x = 20
         offset_y = -self.height() // 2
@@ -117,12 +93,9 @@ class PlayerHoverOverlay(QWidget):
         self.move(new_pos)
         self.show()
         self.raise_()
-
     def hide_overlay(self):
         self._hide_timer.start(50)
-
     def _do_hide(self):
         self.hide()
-
     def cancel_hide(self):
         self._hide_timer.stop()
