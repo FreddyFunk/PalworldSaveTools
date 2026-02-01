@@ -1,9 +1,8 @@
 import sys, os, gc, time
 from import_libs import *
 from loading_manager import run_with_loading
-import tkinter as tk
-from tkinter import filedialog
 from PySide6.QtCore import QEventLoop
+from PySide6.QtWidgets import QApplication, QFileDialog
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'palworld_save_tools', 'commands'))
 from convert import main as convert_main
 def convert_sav_to_json(input_file, output_file):
@@ -21,10 +20,8 @@ def convert_json_to_sav(input_file, output_file):
     finally:
         sys.argv = old_argv
 def pick_players_folder():
-    root = tk.Tk()
-    root.withdraw()
-    folder = filedialog.askdirectory(title='Select Players Folder')
-    root.destroy()
+    app = QApplication.instance() or QApplication(sys.argv)
+    folder = QFileDialog.getExistingDirectory(None, 'Select Players Folder', '')
     if folder and os.path.basename(folder) == 'Players':
         return folder
     print('Invalid folder or no folder selected.')

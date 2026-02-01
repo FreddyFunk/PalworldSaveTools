@@ -1,25 +1,8 @@
-import os, warnings, ssl
-import sys, argparse, code, collections, copy, ctypes, datetime, functools, gc, importlib.metadata, json, shutil, glob
-import logging, multiprocessing, platform, pprint, re, subprocess, tarfile, threading, pickle, zipfile, string, palworld_coord
-import time, traceback, uuid, io, pathlib, csv, urllib.request, tempfile, random, pandas as pd
-import matplotlib.pyplot as plt, matplotlib.patches as patches, matplotlib.font_manager as font_manager, matplotlib.patheffects as path_effects
+import os, ssl
+import sys, argparse, collections, copy, ctypes, datetime, gc, json, shutil, glob
+import logging, multiprocessing, platform, re, subprocess, threading, pickle, zipfile, string, palworld_coord
+import time, traceback, uuid, io, pathlib, urllib.request, tempfile, random, pandas as pd
 from multiprocessing import shared_memory
-try:
-    import tkinter as tk
-    from tkinter import ttk, filedialog, messagebox, PhotoImage, simpledialog
-except ImportError:
-    tk = None
-    ttk = None
-    filedialog = None
-    messagebox = None
-    PhotoImage = None
-    simpledialog = None
-try:
-    import customtkinter as ctk
-    ctk.set_appearance_mode('Dark')
-    ctk.set_default_color_theme('blue')
-except ImportError:
-    ctk = None
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QDialog, QMessageBox, QFileDialog, QInputDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QComboBox, QTextEdit, QTreeWidget, QTreeWidgetItem, QProgressBar, QCheckBox, QRadioButton, QGroupBox, QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView, QSplitter, QScrollArea, QFrame, QMenuBar, QMenu, QStatusBar, QSystemTrayIcon, QStyle, QCommonStyle
 from PySide6.QtGui import QPixmap, QIcon, QFont, QPainter, QPen, QBrush, QColor, QAction
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QObject, QEvent, QSize, QPoint, QRect
@@ -81,14 +64,3 @@ def center_window(window):
         screen = QApplication.primaryScreen().availableGeometry()
         size = window.size()
         window.move((screen.width() - size.width()) // 2, (screen.height() - size.height()) // 2)
-    elif hasattr(window, 'geometry'):
-        window.update_idletasks()
-        screen_width = window.winfo_screenwidth()
-        screen_height = window.winfo_screenheight()
-        width = window.winfo_width()
-        height = window.winfo_height()
-        x = (screen_width - width) // 2
-        y = (screen_height - height) // 2
-        window.geometry(f'{width}x{height}+{x}+{y}')
-    else:
-        pass

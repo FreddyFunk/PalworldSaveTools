@@ -524,6 +524,10 @@ class MapTab(QWidget):
     def refresh_labels(self):
         if hasattr(self, 'search_input'):
             self.search_input.setPlaceholderText(t('map.search.placeholder') if t else 'Search guilds,leaders,bases...')
+        if hasattr(self, 'toggle_bases'):
+            self.toggle_bases.setText(t('map.toggle.bases') if t else 'Bases')
+        if hasattr(self, 'toggle_players'):
+            self.toggle_players.setText(t('map.toggle.players') if t else 'Players')
         if hasattr(self, 'guild_tree'):
             self.guild_tree.setHeaderLabels([t('map.header.guild') if t else 'Guild', t('map.header.leader') if t else 'Leader', t('map.header.lastseen') if t else 'Last Seen', t('map.header.bases') if t else 'Bases'])
         if hasattr(self, 'info_label'):
@@ -637,7 +641,7 @@ class MapTab(QWidget):
         self.guild_tree.setObjectName('searchTree')
         self.guild_tree.setHeaderLabels([t('map.header.guild') if t else 'Guild', t('map.header.leader') if t else 'Leader', t('map.header.lastseen') if t else 'Last Seen', t('map.header.bases') if t else 'Bases'])
         self.guild_tree.setColumnWidth(0, 120)
-        self.guild_tree.setColumnWidth(1, 110)
+        self.guild_tree.setColumnWidth(1, 85)
         self.guild_tree.setColumnWidth(2, 90)
         self.guild_tree.setColumnWidth(3, 45)
         self.guild_tree.itemExpanded.connect(self._on_item_expanded)
@@ -988,10 +992,10 @@ class MapTab(QWidget):
         coords = player_data.get('coords', (0, 0))
         save_coords = player_data.get('save_coords', (0, 0, 0))
         player_uid = player_data.get('player_uid', '')
-        info_lines = [f'<b>{player_name}</b>', f'UID: {player_uid}', f'Level: {level}']
+        info_lines = [f'<b>{player_name}</b>', f"{(t('player.hover.uid') if t else 'UID:')} {player_uid}", f"{(t('player.hover.level') if t else 'Level:')} {level}"]
         if guild_name:
-            info_lines.append(f'Guild: {guild_name}')
-        info_lines.extend([f'Pals: {pal_count}', f'Last Seen: {last_seen}', f'Location: X:{int(coords[0])},Y:{int(coords[1])}'])
+            info_lines.append(f"{(t('player.hover.guild') if t else 'Guild:')} {guild_name}")
+        info_lines.extend([f"{(t('player.hover.pals') if t else 'Pals:')} {pal_count}", f"{(t('player.hover.last_seen') if t else 'Last Seen:')} {last_seen}", f"{(t('player.hover.location') if t else 'Location:')} X:{int(coords[0])},Y:{int(coords[1])}"])
         self.info_label.setText('<br>'.join(info_lines))
     def _highlight_player(self, player_data):
         for marker in self.player_markers:
@@ -1194,7 +1198,7 @@ class MapTab(QWidget):
                     if self.parent_window:
                         self.parent_window.refresh_all()
                     new_percent = int(round(new_radius / 35.0))
-                    QMessageBox.information(self, t('success.title') if t else 'Success', t('base.radius.updated') if t else f'Base radius updated to {new_percent}% ({int(new_radius)})\n\n⚠ Load this save in-game for structures to be reassigned.')
+                    QMessageBox.information(self, t('success.title') if t else 'Success', t('base.radius.updated', radius=f'{new_percent}% ({int(new_radius)})') if t else f'Base radius updated to {new_percent}% ({int(new_radius)})\n\n⚠ Load this save in-game for structures to be reassigned.')
                 else:
                     QMessageBox.critical(self, t('error.title') if t else 'Error', t('base.radius.failed') if t else 'Failed to update base radius')
         except Exception as e:
@@ -1351,7 +1355,7 @@ class MapTab(QWidget):
         else:
             QMessageBox.warning(self, t('error.title'), f'Failed to export any bases for guild "{guild_name}".\n' + '\n'.join(failed_bases))
     def _delete_player(self, player_data):
-        from ..data_manager import load_exclusions
+        from ..data_manager import load_exclusions, delete_player
         player_uid = player_data.get('player_uid', '')
         player_name = player_data.get('player_name', 'Unknown')
         load_exclusions()
@@ -1359,19 +1363,11 @@ class MapTab(QWidget):
         if uid_clean in [ex.replace('-', '').lower() for ex in constants.exclusions.get('players', [])]:
             QMessageBox.warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_player') if t else f'Player "{player_name}" is in exclusion list and cannot be deleted.')
             return
-        reply = QMessageBox.question(self, t('confirm.title') if t else 'Confirm', t('confirm.delete_player') if t else f'Delete player "{player_name}"?\n\nThis will delete the player and all their characters.', QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            try:
-                from ..data_manager import delete_player
-                if delete_player(player_uid):
-                    self.refresh()
-                    if self.parent_window:
-                        self.parent_window.refresh_all()
-                    QMessageBox.information(self, t('success.title') if t else 'Success', t('player.delete.success') if t else 'Player deleted successfully')
-                else:
-                    QMessageBox.warning(self, t('error.title') if t else 'Error', 'Failed to delete player - player not found')
-            except Exception as e:
-                QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to delete player: {str(e)}')
+        delete_player(player_uid)
+        self.refresh()
+        if self.parent_window:
+            self.parent_window.refresh_all()
+        QMessageBox.information(self, t('Done') if t else 'Done', t('deletion.player_deleted') if t else 'Player deleted')
     def _rename_player(self, player_data):
         player_uid = player_data.get('player_uid', '')
         current_name = player_data.get('player_name', 'Unknown')

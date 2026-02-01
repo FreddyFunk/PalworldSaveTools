@@ -1387,7 +1387,7 @@ class MainWindow(QMainWindow):
         if new_radius is not None and new_radius != current_radius:
             if update_base_area_range(constants.loaded_level_json, bid, new_radius):
                 self.refresh_all()
-                self._show_info(t('success.title') if t else 'Success', t('base.radius.updated') if t else f'Base radius updated to {new_radius}\n\n⚠ Load this save in-game for structures to be reassigned.')
+                self._show_info(t('success.title') if t else 'Success', t('base.radius.updated', radius=int(new_radius)) if t else f'Base radius updated to {new_radius}\n\n⚠ Load this save in-game for structures to be reassigned.')
             else:
                 self._show_error(t('error.title') if t else 'Error', t('base.radius.failed') if t else 'Failed to update base radius')
     def _import_base(self, gid):

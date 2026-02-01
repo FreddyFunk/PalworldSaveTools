@@ -4,6 +4,7 @@ import json
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QFrame, QMessageBox, QCheckBox, QSpinBox, QDoubleSpinBox, QLineEdit, QComboBox, QWidget, QApplication, QGroupBox, QFormLayout, QGridLayout, QTabWidget, QTextEdit, QListWidget, QListWidgetItem, QSplitter
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QCursor
+from i18n import t
 def get_assets_path():
     env = os.environ.get('ASSETS_PATH')
     if env:
@@ -45,7 +46,7 @@ class WorldOptionEditorDialog(QDialog):
         self.sav_path = sav_path
         self.settings = json_data['properties']['OptionWorldData']['value']['Settings']['value']
         self.parent_window = parent if parent else None
-        self.setWindowTitle('WorldOption Settings Editor')
+        self.setWindowTitle(t('worldoption.editor.title') if t else 'WorldOption Settings Editor')
         self.setModal(True)
         self.setMinimumSize(1000, 700)
         self.editors = {}
@@ -59,12 +60,12 @@ class WorldOptionEditorDialog(QDialog):
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
         left_layout.setContentsMargins(5, 5, 5, 5)
-        search_label = QLabel('Search:')
+        search_label = QLabel(t('worldoption.editor.search') if t else 'Search:')
         search_label.setFont(QFont('Segoe UI', 10, QFont.Bold))
         left_layout.addWidget(search_label)
         from PySide6.QtWidgets import QLineEdit
         self.search_box = QLineEdit()
-        self.search_box.setPlaceholderText('Filter settings...')
+        self.search_box.setPlaceholderText(t('worldoption.editor.filter_placeholder') if t else 'Filter settings...')
         self.search_box.textChanged.connect(self._filter_settings)
         left_layout.addWidget(self.search_box)
         self.settings_list = QListWidget()
@@ -73,7 +74,7 @@ class WorldOptionEditorDialog(QDialog):
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
         right_layout.setContentsMargins(10, 10, 10, 10)
-        self.editor_title = QLabel('Select a setting to edit')
+        self.editor_title = QLabel(t('worldoption.editor.select_setting') if t else 'Select a setting to edit')
         self.editor_title.setFont(QFont('Segoe UI', 14, QFont.Bold))
         self.editor_title.setAlignment(Qt.AlignCenter)
         right_layout.addWidget(self.editor_title)
@@ -90,12 +91,12 @@ class WorldOptionEditorDialog(QDialog):
         main_layout.addWidget(splitter)
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
-        save_btn = QPushButton('Save Changes')
+        save_btn = QPushButton(t('worldoption.editor.save') if t else 'Save Changes')
         save_btn.setObjectName('dialogOption')
         save_btn.setCursor(QCursor(Qt.PointingHandCursor))
         save_btn.clicked.connect(self._save_to_file)
         btn_layout.addWidget(save_btn)
-        cancel_btn = QPushButton('Cancel')
+        cancel_btn = QPushButton(t('worldoption.editor.cancel') if t else 'Cancel')
         cancel_btn.setObjectName('dialogCancel')
         cancel_btn.setCursor(QCursor(Qt.PointingHandCursor))
         cancel_btn.clicked.connect(self.reject)
@@ -137,7 +138,7 @@ class WorldOptionEditorDialog(QDialog):
         editor = self._create_editor(setting_name, prop_type, actual_value)
         if editor:
             form_layout = QFormLayout()
-            value_label = QLabel('Current Value:')
+            value_label = QLabel(t('worldoption.editor.current_value') if t else 'Current Value:')
             value_label.setFont(QFont('Segoe UI', 10, QFont.Bold))
             form_layout.addRow(value_label)
             form_layout.addRow(editor)
@@ -202,7 +203,7 @@ class WorldOptionEditorDialog(QDialog):
                 textedit.setText(str(value))
             return textedit
         elif prop_type == 'StructProperty':
-            label = QLabel('(Complex structure - edit manually in JSON)')
+            label = QLabel(t('worldoption.editor.complex_structure') if t else '(Complex structure - edit manually in JSON)')
             label.setStyleSheet('color: #888; font-style: italic;')
             return label
         elif prop_type == 'NameProperty':
@@ -239,7 +240,7 @@ class WorldOptionEditorDialog(QDialog):
             prop['value'] = new_value
     def _save_to_file(self):
         if not self.sav_path:
-            QMessageBox.warning(self, 'No File Path', 'No file path provided. Cannot save.')
+            QMessageBox.warning(self, t('error.title') if t else 'Error', t('worldoption.editor.no_file_path') if t else 'No file path provided. Cannot save.')
             return
         try:
             from palworld_aio.utils import json_to_sav
@@ -247,8 +248,8 @@ class WorldOptionEditorDialog(QDialog):
             self.accept()
         except Exception as e:
             import traceback
-            error_details = f'Failed to save:\n{str(e)}\n\n{traceback.format_exc()}'
-            QMessageBox.critical(self, 'Error', error_details)
+            error_details = f"{(t('worldoption.editor.save_failed') if t else 'Failed to save:')}\n{str(e)}\n\n{traceback.format_exc()}"
+            QMessageBox.critical(self, t('error.title') if t else 'Error', error_details)
     def _load_theme(self):
         is_dark = self.parent_window.is_dark_mode if self.parent_window and hasattr(self.parent_window, 'is_dark_mode') else True
         base_path = get_assets_path()
@@ -283,20 +284,15 @@ def edit_worldoption_settings(json_data, sav_path=None, parent=None):
         return True
     return None
 if __name__ == '__main__':
-    import tkinter as tk
-    from tkinter import filedialog
-    root = tk.Tk()
-    root.withdraw()
-    json_path = filedialog.askopenfilename(title='Select WorldOption.json', filetypes=[('JSON Files', '*.json')])
-    root.destroy()
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+    json_path, _ = QFileDialog.getOpenFileName(None, 'Select WorldOption.json', '', 'JSON Files (*.json)')
     if not json_path:
         print('No file selected')
         exit(0)
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
     result = edit_worldoption_settings(data, json_path)
     if result:
         print('Settings saved successfully!')

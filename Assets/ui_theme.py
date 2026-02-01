@@ -1,4 +1,3 @@
-import customtkinter as ctk
 BG = '#0A0B0E'
 GLASS = '#121418'
 ACCENT = '#3B8ED0'
@@ -24,6 +23,3 @@ SPACE_LARGE = 15
 CTK_BUTTON_CORNER_RADIUS = 6
 CTK_FRAME_CORNER_RADIUS = 8
 TREE_ROW_HEIGHT = 22
-def apply_theme():
-    ctk.set_appearance_mode('Dark')
-    ctk.set_default_color_theme('dark-blue')

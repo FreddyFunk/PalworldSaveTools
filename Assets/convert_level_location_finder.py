@@ -1,9 +1,8 @@
 import sys, os, glob, gc, threading, time
 from import_libs import *
 from loading_manager import run_with_loading
-import tkinter as tk
-from tkinter import filedialog
 from PySide6.QtCore import QEventLoop
+from PySide6.QtWidgets import QApplication, QFileDialog
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'palworld_save_tools', 'commands'))
 from convert import main as convert_main
 def convert_sav_to_json(input_file, output_file):
@@ -21,14 +20,12 @@ def convert_json_to_sav(input_file, output_file):
     finally:
         sys.argv = old_argv
 def file_picker(ext):
-    root = tk.Tk()
-    root.withdraw()
+    app = QApplication.instance() or QApplication(sys.argv)
     path = None
     if ext == 'sav':
-        path = filedialog.askopenfilename(title='Select Level.json', filetypes=[('Level.json', 'Level.json')])
+        path, _ = QFileDialog.getOpenFileName(None, 'Select Level.json', '', 'Level.json (Level.json)')
     elif ext == 'json':
-        path = filedialog.askopenfilename(title='Select Level.sav', filetypes=[('Level.sav', 'Level.sav')])
-    root.destroy()
+        path, _ = QFileDialog.getOpenFileName(None, 'Select Level.sav', '', 'Level.sav (Level.sav)')
     return path
 def convert_level_location_finder(ext):
     level_file = file_picker(ext)

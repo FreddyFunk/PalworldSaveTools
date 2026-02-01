@@ -1,6 +1,4 @@
-matplotlib
 pandas
-customtkinter
 cityhash
 numpy
 pyside6-essentials

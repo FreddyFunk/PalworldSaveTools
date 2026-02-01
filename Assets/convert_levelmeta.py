@@ -1,9 +1,8 @@
 import sys, os, glob, gc, threading, time
 from import_libs import *
 from loading_manager import run_with_loading
-import tkinter as tk
-from tkinter import filedialog
 from PySide6.QtCore import QEventLoop
+from PySide6.QtWidgets import QApplication, QFileDialog
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'palworld_save_tools', 'commands'))
 from convert import main as convert_main
 def convert_sav_to_json(input_file, output_file):
@@ -21,14 +20,12 @@ def convert_json_to_sav(input_file, output_file):
     finally:
         sys.argv = old_argv
 def file_picker(ext):
-    root = tk.Tk()
-    root.withdraw()
+    app = QApplication.instance() or QApplication(sys.argv)
     path = None
     if ext == 'sav':
-        path = filedialog.askopenfilename(title='Select LevelMeta.json', filetypes=[('LevelMeta.json', 'LevelMeta.json')])
+        path, _ = QFileDialog.getOpenFileName(None, 'Select LevelMeta.json', '', 'LevelMeta.json (LevelMeta.json)')
     elif ext == 'json':
-        path = filedialog.askopenfilename(title='Select LevelMeta.sav', filetypes=[('LevelMeta.sav', 'LevelMeta.sav')])
-    root.destroy()
+        path, _ = QFileDialog.getOpenFileName(None, 'Select LevelMeta.sav', '', 'LevelMeta.sav (LevelMeta.sav)')
     return path
 def convert_levelmeta_to_json():
     return convert_levelmeta('json')

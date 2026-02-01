@@ -4,6 +4,7 @@ import json
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QSpinBox, QLineEdit, QWidget, QApplication, QFormLayout, QGroupBox
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QCursor
+from i18n import t
 def get_assets_path():
     env = os.environ.get('ASSETS_PATH')
     if env:
@@ -27,7 +28,7 @@ class LevelMetaEditorDialog(QDialog):
         self.sav_path = sav_path
         self.settings = json_data['properties']['SaveData']['value']
         self.parent_window = parent if parent else None
-        self.setWindowTitle('LevelMeta Settings Editor')
+        self.setWindowTitle(t('levelmeta.editor.title') if t else 'LevelMeta Settings Editor')
         self.setModal(True)
         self.setMinimumSize(500, 300)
         self._setup_ui()
@@ -36,20 +37,20 @@ class LevelMetaEditorDialog(QDialog):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(15)
-        form_group = QGroupBox('LevelMeta Settings')
+        form_group = QGroupBox(t('levelmeta.editor.settings_group') if t else 'LevelMeta Settings')
         form_layout = QFormLayout()
         form_group.setLayout(form_layout)
-        world_name_label = QLabel('World Name:')
+        world_name_label = QLabel(t('levelmeta.editor.world_name') if t else 'World Name:')
         world_name_label.setFont(QFont('Segoe UI', 10, QFont.Bold))
         self.world_name_editor = QLineEdit()
         self.world_name_editor.setText(self.settings.get('WorldName', {}).get('value', ''))
         form_layout.addRow(world_name_label, self.world_name_editor)
-        host_name_label = QLabel('Host Player Name:')
+        host_name_label = QLabel(t('levelmeta.editor.host_name') if t else 'Host Player Name:')
         host_name_label.setFont(QFont('Segoe UI', 10, QFont.Bold))
         self.host_name_editor = QLineEdit()
         self.host_name_editor.setText(self.settings.get('HostPlayerName', {}).get('value', ''))
         form_layout.addRow(host_name_label, self.host_name_editor)
-        host_level_label = QLabel('Host Player Level:')
+        host_level_label = QLabel(t('levelmeta.editor.host_level') if t else 'Host Player Level:')
         host_level_label.setFont(QFont('Segoe UI', 10, QFont.Bold))
         self.host_level_editor = QSpinBox()
         self.host_level_editor.setRange(1, 999)
@@ -59,12 +60,12 @@ class LevelMetaEditorDialog(QDialog):
         main_layout.addStretch(1)
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
-        save_btn = QPushButton('Save Changes')
+        save_btn = QPushButton(t('levelmeta.editor.save') if t else 'Save Changes')
         save_btn.setObjectName('dialogOption')
         save_btn.setCursor(QCursor(Qt.PointingHandCursor))
         save_btn.clicked.connect(self._save_to_file)
         btn_layout.addWidget(save_btn)
-        cancel_btn = QPushButton('Cancel')
+        cancel_btn = QPushButton(t('levelmeta.editor.cancel') if t else 'Cancel')
         cancel_btn.setObjectName('dialogCancel')
         cancel_btn.setCursor(QCursor(Qt.PointingHandCursor))
         cancel_btn.clicked.connect(self.reject)
@@ -72,7 +73,7 @@ class LevelMetaEditorDialog(QDialog):
         main_layout.addLayout(btn_layout)
     def _save_to_file(self):
         if not self.sav_path:
-            QMessageBox.warning(self, 'No File Path', 'No file path provided. Cannot save.')
+            QMessageBox.warning(self, t('error.title') if t else 'Error', t('levelmeta.editor.no_file_path') if t else 'No file path provided. Cannot save.')
             return
         try:
             self.settings['WorldName']['value'] = self.world_name_editor.text()
@@ -83,8 +84,8 @@ class LevelMetaEditorDialog(QDialog):
             self.accept()
         except Exception as e:
             import traceback
-            error_details = f'Failed to save:\n{str(e)}\n\n{traceback.format_exc()}'
-            QMessageBox.critical(self, 'Error', error_details)
+            error_details = f"{(t('levelmeta.editor.save_failed') if t else 'Failed to save:')}\n{str(e)}\n\n{traceback.format_exc()}"
+            QMessageBox.critical(self, t('error.title') if t else 'Error', error_details)
     def _load_theme(self):
         is_dark = self.parent_window.is_dark_mode if self.parent_window and hasattr(self.parent_window, 'is_dark_mode') else True
         base_path = get_assets_path()
@@ -119,20 +120,15 @@ def edit_levelmeta_settings(json_data, sav_path=None, parent=None):
         return True
     return None
 if __name__ == '__main__':
-    import tkinter as tk
-    from tkinter import filedialog
-    root = tk.Tk()
-    root.withdraw()
-    json_path = filedialog.askopenfilename(title='Select LevelMeta.json', filetypes=[('JSON Files', '*.json')])
-    root.destroy()
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+    json_path, _ = QFileDialog.getOpenFileName(None, 'Select LevelMeta.json', '', 'JSON Files (*.json)')
     if not json_path:
         print('No file selected')
         exit(0)
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
     result = edit_levelmeta_settings(data, json_path)
     if result:
         print('Settings saved successfully!')

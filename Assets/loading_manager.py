@@ -1,5 +1,4 @@
 import sys, os, time, random, subprocess, threading, json, traceback
-import tkinter as tk
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton, QTextEdit, QGraphicsOpacityEffect, QMessageBox, QProgressBar, QDialog
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QPropertyAnimation, QPoint, QSize
 from PySide6.QtGui import QPixmap, QFont, QCursor
@@ -227,12 +226,11 @@ if '--spawn-loader' in sys.argv:
                 QTimer.singleShot(2000, lambda: btn.setText(old_txt))
             except:
                 try:
-                    root = tk.Tk()
-                    root.withdraw()
-                    root.clipboard_clear()
-                    root.clipboard_append(text)
-                    root.update()
-                    root.destroy()
+                    clipboard = QApplication.clipboard()
+                    clipboard.setText(text)
+                    old_txt = btn.text()
+                    btn.setText('COPIED!')
+                    QTimer.singleShot(2000, lambda: btn.setText(old_txt))
                 except:
                     pass
         def switch_to_error(self, data):
@@ -535,12 +533,11 @@ class ErrorDialog(QDialog):
             QTimer.singleShot(2000, lambda: btn.setText(old_txt))
         except:
             try:
-                root = tk.Tk()
-                root.withdraw()
-                root.clipboard_clear()
-                root.clipboard_append(text)
-                root.update()
-                root.destroy()
+                clipboard = QApplication.clipboard()
+                clipboard.setText(text)
+                old_txt = btn.text()
+                btn.setText('COPIED!')
+                QTimer.singleShot(2000, lambda: btn.setText(old_txt))
             except:
                 pass
 def show_error_screen(error_text):

@@ -188,36 +188,6 @@ def nuke_venv():
         shutil.rmtree(VENV_DIR, ignore_errors=True)
         if SENTINEL.exists():
             SENTINEL.unlink(missing_ok=True)
-def ensure_tkinter_installed():
-    if os.name != 'posix' or platform.system() != 'Linux':
-        return True
-    is_debian_based = False
-    try:
-        result = subprocess.run(['which', 'apt'], capture_output=True, timeout=5)
-        is_debian_based = result.returncode == 0
-    except Exception:
-        pass
-    if not is_debian_based:
-        return True
-    try:
-        import tkinter
-        return True
-    except ImportError:
-        pass
-    print(f'{YELLOW}Missing tkinter (python3-tk) package{RESET}')
-    print_step_working('Installing tkinter')
-    try:
-        result = run_apt_install(['python3-tk'], 'Installing tkinter')
-        if result == 0:
-            print_ok('tkinter installed')
-            return True
-        else:
-            print_fail('tkinter installation failed')
-            print(f'{RED}Please run manually: sudo apt install -y python3-tk{RESET}')
-            return False
-    except Exception as e:
-        print_fail(f'tkinter installation: {e}')
-        return False
 def ensure_qt_dependencies():
     if os.name != 'posix' or platform.system() != 'Linux':
         return True
@@ -287,9 +257,6 @@ def main():
             print(f"{DIM}{step_label(3, 3, 'Environment ready,bypassing checks')}{RESET}")
         if not ensure_qt_dependencies():
             print_fail(step_label(3, 3, 'Qt dependencies check failed'))
-            return
-        if not ensure_tkinter_installed():
-            print_fail(step_label(3, 3, 'tkinter check failed'))
             return
         print(f"{BOLD}{step_label(3, 3, 'Launching Application')}{RESET}")
         subprocess.call([str(vpy), str(start_py)])
