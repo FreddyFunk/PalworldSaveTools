@@ -1,6 +1,6 @@
-[English](src/resources/readme/README.en_US.md) | [简体中文](src/resources/readme/README.zh_CN.md) | [Deutsch](src/resources/readme/README.de_DE.md) | [Español](src/resources/readme/README.es_ES.md) | [Français](src/resources/readme/README.fr_FR.md) | [Русский](src/resources/readme/README.ru_RU.md) | [日本語](src/resources/readme/README.ja_JP.md) | [한국어](src/resources/readme/README.ko_KR.md)
+[English](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
-![PalworldSaveTools Logo](src/resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools Logo](resources/PalworldSaveTools_Blue.png)
 ---
 - **Contact me on Discord:** Pylar1991
 ---
