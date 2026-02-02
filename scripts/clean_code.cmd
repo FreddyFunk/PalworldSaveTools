@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0.."
-python .scripts\clean_code.py
+python scripts\clean_code.py
 pause
