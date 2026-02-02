@@ -18,6 +18,6 @@ Scan Save Logger/
 updated_worldmap.png
 task_progress.md
 Backups/
-save.coderef/
-PSP.coderef/
+.coderef.psp/
+.coderef.palsave/
 .scripts/
