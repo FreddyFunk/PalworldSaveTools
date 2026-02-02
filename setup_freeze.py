@@ -1,11 +1,11 @@
 import sys, os
-sys.path.insert(0, os.path.abspath('Src'))
-sys.path.insert(0, os.path.abspath('Src/resources'))
+sys.path.insert(0, os.path.abspath('src'))
+sys.path.insert(0, os.path.abspath('src/resources'))
 from cx_Freeze import setup, Executable
 def find_ooz_library():
     try:
         import ooz
-        return (os.path.dirname(ooz.__file__), 'Src/palworld_save_tools/lib/windows')
+        return (os.path.dirname(ooz.__file__), 'src/palworld_save_tools/lib/windows')
     except:
         pass
     return None
@@ -19,11 +19,11 @@ def find_pyside6_assets():
     except:
         pass
     return None
-build_exe_options = {'packages': ['i18n', 'subprocess', 'pathlib', 'shutil', 'pandas', 'cityhash', 'json', 'uuid', 'time', 'datetime', 'struct', 'enum', 'collections', 'itertools', 'math', 'zlib', 'gzip', 'zipfile', 'threading', 'multiprocessing', 'io', 'base64', 'binascii', 'hashlib', 'hmac', 'secrets', 'ssl', 'socket', 'urllib', 'http', 'email', 'mimetypes', 'tempfile', 'glob', 'fnmatch', 'argparse', 'configparser', 'logging', 'traceback', 'string', 'random', 're', 'copy', 'ctypes', 'gc', 'importlib', 'numpy', 'ooz', 'pickle', 'platform', 'PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtWidgets', 'nerdfont', 'unittest', 'unittest.mock', 'concurrent.futures'], 'excludes': ['test', 'pdb', 'tkinter.test', 'lib2to3', 'distutils', 'setuptools', 'pip', 'wheel', 'venv', 'ensurepip', 'msgpack'], 'include_files': [('Src/', 'Src/'), ('readme.md', 'readme.md'), ('license', 'license'), ('Src/resources/cert/cacert.pem', 'Src/resources/cert/cacert.pem')], 'zip_include_packages': [], 'zip_exclude_packages': ['*'], 'build_exe': 'PST_standalone', 'optimize': 0, 'silent': True}
+build_exe_options = {'packages': ['i18n', 'subprocess', 'pathlib', 'shutil', 'pandas', 'cityhash', 'json', 'uuid', 'time', 'datetime', 'struct', 'enum', 'collections', 'itertools', 'math', 'zlib', 'gzip', 'zipfile', 'threading', 'multiprocessing', 'io', 'base64', 'binascii', 'hashlib', 'hmac', 'secrets', 'ssl', 'socket', 'urllib', 'http', 'email', 'mimetypes', 'tempfile', 'glob', 'fnmatch', 'argparse', 'configparser', 'logging', 'traceback', 'string', 'random', 're', 'copy', 'ctypes', 'gc', 'importlib', 'numpy', 'ooz', 'pickle', 'platform', 'PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtWidgets', 'nerdfont', 'unittest', 'unittest.mock', 'concurrent.futures'], 'excludes': ['test', 'pdb', 'tkinter.test', 'lib2to3', 'distutils', 'setuptools', 'pip', 'wheel', 'venv', 'ensurepip', 'msgpack'], 'include_files': [('src/', 'src/'), ('readme.md', 'readme.md'), ('license', 'license'), ('src/resources/cert/cacert.pem', 'resources/cert/cacert.pem')], 'zip_include_packages': [], 'zip_exclude_packages': ['*'], 'build_exe': 'PST_standalone', 'optimize': 0, 'silent': True}
 ooz_l = find_ooz_library()
 if ooz_l:
     build_exe_options['include_files'].append(ooz_l)
 ps6_a = find_pyside6_assets()
 if ps6_a:
     build_exe_options['include_files'].append(ps6_a)
-setup(name='PalworldSaveTools', version='1.1.64', options={'build_exe': build_exe_options}, executables=[Executable('Src/palworld_aio/main.py', base='gui', target_name='PalworldSaveTools.exe', icon='Src/resources/pal.ico')])
+setup(name='PalworldSaveTools', version='1.1.64', options={'build_exe': build_exe_options}, executables=[Executable('src/palworld_aio/main.py', base='gui', target_name='PalworldSaveTools.exe', icon='src/resources/pal.ico')])
