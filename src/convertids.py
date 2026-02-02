@@ -1,4 +1,5 @@
 from import_libs import *
+from loading_manager import show_warning, show_critical
 import nerdfont as nf
 def get_steam_id_from_local():
     local_app_data_path = os.path.expandvars('%localappdata%\\Pal\\Saved\\SaveGames')
@@ -10,7 +11,7 @@ def convert_steam_id():
     def do_convert(steam_input=None):
         steam_input = steam_entry.text().strip() if steam_input is None else steam_input
         if not steam_input:
-            QMessageBox.warning(dialog, t('Warning'), t('steamid.warn.enter_id'))
+            show_warning(dialog, t('Warning'), t('steamid.warn.enter_id'))
             return
         if 'steamcommunity.com/profiles/' in steam_input:
             steam_input = steam_input.split('steamcommunity.com/profiles/')[1].split('/')[0]
@@ -22,7 +23,7 @@ def convert_steam_id():
             nosteam_uid = PlayerUid2NoSteam(int.from_bytes(toUUID(palworld_uid).raw_bytes[0:4], byteorder='little')) + '-0000-0000-0000-000000000000'
             result_label.setText(t('steamid.result', pal=str(palworld_uid).upper(), nosteam=nosteam_uid.upper()))
         except ValueError:
-            QMessageBox.critical(dialog, t('Error'), t('steamid.err.invalid'))
+            show_critical(dialog, t('Error'), t('steamid.err.invalid'))
     steam_id_from_local = get_steam_id_from_local()
     dialog = QDialog()
     dialog.setWindowTitle(t('steamid.title'))

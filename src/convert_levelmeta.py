@@ -1,6 +1,6 @@
 import sys, os, glob, gc, threading, time
 from import_libs import *
-from loading_manager import run_with_loading
+from loading_manager import run_with_loading, show_information
 from PySide6.QtCore import QEventLoop
 from PySide6.QtWidgets import QApplication, QFileDialog
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'palworld_save_tools', 'commands'))
@@ -52,9 +52,8 @@ def convert_levelmeta(ext):
     loop.exec()
     time.sleep(0.5)
     print(f'Converted {levelmeta_file} to {output_path}')
-    from PySide6.QtWidgets import QApplication, QMessageBox
     parent = QApplication.activeWindow()
-    QMessageBox.information(parent, t('tool.convert.done'), t('tool.convert.levelmeta_done', source=levelmeta_file, target=output_path))
+    show_information(parent, t('tool.convert.done'), t('tool.convert.levelmeta_done', source=levelmeta_file, target=output_path))
     return True
 def main():
     if len(sys.argv) != 2 or sys.argv[1] not in ['sav', 'json']:

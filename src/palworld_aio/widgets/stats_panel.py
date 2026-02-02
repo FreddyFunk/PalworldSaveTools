@@ -1,7 +1,8 @@
-from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QFrame, QPushButton, QMessageBox, QApplication
+from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QFrame, QPushButton, QApplication
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from i18n import t
+from loading_manager import show_information, show_warning
 try:
     from palworld_aio import constants
 except ImportError:
@@ -122,6 +123,6 @@ class StatsPanel(QWidget):
         try:
             clipboard = QApplication.clipboard()
             clipboard.setText(copy_content)
-            QMessageBox.information(self, t('status.copy_success_title') if t else 'Copied', t('status.copy_success_body') if t else 'Stats copied to clipboard!')
+            show_information(self, t('status.copy_success_title') if t else 'Copied', t('status.copy_success_body') if t else 'Stats copied to clipboard!')
         except Exception:
-            QMessageBox.warning(self, t('status.copy_fail_title') if t else 'Error', t('status.copy_fail_body') if t else 'Failed to copy to clipboard.')
+            show_warning(self, t('status.copy_fail_title') if t else 'Error', t('status.copy_fail_body') if t else 'Failed to copy to clipboard.')

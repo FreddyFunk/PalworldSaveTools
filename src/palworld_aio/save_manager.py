@@ -8,8 +8,9 @@ import threading
 import re
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtWidgets import QFileDialog
 from PySide6.QtCore import QObject, Signal
+from loading_manager import show_critical
 from palworld_save_tools.gvas import GvasFile
 from palworld_save_tools.palsav import decompress_sav_to_gvas
 from palworld_save_tools.paltypes import PALWORLD_TYPE_HINTS
@@ -46,12 +47,12 @@ class SaveManager(QObject):
         if not p:
             return False
         if not p.endswith('Level.sav'):
-            QMessageBox.critical(parent, t('error.title'), t('error.not_level_sav'))
+            show_critical(parent, t('error.title'), t('error.not_level_sav'))
             return False
         d = os.path.dirname(p)
         playerdir = os.path.join(d, 'Players')
         if not os.path.isdir(playerdir):
-            QMessageBox.critical(parent, t('error.title'), t('error.players_folder_missing'))
+            show_critical(parent, t('error.title'), t('error.players_folder_missing'))
             return False
         if constants.loaded_level_json is not None:
             constants.loaded_level_json = None
@@ -102,7 +103,7 @@ class SaveManager(QObject):
                     constants.srcGuildMapping.GroupSaveDataMap = {}
             except Exception as e:
                 if path is None:
-                    QMessageBox.critical(parent, t('error.title'), t('error.guild_mapping_failed', err=e))
+                    show_critical(parent, t('error.title'), t('error.guild_mapping_failed', err=e))
                 constants.srcGuildMapping = None
             constants.base_guild_lookup = {}
             guild_name_map = {}

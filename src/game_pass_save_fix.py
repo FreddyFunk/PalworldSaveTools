@@ -2,7 +2,7 @@ from import_libs import *
 from palworld_aio.utils import sav_to_json, json_to_sav, extract_value
 from fix_host_save import ask_string_with_icon
 from common import get_src_directory
-from loading_manager import run_with_loading
+from loading_manager import run_with_loading, show_information, show_critical
 import nerdfont as nf
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QFrame, QMessageBox, QFileDialog, QStyleFactory, QApplication, QLabel
 from PySide6.QtCore import Qt, Signal, QObject, QTimer, QMetaObject, Q_ARG
@@ -99,19 +99,9 @@ class GamePassSaveFixWidget(QWidget):
         return valid
     def handle_message(self, message_type: str, title: str, text: str):
         if message_type == 'info':
-            msg_box = QMessageBox(self)
-            msg_box.setWindowTitle(title)
-            msg_box.setText(text)
-            msg_box.setIcon(QMessageBox.Information)
-            msg_box.addButton(t('button.ok') if t else 'OK', QMessageBox.AcceptRole)
-            msg_box.exec()
+            show_information(self, title, text)
         elif message_type == 'critical':
-            msg_box = QMessageBox(self)
-            msg_box.setWindowTitle(title)
-            msg_box.setText(text)
-            msg_box.setIcon(QMessageBox.Critical)
-            msg_box.addButton(t('button.ok') if t else 'OK', QMessageBox.AcceptRole)
-            msg_box.exec()
+            show_critical(self, title, text)
     def start_conversion(self):
         print('Extraction complete.Converting save files...')
         threading.Thread(target=self.convert_save_files, daemon=True).start()

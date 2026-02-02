@@ -13,6 +13,7 @@ from PySide6.QtGui import QIcon, QFont, QAction, QPixmap, QCloseEvent, QTextCurs
 from i18n import t, set_language, load_resources
 from common import get_versions
 from import_libs import run_with_loading
+from loading_manager import show_question
 from .tools_tab import center_on_parent
 GITHUB_RAW_URL = 'https://raw.githubusercontent.com/deafdudecomputers/PalworldSaveTools/main/src/common.py'
 GITHUB_LATEST_ZIP = 'https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest'
@@ -1004,8 +1005,8 @@ class MainWindow(QMainWindow):
         if not constants.loaded_level_json:
             self._show_warning(t('Error'), t('error.no_save_loaded'))
             return
-        reply = QMessageBox.question(self, t('Confirm') if t else 'Confirm', t('deletion.fix_illegal_pals_confirm') if t else 'This will fix all illegal pals by setting their stats to legal maximums (level 65, IVs 100, souls 20). Continue?', QMessageBox.Yes | QMessageBox.No)
-        if reply != QMessageBox.Yes:
+        reply = show_question(self, t('Confirm') if t else 'Confirm', t('deletion.fix_illegal_pals_confirm') if t else 'This will fix all illegal pals by setting their stats to legal maximums (level 65, IVs 100, souls 20). Continue?')
+        if not reply:
             return
         def task():
             return fix_illegal_pals_in_save(self)

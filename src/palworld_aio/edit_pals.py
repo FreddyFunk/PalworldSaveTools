@@ -1,10 +1,11 @@
 import os
 import json
 import uuid
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox, QComboBox, QTextEdit, QFileDialog, QMessageBox, QGroupBox, QFormLayout, QCheckBox, QFrame, QTabWidget, QScrollArea, QWidget, QGridLayout, QListWidget, QInputDialog, QTableWidget, QApplication, QProgressBar
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox, QComboBox, QTextEdit, QFileDialog, QGroupBox, QFormLayout, QCheckBox, QFrame, QTabWidget, QScrollArea, QWidget, QGridLayout, QListWidget, QInputDialog, QTableWidget, QApplication, QProgressBar
 from PySide6.QtCore import Qt, QTimer, Signal, QPoint, QEvent, QSize
 from PySide6.QtGui import QIcon, QFont, QPixmap, QRegion, QCursor, QPainter, QPainterPath, QPen, QBrush, QFontMetrics, QPalette, QColor
 from i18n import t
+from loading_manager import show_information, show_warning, show_question
 try:
     import nerdfont as nf
 except ImportError:
@@ -1407,7 +1408,7 @@ class EditPalsDialog(FramelessDialog):
             e_list = raw.get('EquipWaza', {}).get('value', {}).get('values', [])
             print(f'DEBUG: Current EquipWaza list: {e_list}')
             if sum((1 for w in e_list if w)) >= 3:
-                QMessageBox.warning(self, 'Limit Reached', 'Maximum 3 active skills allowed.')
+                show_warning(self, 'Limit Reached', 'Maximum 3 active skills allowed.')
                 return
         except:
             pass
@@ -1452,7 +1453,7 @@ class EditPalsDialog(FramelessDialog):
                 raw = pal_item['value']['RawData']['value']['object']['SaveParameter']['value']
             p_list = raw.get('PassiveSkillList', {}).get('value', {}).get('values', [])
             if sum((1 for p in p_list if p)) >= 4:
-                QMessageBox.warning(self, 'Limit Reached', 'Maximum 4 passive skills allowed.')
+                show_warning(self, 'Limit Reached', 'Maximum 4 passive skills allowed.')
                 return
         except:
             pass
@@ -1645,7 +1646,7 @@ class EditPalsDialog(FramelessDialog):
                 if skill_name and skill_name != t('edit_pals.clear_skill'):
                     current_skills = tab.current_active_skills if skill_type == 'active' else tab.current_passive_skills
                     if skill_name in current_skills and current_skills[slot_index] != skill_name:
-                        QMessageBox.warning(dialog, 'Duplicate Skill', f"This pal already has the skill '{skill_name}'.Please choose a different skill.")
+                        show_warning(dialog, 'Duplicate Skill', f"This pal already has the skill '{skill_name}'.Please choose a different skill.")
                         return
                 self._update_skill_slot(tab, slot_index, skill_name, skill_type)
                 dialog.accept()
@@ -2412,13 +2413,13 @@ class EditPalsDialog(FramelessDialog):
         layout.addLayout(button_layout)
         if dialog.exec() == QDialog.Accepted:
             if not selected_pal['asset']:
-                QMessageBox.warning(self, 'Error', t('edit_pals.error_select_pal_type'))
+                show_warning(self, 'Error', t('edit_pals.error_select_pal_type'))
                 return
             character_id = selected_pal['asset']
             nickname = nick_edit.text().strip() or f"🆕{selected_pal['name']}"
             container_name, container_id = container_combo.currentData()
             if not container_id:
-                QMessageBox.warning(self, 'Error', f'No {container_name} container found.')
+                show_warning(self, 'Error', f'No {container_name} container found.')
                 return
             cmap = constants.loaded_level_json['properties']['worldSaveData']['value']['CharacterSaveParameterMap']['value']
             all_pals = [item for item in cmap if item.get('value', {}).get('RawData', {}).get('value', {}).get('object', {}).get('SaveParameter', {}).get('struct_type') == 'PalIndividualCharacterSaveParameter']
@@ -2426,7 +2427,7 @@ class EditPalsDialog(FramelessDialog):
             max_slots = 5 if container_name == 'party' else 960
             current_count = sum((1 for pal_item in all_pals if str(pal_item['value']['RawData']['value']['object']['SaveParameter']['value'].get('SlotId', {}).get('value', {}).get('ContainerId', {}).get('value', {}).get('ID', {}).get('value', '')).lower() == str(container_id).lower()))
             if current_count >= max_slots:
-                QMessageBox.warning(self, 'Error', f'Maximum slots reached for {container_name}.')
+                show_warning(self, 'Error', f'Maximum slots reached for {container_name}.')
                 return
             wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
             group_id = None
@@ -2441,7 +2442,7 @@ class EditPalsDialog(FramelessDialog):
                     if group_id:
                         break
             if not group_id:
-                QMessageBox.warning(self, 'Error', t('edit_pals.error_no_guild'))
+                show_warning(self, 'Error', t('edit_pals.error_no_guild'))
                 return
             pal_data = self._generate_pal_save_parameter(character_id, nickname, self.player_uid, container_id, slot_index, group_id)
             instance_id = pal_data['key']['InstanceId']['value']
@@ -2514,7 +2515,7 @@ class EditPalsDialog(FramelessDialog):
                 gvasfile_to_sav(player_gvas, self.player_sav_path)
             self._load_pals()
             pal_name = selected_pal['name']
-            QMessageBox.information(self, 'Success', f'Created new {pal_name} in {container_name}.')
+            show_information(self, 'Success', f'Created new {pal_name} in {container_name}.')
     def _delete_pal(self):
         print(f'DEBUG: Attempting to delete pal')
         tab_index = self.tabs.currentIndex()
@@ -2534,8 +2535,8 @@ class EditPalsDialog(FramelessDialog):
         print(f'DEBUG: Pal index: {pal_index},tab.pal_data length: {len(tab.pal_data)}')
         if pal_index < 0 or pal_index >= len(tab.pal_data):
             return
-        reply = QMessageBox.question(self, t('edit_pals.confirm_delete'), f'Are you sure you want to delete this pal from {tab_name}?', QMessageBox.Yes | QMessageBox.No)
-        if reply != QMessageBox.Yes:
+        reply = show_question(self, t('edit_pals.confirm_delete'), f'Are you sure you want to delete this pal from {tab_name}?')
+        if not reply:
             return
         pal_item = tab.pal_data[pal_index]
         print(f'DEBUG: Deleting pal_item: {pal_item}')
@@ -2557,7 +2558,7 @@ class EditPalsDialog(FramelessDialog):
         if tab_name != 'DPS':
             self._populate_tab(tab, tab.pal_data, tab_name)
     def _clone_pal(self):
-        QMessageBox.information(self, 'Info', 'Clone Pal functionality not implemented yet')
+        show_information(self, 'Info', 'Clone Pal functionality not implemented yet')
     def accept(self):
         try:
             if hasattr(self, '_pending_deletions') and self._pending_deletions:
@@ -2754,7 +2755,7 @@ class EditPalsDialog(FramelessDialog):
                 layout.addLayout(button_layout)
                 if dialog.exec() == QDialog.Accepted:
                     if not selected_pal['asset']:
-                        QMessageBox.warning(self, 'Error', t('edit_pals.error_select_pal_type'))
+                        show_warning(self, 'Error', t('edit_pals.error_select_pal_type'))
                         return None
                     character_id = selected_pal['asset']
                     nickname = nick_edit.text().strip() or f"🆕{selected_pal['name']}"
@@ -2847,7 +2848,7 @@ class EditPalsDialog(FramelessDialog):
             layout.addLayout(button_layout)
             if dialog.exec() == QDialog.Accepted:
                 if not selected_pal['asset']:
-                    QMessageBox.warning(self, 'Error', t('edit_pals.error_select_pal_type'))
+                    show_warning(self, 'Error', t('edit_pals.error_select_pal_type'))
                     return None
                 character_id = selected_pal['asset']
                 nickname = nick_edit.text().strip() or f"🆕{selected_pal['name']}"
@@ -2874,7 +2875,7 @@ class EditPalsDialog(FramelessDialog):
                                 is_pending_deletion = True
                                 break
                         if not is_pending_deletion:
-                            QMessageBox.warning(self, 'Error', f'Slot {slot_index} is already occupied.')
+                            show_warning(self, 'Error', f'Slot {slot_index} is already occupied.')
                             return None
                 wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
                 group_id = None
@@ -2889,14 +2890,14 @@ class EditPalsDialog(FramelessDialog):
                         if group_id:
                             break
                 if not group_id:
-                    QMessageBox.warning(self, 'Error', t('edit_pals.error_no_guild'))
+                    show_warning(self, 'Error', t('edit_pals.error_no_guild'))
                     return None
                 pal_data = self._generate_pal_save_parameter(character_id, nickname, self.player_uid, container_id, slot_index, group_id)
                 return {'character_id': character_id, 'nickname': nickname, 'container_id': container_id, 'container_name': container_name, 'tab_name': tab_name, 'slot_index': slot_index, 'group_id': group_id, 'pal_item': pal_data, 'pal_name': selected_pal['name'], 'selected_pal': selected_pal}
             return None
         except Exception as e:
             print(f'Error in pal creation dialog: {e}')
-            QMessageBox.warning(self, 'Error', f'Failed to create pal: {e}')
+            show_warning(self, 'Error', f'Failed to create pal: {e}')
             return None
     def _create_pal_at_slot(self, slot_index, tab_name):
         try:
@@ -2982,7 +2983,7 @@ class EditPalsDialog(FramelessDialog):
             layout.addLayout(button_layout)
             if dialog.exec() == QDialog.Accepted:
                 if not selected_pal['asset']:
-                    QMessageBox.warning(self, 'Error', t('edit_pals.error_select_pal_type'))
+                    show_warning(self, 'Error', t('edit_pals.error_select_pal_type'))
                     return
                 character_id = selected_pal['asset']
                 nickname = nick_edit.text().strip() or f"🆕{selected_pal['name']}"
@@ -2993,7 +2994,7 @@ class EditPalsDialog(FramelessDialog):
                     pal_container_id = raw.get('SlotId', {}).get('value', {}).get('ContainerId', {}).get('value', {}).get('ID', {}).get('value')
                     pal_slot_index = raw.get('SlotId', {}).get('value', {}).get('SlotIndex', {}).get('value')
                     if pal_container_id == container_id and pal_slot_index == slot_index:
-                        QMessageBox.warning(self, 'Error', f'Slot {slot_index} is already occupied.')
+                        show_warning(self, 'Error', f'Slot {slot_index} is already occupied.')
                         return
                 wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
                 group_id = None
@@ -3008,7 +3009,7 @@ class EditPalsDialog(FramelessDialog):
                         if group_id:
                             break
                 if not group_id:
-                    QMessageBox.warning(self, 'Error', t('edit_pals.error_no_guild'))
+                    show_warning(self, 'Error', t('edit_pals.error_no_guild'))
                     return
                 pal_data = self._generate_pal_save_parameter(character_id, nickname, self.player_uid, container_id, slot_index, group_id)
                 instance_id = pal_data['key']['InstanceId']['value']
@@ -3086,12 +3087,12 @@ class EditPalsDialog(FramelessDialog):
                     tab = self.palbox_tab
                 self._on_pal_widget_selected(slot_index, tab, tab_name)
                 pal_name = selected_pal['name']
-                QMessageBox.information(self, 'Success', f'Created new {pal_name} in {container_name} slot {slot_index}.')
+                show_information(self, 'Success', f'Created new {pal_name} in {container_name} slot {slot_index}.')
         except Exception as e:
             print(f'Error creating pal at slot: {e}')
-            QMessageBox.warning(self, 'Error', f'Failed to create pal: {e}')
+            show_warning(self, 'Error', f'Failed to create pal: {e}')
     def _max_all(self):
-        QMessageBox.information(self, 'Info', 'Max All functionality not implemented yet')
+        show_information(self, 'Info', 'Max All functionality not implemented yet')
     def _delete_dps_pal(self, tab, slot_index):
         if not hasattr(tab, 'widget_list'):
             return

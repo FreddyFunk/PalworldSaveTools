@@ -1,5 +1,6 @@
 from import_libs import *
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QFrame, QApplication
+from loading_manager import show_critical
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QApplication
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QTimer
 import os, time, shutil
@@ -47,7 +48,7 @@ def restore_map():
     resources_file = os.path.join(get_base_directory(), 'resources', 'LocalData.sav')
     if not os.path.exists(resources_file):
         parent = QApplication.activeWindow()
-        QMessageBox.critical(parent, t('Error'), t('LocalData.sav not found: {file}', file=resources_file))
+        show_critical(parent, t('Error'), t('LocalData.sav not found: {file}', file=resources_file))
         return
     class RestoreMapDialog(QDialog):
         def __init__(self):

@@ -2,10 +2,11 @@ import os
 import sys
 import json
 import traceback
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QScrollArea, QMessageBox, QSizePolicy, QSpacerItem, QGridLayout, QApplication, QDialog
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QScrollArea, QSizePolicy, QSpacerItem, QGridLayout, QApplication, QDialog
 from PySide6.QtCore import Qt, QSize, Signal, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QPixmap, QIcon, QFont, QCursor
 from i18n import t
+from loading_manager import show_critical
 try:
     from palworld_aio import constants
 except ImportError:
@@ -314,7 +315,7 @@ class ToolsTab(QWidget):
         except Exception as e:
             print(f'Error importing/calling {module_name}.{function_name}: {e}')
             traceback.print_exc()
-            QMessageBox.critical(self, t('Error') if t else 'Error', f'Failed to run tool: {e}')
+            show_critical(self, t('Error') if t else 'Error', f'Failed to run tool: {e}')
             raise
     def _run_converting_tool(self, index):
         try:

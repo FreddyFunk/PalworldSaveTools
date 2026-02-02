@@ -1,5 +1,6 @@
 from import_libs import *
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QLineEdit, QFileDialog, QApplication, QFrame, QGridLayout
+from loading_manager import show_information, show_critical
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QFileDialog, QApplication, QFrame, QGridLayout
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QTimer
 def sav_to_gvasfile(filepath):
@@ -88,18 +89,18 @@ class SlotNumUpdaterApp(QDialog):
     def load_selected_save(self):
         fp = self.file_entry.text()
         if not fp.endswith('Level.sav'):
-            QMessageBox.critical(self, t('error.title'), t('slot.invalid_file'))
+            show_critical(self, t('error.title'), t('slot.invalid_file'))
             return
         def task():
             return sav_to_gvasfile(fp)
         def on_finished(result):
             self.gvas_file = result
-            QMessageBox.information(self, t('slot.loaded_title'), t('slot.loaded_msg'))
+            show_information(self, t('slot.loaded_title'), t('slot.loaded_msg'))
         run_with_loading(on_finished, task)
     def apply_slotnum_update(self):
         filepath = self.file_entry.text()
         if not hasattr(self, 'gvas_file'):
-            QMessageBox.critical(self, t('error.title'), t('slot.load_first'))
+            show_critical(self, t('error.title'), t('slot.load_first'))
             return
         try:
             pages = int(self.pages_entry.text())
@@ -107,7 +108,7 @@ class SlotNumUpdaterApp(QDialog):
             if pages < 1 or slots < 1:
                 raise ValueError
         except ValueError:
-            QMessageBox.critical(self, t('error.title'), t('slot.invalid_numbers'))
+            show_critical(self, t('error.title'), t('slot.invalid_numbers'))
             return
         new_value = pages * slots
         gvas_file = self.gvas_file
@@ -128,9 +129,9 @@ class SlotNumUpdaterApp(QDialog):
         def on_finished(result):
             status, count = result
             if status == 'no_entries':
-                QMessageBox.information(self, t('info.title'), t('slot.no_entries'))
+                show_information(self, t('info.title'), t('slot.no_entries'))
             elif status == 'success':
-                QMessageBox.information(self, t('success.title'), t('slot.success_msg', count=count, new=new_value))
+                show_information(self, t('success.title'), t('slot.success_msg', count=count, new=new_value))
         run_with_loading(on_finished, task)
     def load_styles(self):
         user_cfg_path = os.path.join(get_src_directory(), 'data', 'configs', 'user.cfg')

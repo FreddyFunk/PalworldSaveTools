@@ -1,4 +1,5 @@
 from import_libs import *
+from loading_manager import show_information, show_warning
 from PySide6.QtWidgets import QHeaderView, QMainWindow, QWidget, QLineEdit, QTreeWidget, QTreeWidgetItem, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QFrame, QApplication
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QTimer
@@ -135,7 +136,7 @@ def fix_save(save_path, new_guid, old_guid, guild_fix=True):
             print(f'Error: {error_msg}')
             try:
                 parent = QApplication.activeWindow()
-                QMessageBox.warning(parent, t('Error'), error_msg)
+                show_warning(parent, t('Error'), error_msg)
             except:
                 pass
             return False
@@ -207,7 +208,7 @@ def fix_save(save_path, new_guid, old_guid, guild_fix=True):
     def on_finished(result):
         if result:
             parent = QApplication.activeWindow()
-            QMessageBox.information(parent, t('Success'), t('Fix has been applied! Have fun!'))
+            show_information(parent, t('Success'), t('Fix has been applied! Have fun!'))
     run_with_loading(on_finished, task)
 def copy_dps_file(src_folder, src_uid, tgt_folder, tgt_uid, target_pal_storage_id):
     src_file = os.path.join(src_folder, f"{str(src_uid).replace('-', '').upper()}_dps.sav")
@@ -308,7 +309,7 @@ def populate_player_lists(folder_path):
     players_folder = os.path.join(folder_path, 'Players')
     if not os.path.exists(players_folder):
         parent = QApplication.activeWindow()
-        QMessageBox.warning(parent, t('Error'), t('fix_host_save.players_folder_not_found'))
+        show_warning(parent, t('Error'), t('fix_host_save.players_folder_not_found'))
         return []
     level_json = sav_to_json(os.path.join(folder_path, 'Level.sav'))
     group_data_list = level_json['properties']['worldSaveData']['value']['GroupSaveDataMap']['value']
@@ -411,10 +412,10 @@ def fix_save_wrapper(window, level_sav_entry, old_tree, new_tree):
     new_guid = extract_guid_from_tree_selection(new_tree)
     file_path = level_sav_entry.text()
     if not (old_guid and new_guid and file_path):
-        QMessageBox.warning(window, t('Error'), t('fix_host_save.select_guids_and_file'))
+        show_warning(window, t('Error'), t('fix_host_save.select_guids_and_file'))
         return
     if old_guid == new_guid:
-        QMessageBox.warning(window, t('Error'), t('fix_host_save.guids_cannot_be_same'))
+        show_warning(window, t('Error'), t('fix_host_save.guids_cannot_be_same'))
         return
     folder_path = os.path.dirname(file_path)
     fix_save(folder_path, new_guid, old_guid)
@@ -564,7 +565,7 @@ class FixHostSaveWindow(QWidget):
                 if player_level < 2:
                     self.old_tree.clearSelection()
                     self.source_result_label.setText(t('Source Player: N/A'))
-                    QMessageBox.warning(self, t('fix_host_save.cannot_select_title'), t('fix_host_save.cannot_select_message', name=values[1], level=player_level))
+                    show_warning(self, t('fix_host_save.cannot_select_title'), t('fix_host_save.cannot_select_message', name=values[1], level=player_level))
                     return
             self.source_result_label.setText(t('Source Player: {name}({guid})', name=values[1], guid=player_guid))
         else:
@@ -579,7 +580,7 @@ class FixHostSaveWindow(QWidget):
                 if player_level < 2:
                     self.new_tree.clearSelection()
                     self.target_result_label.setText(t('Target Player: N/A'))
-                    QMessageBox.warning(self, t('fix_host_save.cannot_select_title'), t('fix_host_save.cannot_select_message', name=values[1], level=player_level))
+                    show_warning(self, t('fix_host_save.cannot_select_title'), t('fix_host_save.cannot_select_message', name=values[1], level=player_level))
                     return
             self.target_result_label.setText(t('Target Player: {name}({guid})', name=values[1], guid=player_guid))
         else:

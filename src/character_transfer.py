@@ -1,4 +1,5 @@
 from import_libs import *
+from loading_manager import show_information, show_warning
 from PySide6.QtWidgets import QHeaderView, QWidget, QTreeWidget, QTreeWidgetItem, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QFileDialog, QMessageBox, QApplication, QFrame
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon, QFont
@@ -436,12 +437,7 @@ class CharacterTransferWindow(QWidget):
             print(f'GUI wrapper main error: {e}')
             return False
     def show_message(self, title, message):
-        msg = QMessageBox(QMessageBox.Information, title, message)
-        try:
-            msg.setWindowIcon(QIcon(ICON_PATH))
-        except Exception:
-            pass
-        msg.exec()
+        show_information(None, title, message)
     def finalize_save(self):
         try:
             finalize_save(self)
@@ -530,7 +526,7 @@ def transfer_all_characters():
         current_selection_label.setText('Source: None,Target: None')
         source_player_list.clearSelection()
         target_player_list.clearSelection()
-        msg = QMessageBox(QMessageBox.Information, t('Transfer Successful'), t('All players transferred!'))
+        show_information(None, t('Transfer Successful'), t('All players transferred!'))
         try:
             msg.setWindowIcon(QIcon(ICON_PATH))
         except:
@@ -581,7 +577,7 @@ def main(skip_msgbox=False, skip_gui=False):
     if source_player_level < 2:
         print(f'Error: Source player must be at least level 2. Current level: {source_player_level}')
         error_msg = t('character_transfer.source_player_level_2', level=source_player_level) if source_player_level > 0 else t('character_transfer.source_player_not_leveled')
-        msg = QMessageBox(QMessageBox.Warning, t('Error!'), error_msg)
+        show_warning(None, t('Error!'), error_msg)
         try:
             msg.setWindowIcon(QIcon(ICON_PATH))
         except Exception:
@@ -602,7 +598,7 @@ def main(skip_msgbox=False, skip_gui=False):
         if target_player_level < 2:
             print(f'Error: Target player must be at least level 2. Current level: {target_player_level}')
             error_msg = t('character_transfer.target_player_level_2', level=target_player_level) if target_player_level > 0 else t('character_transfer.target_player_not_leveled')
-            msg = QMessageBox(QMessageBox.Warning, t('Error!'), error_msg)
+            show_warning(None, t('Error!'), error_msg)
             try:
                 msg.setWindowIcon(QIcon(ICON_PATH))
             except Exception:
@@ -657,7 +653,7 @@ def main(skip_msgbox=False, skip_gui=False):
         source_player_list.clearSelection()
         target_player_list.clearSelection()
     if not skip_msgbox:
-        msg = QMessageBox(QMessageBox.Information, t('Transfer Successful'), t("Transfer successful in memory! Hit 'Save Changes' to save."))
+        show_information(None, t('Transfer Successful'), t("Transfer successful in memory! Hit 'Save Changes' to save."))
         try:
             msg.setWindowIcon(QIcon(ICON_PATH))
         except Exception:
@@ -1003,7 +999,7 @@ def save_and_backup():
         return True
     def on_finished(success):
         if success:
-            msg = QMessageBox(QMessageBox.Information, t('Success'), t('Transfer complete and backup created!'))
+            show_information(None, t('Success'), t('Transfer complete and backup created!'))
             try:
                 msg.setWindowIcon(QIcon(ICON_PATH))
             except:
@@ -1078,7 +1074,7 @@ def source_level_file():
     if not tmp:
         return
     if not tmp.endswith('Level.sav'):
-        msg = QMessageBox(QMessageBox.Warning, t('Error!'), t('This is NOT Level.sav.Please select Level.sav file.'))
+        show_warning(None, t('Error!'), t('This is NOT Level.sav.Please select Level.sav file.'))
         try:
             msg.setWindowIcon(QIcon(ICON_PATH))
         except Exception:
@@ -1108,7 +1104,7 @@ def source_level_file():
     def on_finished(result):
         global level_sav_path, selected_source_player
         if result is None:
-            msg = QMessageBox(QMessageBox.Warning, t('Error!'), t('Invalid file,must be Level.sav!'))
+            show_warning(None, t('Error!'), t('Invalid file,must be Level.sav!'))
             try:
                 msg.setWindowIcon(QIcon(ICON_PATH))
             except Exception:
@@ -1135,7 +1131,7 @@ def target_level_file():
     if not tmp:
         return
     if not tmp.endswith('Level.sav'):
-        msg = QMessageBox(QMessageBox.Warning, t('Error!'), t('This is NOT Level.sav.Please select Level.sav file.'))
+        show_warning(None, t('Error!'), t('This is NOT Level.sav.Please select Level.sav file.'))
         try:
             msg.setWindowIcon(QIcon(ICON_PATH))
         except Exception:
@@ -1168,7 +1164,7 @@ def target_level_file():
     def on_finished(result):
         global t_level_sav_path, target_raw_gvas, target_save_type, selected_target_player
         if result is None:
-            msg = QMessageBox(QMessageBox.Warning, t('Error!'), t('Invalid file,must be Level.sav!'))
+            show_warning(None, t('Error!'), t('Invalid file,must be Level.sav!'))
             try:
                 msg.setWindowIcon(QIcon(ICON_PATH))
             except Exception:

@@ -1,10 +1,11 @@
 import os
 import sys
 import json
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QSpinBox, QLineEdit, QWidget, QApplication, QFormLayout, QGroupBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox, QLineEdit, QWidget, QApplication, QFormLayout, QGroupBox
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QCursor
 from i18n import t
+from loading_manager import show_warning, show_critical
 def get_src_path():
     env = os.environ.get('src_PATH')
     if env:
@@ -73,7 +74,7 @@ class LevelMetaEditorDialog(QDialog):
         main_layout.addLayout(btn_layout)
     def _save_to_file(self):
         if not self.sav_path:
-            QMessageBox.warning(self, t('error.title') if t else 'Error', t('levelmeta.editor.no_file_path') if t else 'No file path provided. Cannot save.')
+            show_warning(self, t('error.title') if t else 'Error', t('levelmeta.editor.no_file_path') if t else 'No file path provided. Cannot save.')
             return
         try:
             self.settings['WorldName']['value'] = self.world_name_editor.text()
@@ -85,7 +86,7 @@ class LevelMetaEditorDialog(QDialog):
         except Exception as e:
             import traceback
             error_details = f"{(t('levelmeta.editor.save_failed') if t else 'Failed to save:')}\n{str(e)}\n\n{traceback.format_exc()}"
-            QMessageBox.critical(self, t('error.title') if t else 'Error', error_details)
+            show_critical(self, t('error.title') if t else 'Error', error_details)
     def _load_theme(self):
         is_dark = self.parent_window.is_dark_mode if self.parent_window and hasattr(self.parent_window, 'is_dark_mode') else True
         base_path = get_src_path()

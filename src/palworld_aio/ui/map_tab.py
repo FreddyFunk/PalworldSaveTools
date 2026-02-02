@@ -2,10 +2,11 @@ import os
 import json
 import math
 import random
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsEllipseItem, QMenu, QLineEdit, QTreeWidget, QTreeWidgetItem, QSplitter, QLabel, QMessageBox, QFileDialog, QInputDialog, QGraphicsItem, QGraphicsObject, QCheckBox, QPushButton
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsEllipseItem, QMenu, QLineEdit, QTreeWidget, QTreeWidgetItem, QSplitter, QLabel, QFileDialog, QInputDialog, QGraphicsItem, QGraphicsObject, QCheckBox, QPushButton
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint, Signal, QTimer, QPropertyAnimation, QEasingCurve, Property, QParallelAnimationGroup
 from PySide6.QtGui import QPixmap, QPen, QBrush, QColor, QPainter, QTransform, QRadialGradient, QFont, QCursor
 from i18n import t
+from loading_manager import show_information, show_warning, show_critical, show_question
 import palworld_coord
 try:
     from palworld_aio import constants
@@ -1142,10 +1143,10 @@ class MapTab(QWidget):
                 self._unlock_technologies(item_data)
     def _delete_base(self, base_data):
         if str(base_data['base_id']) in constants.exclusions.get('bases', []):
-            QMessageBox.warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_base') if t else f"Base {base_data['base_id']} is in exclusion list and cannot be deleted.")
+            show_warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_base') if t else f"Base {base_data['base_id']} is in exclusion list and cannot be deleted.")
             return
-        reply = QMessageBox.question(self, t('confirm.title') if t else 'Confirm', t('confirm.delete_base') if t else f"Delete base at X:{int(base_data['coords'][0])},Y:{int(base_data['coords'][1])}?", QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        reply = show_question(self, t('confirm.title') if t else 'Confirm', t('confirm.delete_base') if t else f"Delete base at X:{int(base_data['coords'][0])},Y:{int(base_data['coords'][1])}?")
+        if reply:
             try:
                 img_x, img_y = base_data['img_coords']
                 self._play_effect(DeleteEffect, img_x, img_y)
@@ -1155,15 +1156,15 @@ class MapTab(QWidget):
                 self.refresh()
                 if self.parent_window:
                     self.parent_window.refresh_all()
-                QMessageBox.information(self, t('success.title') if t else 'Success', t('base.delete.success') if t else 'Base deleted successfully')
+                show_information(self, t('success.title') if t else 'Success', t('base.delete.success') if t else 'Base deleted successfully')
             except Exception as e:
-                QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to delete base: {str(e)}')
+                show_critical(self, t('error.title') if t else 'Error', f'Failed to delete base: {str(e)}')
     def _export_base(self, base_data):
         try:
             bid = str(base_data['base_id'])
             data = export_base_json(constants.loaded_level_json, bid)
             if not data:
-                QMessageBox.warning(self, t('error.title') if t else 'Error', t('base.export.not_found') if t else 'Base data not found')
+                show_warning(self, t('error.title') if t else 'Error', t('base.export.not_found') if t else 'Base data not found')
                 return
             default_name = f'base_{bid[:8]}.json'
             file_path, _ = QFileDialog.getSaveFileName(self, t('base.export.title') if t else 'Export Base', default_name, 'JSON Files(*.json)')
@@ -1177,9 +1178,9 @@ class MapTab(QWidget):
                     json.dump(data, f, cls=CustomEncoder, indent=2)
                 img_x, img_y = base_data['img_coords']
                 self._play_effect(ExportEffect, img_x, img_y)
-                QMessageBox.information(self, t('success.title') if t else 'Success', t('base.export.success') if t else 'Base exported successfully')
+                show_information(self, t('success.title') if t else 'Success', t('base.export.success') if t else 'Base exported successfully')
         except Exception as e:
-            QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to export base: {str(e)}')
+            show_critical(self, t('error.title') if t else 'Error', f'Failed to export base: {str(e)}')
     def _adjust_base_radius(self, base_data):
         try:
             bid = str(base_data['base_id'])
@@ -1187,7 +1188,7 @@ class MapTab(QWidget):
             base_camp_data = wsd.get('BaseCampSaveData', {}).get('value', [])
             src_base_entry = next((b for b in base_camp_data if str(b['key']).replace('-', '').lower() == bid.replace('-', '').lower()), None)
             if not src_base_entry:
-                QMessageBox.warning(self, t('error.title') if t else 'Error', t('base.export.not_found') if t else 'Base data not found')
+                show_warning(self, t('error.title') if t else 'Error', t('base.export.not_found') if t else 'Base data not found')
                 return
             current_radius = src_base_entry['value']['RawData']['value'].get('area_range', 3500.0)
             current_percent = int(round(current_radius / 35.0))
@@ -1198,11 +1199,11 @@ class MapTab(QWidget):
                     if self.parent_window:
                         self.parent_window.refresh_all()
                     new_percent = int(round(new_radius / 35.0))
-                    QMessageBox.information(self, t('success.title') if t else 'Success', t('base.radius.updated', radius=f'{new_percent}% ({int(new_radius)})') if t else f'Base radius updated to {new_percent}% ({int(new_radius)})\n\n⚠ Load this save in-game for structures to be reassigned.')
+                    show_information(self, t('success.title') if t else 'Success', t('base.radius.updated', radius=f'{new_percent}% ({int(new_radius)})') if t else f'Base radius updated to {new_percent}% ({int(new_radius)})\n\n⚠ Load this save in-game for structures to be reassigned.')
                 else:
-                    QMessageBox.critical(self, t('error.title') if t else 'Error', t('base.radius.failed') if t else 'Failed to update base radius')
+                    show_critical(self, t('error.title') if t else 'Error', t('base.radius.failed') if t else 'Failed to update base radius')
         except Exception as e:
-            QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to adjust base radius: {str(e)}')
+            show_critical(self, t('error.title') if t else 'Error', f'Failed to adjust base radius: {str(e)}')
     def _rename_guild(self, guild_id):
         current_name = self.guilds_data.get(guild_id, {}).get('guild_name', '')
         new_name, ok = QInputDialog.getText(self, t('guild.rename.title') if t else 'Rename Guild', t('guild.rename.prompt') if t else 'Enter new guild name:', text=current_name)
@@ -1212,9 +1213,9 @@ class MapTab(QWidget):
                 self.refresh()
                 if self.parent_window:
                     self.parent_window.refresh_all()
-                QMessageBox.information(self, t('success.title') if t else 'Success', t('guild.rename.success') if t else 'Guild renamed successfully')
+                show_information(self, t('success.title') if t else 'Success', t('guild.rename.success') if t else 'Guild renamed successfully')
             except Exception as e:
-                QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to rename guild: {str(e)}')
+                show_critical(self, t('error.title') if t else 'Error', f'Failed to rename guild: {str(e)}')
     def _delete_guild(self, guild_id):
         from ..data_manager import delete_guild, load_exclusions
         guild_name = self.guilds_data.get(guild_id, {}).get('guild_name', 'Unknown')
@@ -1222,7 +1223,7 @@ class MapTab(QWidget):
         load_exclusions()
         guild_id_clean = str(guild_id).replace('-', '').lower()
         if guild_id_clean in [ex.replace('-', '').lower() for ex in constants.exclusions.get('guilds', [])]:
-            QMessageBox.warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_guild') if t else f'Guild {guild_id} is in exclusion list and cannot be deleted.')
+            show_warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_guild') if t else f'Guild {guild_id} is in exclusion list and cannot be deleted.')
             return
         wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
         for b in wsd.get('BaseCampSaveData', {}).get('value', []):
@@ -1232,7 +1233,7 @@ class MapTab(QWidget):
                 base_id = str(b['key']).replace('-', '').lower()
                 if base_gid == guild_id_clean:
                     if base_id in [ex.replace('-', '').lower() for ex in constants.exclusions.get('bases', [])]:
-                        QMessageBox.warning(self, t('warning.title') if t else 'Warning', f'Guild "{guild_name}" has bases in exclusion list and cannot be deleted.\nExcluded base: {base_id}')
+                        show_warning(self, t('warning.title') if t else 'Warning', f'Guild "{guild_name}" has bases in exclusion list and cannot be deleted.\nExcluded base: {base_id}')
                         return
             except:
                 pass
@@ -1244,29 +1245,29 @@ class MapTab(QWidget):
                         for p in g['value']['RawData']['value'].get('players', []):
                             player_id = str(p.get('player_uid', '')).replace('-', '').lower()
                             if player_id in [ex.replace('-', '').lower() for ex in constants.exclusions.get('players', [])]:
-                                QMessageBox.warning(self, t('warning.title') if t else 'Warning', f'Guild "{guild_name}" has players in exclusion list and cannot be deleted.\nExcluded player: {player_id}')
+                                show_warning(self, t('warning.title') if t else 'Warning', f'Guild "{guild_name}" has players in exclusion list and cannot be deleted.\nExcluded player: {player_id}')
                                 return
                     break
             except:
                 pass
-        reply = QMessageBox.question(self, t('confirm.title') if t else 'Confirm', f'Delete guild "{guild_name}" and all {base_count} bases?\n\nThis will also delete all characters owned by guild members.', QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        reply = show_question(self, t('confirm.title') if t else 'Confirm', f'Delete guild "{guild_name}" and all {base_count} bases?\n\nThis will also delete all characters owned by guild members.')
+        if reply:
             try:
                 if delete_guild(guild_id):
                     self.refresh()
                     if self.parent_window:
                         self.parent_window.refresh_all()
-                    QMessageBox.information(self, t('success.title') if t else 'Success', t('guild.delete.success') if t else 'Guild and all bases deleted successfully')
+                    show_information(self, t('success.title') if t else 'Success', t('guild.delete.success') if t else 'Guild and all bases deleted successfully')
                 else:
-                    QMessageBox.warning(self, t('error.title') if t else 'Error', 'Failed to delete guild - guild not found or not a guild type')
+                    show_warning(self, t('error.title') if t else 'Error', 'Failed to delete guild - guild not found or not a guild type')
             except Exception as e:
-                QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to delete guild: {str(e)}')
+                show_critical(self, t('error.title') if t else 'Error', f'Failed to delete guild: {str(e)}')
     def _import_base_to_guild(self, guild_id):
         wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
         base_camp_data = wsd.get('BaseCampSaveData', {}).get('value', [])
         if not base_camp_data or len(base_camp_data) == 0:
             parent = self.parent_window if self.parent_window else self
-            QMessageBox.warning(parent, t('warning.title') if t else 'Warning', t('base.import.no_bases') if t else 'Cannot import base to this save.\n\nThis save does not have any bases.\n\nPlease create a base first by placing a Palbox in-game, then try importing again.')
+            show_warning(parent, t('warning.title') if t else 'Warning', t('base.import.no_bases') if t else 'Cannot import base to this save.\n\nThis save does not have any bases.\n\nPlease create a base first by placing a Palbox in-game, then try importing again.')
             return
         file_paths, _ = QFileDialog.getOpenFileNames(self, t('base.import_multi') if t else 'Import Bases(Multi-File)', '', 'JSON Files(*.json)')
         if not file_paths:
@@ -1305,17 +1306,17 @@ class MapTab(QWidget):
             msg = f'Successfully imported {successful_imports} base(s).'
             if failed_imports > 0:
                 msg += f'\nFailed to import {failed_imports} file(s):\n' + '\n'.join(failed_files)
-            QMessageBox.information(self, t('success.title') if t else 'Success', msg)
+            show_information(self, t('success.title') if t else 'Success', msg)
         else:
-            QMessageBox.warning(self, t('error.title') if t else 'Error', f'Failed to import any bases.\n' + '\n'.join(failed_files))
+            show_warning(self, t('error.title') if t else 'Error', f'Failed to import any bases.\n' + '\n'.join(failed_files))
     def _export_bases_for_guild(self, guild_id):
         guild_name = self.guilds_data.get(guild_id, {}).get('guild_name', '')
         if not guild_name:
-            QMessageBox.warning(self, t('error.title'), f'Guild not found: {guild_id}')
+            show_warning(self, t('error.title'), f'Guild not found: {guild_id}')
             return
         guild_bases = self.guilds_data.get(guild_id, {}).get('bases', [])
         if not guild_bases:
-            QMessageBox.information(self, t('Info') if t else 'Info', f'No bases found for guild "{guild_name}".')
+            show_information(self, t('Info') if t else 'Info', f'No bases found for guild "{guild_name}".')
             return
         export_dir = QFileDialog.getExistingDirectory(self, f'Select Export Directory for "{guild_name}"')
         if not export_dir:
@@ -1351,9 +1352,9 @@ class MapTab(QWidget):
             msg = f'Successfully exported {successful_exports} base(s)for guild "{guild_name}" to {export_dir}.'
             if failed_exports > 0:
                 msg += f'\nFailed to export {failed_exports} base(s):\n' + '\n'.join(failed_bases)
-            QMessageBox.information(self, t('success.title'), msg)
+            show_information(self, t('success.title'), msg)
         else:
-            QMessageBox.warning(self, t('error.title'), f'Failed to export any bases for guild "{guild_name}".\n' + '\n'.join(failed_bases))
+            show_warning(self, t('error.title'), f'Failed to export any bases for guild "{guild_name}".\n' + '\n'.join(failed_bases))
     def _delete_player(self, player_data):
         from ..data_manager import load_exclusions, delete_player
         player_uid = player_data.get('player_uid', '')
@@ -1361,13 +1362,13 @@ class MapTab(QWidget):
         load_exclusions()
         uid_clean = str(player_uid).replace('-', '').lower()
         if uid_clean in [ex.replace('-', '').lower() for ex in constants.exclusions.get('players', [])]:
-            QMessageBox.warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_player') if t else f'Player "{player_name}" is in exclusion list and cannot be deleted.')
+            show_warning(self, t('warning.title') if t else 'Warning', t('deletion.warning.protected_player') if t else f'Player "{player_name}" is in exclusion list and cannot be deleted.')
             return
         delete_player(player_uid)
         self.refresh()
         if self.parent_window:
             self.parent_window.refresh_all()
-        QMessageBox.information(self, t('Done') if t else 'Done', t('deletion.player_deleted') if t else 'Player deleted')
+        show_information(self, t('Done') if t else 'Done', t('deletion.player_deleted') if t else 'Player deleted')
     def _rename_player(self, player_data):
         player_uid = player_data.get('player_uid', '')
         current_name = player_data.get('player_name', 'Unknown')
@@ -1379,30 +1380,30 @@ class MapTab(QWidget):
                     self.refresh()
                     if self.parent_window:
                         self.parent_window.refresh_all()
-                    QMessageBox.information(self, t('success.title') if t else 'Success', t('player.rename.success') if t else 'Player renamed successfully')
+                    show_information(self, t('success.title') if t else 'Success', t('player.rename.success') if t else 'Player renamed successfully')
                 else:
-                    QMessageBox.warning(self, t('error.title') if t else 'Error', 'Failed to rename player')
+                    show_warning(self, t('error.title') if t else 'Error', 'Failed to rename player')
             except Exception as e:
-                QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to rename player: {str(e)}')
+                show_critical(self, t('error.title') if t else 'Error', f'Failed to rename player: {str(e)}')
     def _unlock_viewing_cage(self, player_data):
         player_uid = player_data.get('player_uid', '')
         player_name = player_data.get('player_name', 'Unknown')
         try:
             from ..func_manager import unlock_viewing_cage_for_player
             if unlock_viewing_cage_for_player(player_uid, self):
-                QMessageBox.information(self, t('success.title') if t else 'Success', t('player.viewing_cage.unlocked') if t else 'Viewing Cage unlocked successfully.')
+                show_information(self, t('success.title') if t else 'Success', t('player.viewing_cage.unlocked') if t else 'Viewing Cage unlocked successfully.')
             else:
-                QMessageBox.warning(self, t('error.title') if t else 'Error', t('player.viewing_cage.failed') if t else 'Failed to unlock viewing cage')
+                show_warning(self, t('error.title') if t else 'Error', t('player.viewing_cage.failed') if t else 'Failed to unlock viewing cage')
         except Exception as e:
-            QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to unlock viewing cage: {str(e)}')
+            show_critical(self, t('error.title') if t else 'Error', f'Failed to unlock viewing cage: {str(e)}')
     def _unlock_technologies(self, player_data):
         player_uid = player_data.get('player_uid', '')
         player_name = player_data.get('player_name', 'Unknown')
         try:
             from ..func_manager import unlock_all_technologies_for_player
             if unlock_all_technologies_for_player(player_uid, self):
-                QMessageBox.information(self, t('success.title') if t else 'Success', t('player.unlock_technologies.success') if t else 'Unlock All Technologies completed')
+                show_information(self, t('success.title') if t else 'Success', t('player.unlock_technologies.success') if t else 'Unlock All Technologies completed')
             else:
-                QMessageBox.warning(self, t('error.title') if t else 'Error', t('player.unlock_technologies.failed') if t else 'Unlock All Technologies failed')
+                show_warning(self, t('error.title') if t else 'Error', t('player.unlock_technologies.failed') if t else 'Unlock All Technologies failed')
         except Exception as e:
-            QMessageBox.critical(self, t('error.title') if t else 'Error', f'Failed to unlock technologies: {str(e)}')
+            show_critical(self, t('error.title') if t else 'Error', f'Failed to unlock technologies: {str(e)}')

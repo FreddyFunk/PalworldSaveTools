@@ -539,3 +539,73 @@ class ErrorDialog(QDialog):
 def show_error_screen(error_text):
     dialog = ErrorDialog(error_text)
     dialog.exec()
+def _center_message_box_on_parent(msg_box):
+    parent = msg_box.parent()
+    if parent and hasattr(parent, 'geometry'):
+        parent_rect = parent.geometry()
+        size = msg_box.sizeHint()
+        if not size.isValid():
+            msg_box.adjustSize()
+            size = msg_box.size()
+        dialog_x = parent_rect.x() + (parent_rect.width() - size.width()) // 2
+        dialog_y = parent_rect.y() + (parent_rect.height() - size.height()) // 2
+        msg_box.move(dialog_x, dialog_y)
+def _get_effective_parent(parent):
+    if parent and hasattr(parent, 'geometry') and parent.isVisible():
+        return parent
+    active = QApplication.activeWindow()
+    if active and hasattr(active, 'geometry') and active.isVisible():
+        return active
+    for widget in QApplication.topLevelWidgets():
+        if widget.isVisible() and widget.isWindow() and widget.windowTitle() and (not isinstance(widget, QDialog)):
+            return widget
+    return None
+def show_information(parent, title, text):
+    parent = _get_effective_parent(parent)
+    dialog = QMessageBox(parent)
+    dialog.setWindowFlags(Qt.Dialog | Qt.WindowType.Window | Qt.WindowStaysOnTopHint)
+    dialog.setWindowModality(Qt.ApplicationModal)
+    dialog.setWindowTitle(title)
+    dialog.setText(text)
+    dialog.setIcon(QMessageBox.Information)
+    dialog.adjustSize()
+    if parent:
+        _center_message_box_on_parent(dialog)
+    dialog.exec()
+def show_warning(parent, title, text):
+    parent = _get_effective_parent(parent)
+    dialog = QMessageBox(parent)
+    dialog.setWindowFlags(Qt.Dialog | Qt.WindowType.Window | Qt.WindowStaysOnTopHint)
+    dialog.setWindowModality(Qt.ApplicationModal)
+    dialog.setWindowTitle(title)
+    dialog.setText(text)
+    dialog.setIcon(QMessageBox.Warning)
+    dialog.adjustSize()
+    if parent:
+        _center_message_box_on_parent(dialog)
+    dialog.exec()
+def show_critical(parent, title, text):
+    parent = _get_effective_parent(parent)
+    dialog = QMessageBox(parent)
+    dialog.setWindowFlags(Qt.Dialog | Qt.WindowType.Window | Qt.WindowStaysOnTopHint)
+    dialog.setWindowModality(Qt.ApplicationModal)
+    dialog.setWindowTitle(title)
+    dialog.setText(text)
+    dialog.setIcon(QMessageBox.Critical)
+    dialog.adjustSize()
+    if parent:
+        _center_message_box_on_parent(dialog)
+    dialog.exec()
+def show_question(parent, title, text):
+    parent = _get_effective_parent(parent)
+    dialog = QMessageBox(parent)
+    dialog.setWindowFlags(Qt.Dialog | Qt.WindowType.Window | Qt.WindowStaysOnTopHint)
+    dialog.setWindowModality(Qt.ApplicationModal)
+    dialog.setWindowTitle(title)
+    dialog.setText(text)
+    dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    dialog.setIcon(QMessageBox.Question)
+    dialog.adjustSize()
+    if parent:
+        _center_message_box_on_parent(dialog)
+    return dialog.exec() == QMessageBox.Yes

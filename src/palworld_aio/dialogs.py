@@ -1,9 +1,10 @@
 import os
 import json
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox, QComboBox, QTextEdit, QFileDialog, QMessageBox, QGroupBox, QFormLayout, QCheckBox, QFrame, QTabWidget, QScrollArea, QWidget, QGridLayout
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox, QComboBox, QTextEdit, QFileDialog, QGroupBox, QFormLayout, QCheckBox, QFrame, QTabWidget, QScrollArea, QWidget, QGridLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QFont
 from i18n import t
+from loading_manager import show_critical
 from palworld_aio import constants
 from palworld_aio.utils import sav_to_json, extract_value, get_pal_data, calculate_max_hp, calculate_attack, calculate_defense, format_character_key
 class InputDialog(QDialog):
@@ -409,7 +410,7 @@ class PalDefenderDialog(QDialog):
             if not result:
                 self._append_output(t('paldefender.no_match') if t else 'No guilds matched the filter criteria.')
         except Exception as e:
-            QMessageBox.critical(self, t('error.title') if t else 'Error', str(e))
+            show_critical(self, t('error.title') if t else 'Error', str(e))
     def _parse_log(self, inactivity_days=None, max_level=None):
         import re
         import palworld_coord
