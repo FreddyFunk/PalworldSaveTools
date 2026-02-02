@@ -51,7 +51,7 @@
 > ⚠️ Überschreibt deinen aktuellen Kartenfortschritt mit der vollständig entsperrten Karte aus PST.
 
 ### 1️⃣ Kopiere die entsperrte Karte
-Kopiere die Datei `LocalData.sav` aus `Src\resources\LocalData.sav`.
+Kopiere die Datei `LocalData.sav` aus `src\resources\LocalData.sav`.
 
 ### 2️⃣ Finde die ID deines neuen Servers/Welt
 - **Tritt deinem neuen Server/Welt bei**.  

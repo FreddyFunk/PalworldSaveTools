@@ -61,7 +61,7 @@
 > ⚠️ 这会用 PST 自带的全开地图覆盖你当前的地图进度。
 
 ### 1️⃣ 复制解锁地图文件
-从 `Src\resources\LocalData.sav` 复制 `LocalData.sav`。
+从 `src\resources\LocalData.sav` 复制 `LocalData.sav`。
 
 ### 2️⃣ 查找新的服务器/世界 ID
 - 进入你的新服务器/世界

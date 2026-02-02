@@ -26,14 +26,14 @@ SPACE_LARGE = 15
 CORNER_RADIUS = 6
 FRAME_CORNER_RADIUS = 8
 TREE_ROW_HEIGHT = 22
-GITHUB_RAW_URL = 'https://raw.githubusercontent.com/deafdudecomputers/PalworldSaveTools/main/Src/common.py'
+GITHUB_RAW_URL = 'https://raw.githubusercontent.com/deafdudecomputers/PalworldSaveTools/main/src/common.py'
 def get_base_path():
     if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
     return os.getcwd()
 def get_src_path():
     if getattr(sys, 'frozen', False):
-        return os.path.join(os.path.dirname(sys.executable), 'Src')
+        return os.path.join(os.path.dirname(sys.executable), 'src')
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def get_icon_path():
     return os.path.join(get_base_path(), 'resources', 'pal.ico')

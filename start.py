@@ -179,7 +179,7 @@ def unlock_self_folder():
     except Exception:
         pass
 def get_config_value(key: str, default=None):
-    config_path = PROJECT_DIR / 'Src' / 'data' / 'configs' / 'config.json'
+    config_path = PROJECT_DIR / 'src' / 'data' / 'configs' / 'config.json'
     try:
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -208,7 +208,7 @@ if GUI_AVAILABLE:
         started = Signal()
     _signals: Optional[WorkerSignals] = None
 def load_splash_styles():
-    user_cfg_path = os.path.join(PROJECT_DIR, 'Src', 'data', 'configs', 'user.cfg')
+    user_cfg_path = os.path.join(PROJECT_DIR, 'src', 'data', 'configs', 'user.cfg')
     theme = 'dark'
     if os.path.exists(user_cfg_path):
         try:
@@ -217,7 +217,7 @@ def load_splash_styles():
             theme = data.get('theme', 'dark')
         except:
             pass
-    qss_path = os.path.join(PROJECT_DIR, 'Src', 'data', 'gui', f'{theme}mode.qss')
+    qss_path = os.path.join(PROJECT_DIR, 'src', 'data', 'gui', f'{theme}mode.qss')
     if os.path.exists(qss_path):
         with open(qss_path, 'r') as f:
             return f.read()
@@ -564,7 +564,7 @@ def spawn_aio_and_exit(venv_py: Path):
                 app.processEvents()
             except Exception:
                 pass
-        main_py = PROJECT_DIR / 'Src' / 'palworld_aio' / 'main.py'
+        main_py = PROJECT_DIR / 'src' / 'palworld_aio' / 'main.py'
         result = subprocess.run([str(venv_py), str(main_py)], cwd=str(PROJECT_DIR))
         sys.exit(result.returncode)
     except KeyboardInterrupt:
@@ -724,7 +724,7 @@ def main():
             if rc_final == 0:
                 if get_config_value('checkstartlogs', False):
                     input('Press Enter to continue to palworld_aio...')
-                main_py = PROJECT_DIR / 'Src' / 'palworld_aio' / 'main.py'
+                main_py = PROJECT_DIR / 'src' / 'palworld_aio' / 'main.py'
                 try:
                     subprocess.run([str(venv_py), str(main_py)], cwd=str(PROJECT_DIR))
                 except Exception:

@@ -1,9 +1,10 @@
-import os, sys, subprocess, shutil, re
+import os, sys, subprocess, shutil, re, argparse
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 os.chdir(ROOT_DIR)
 VENV_DIR = '.pst_venv'
 PYTHON_EXE = os.path.join(VENV_DIR, 'Scripts', 'python.exe') if os.name == 'nt' else os.path.join(VENV_DIR, 'bin', 'python')
+USE_EXISTING_VENV = False
 def create_venv():
     if not os.path.exists(VENV_DIR):
         print('Creating virtual environment...')
@@ -18,7 +19,7 @@ def install_deps():
     if os.path.exists('requirements.txt'):
         subprocess.check_call([PYTHON_EXE, '-m', 'pip', 'install', '-r', 'requirements.txt'])
 def sync_version():
-    common_file = os.path.join('Src', 'common.py')
+    common_file = os.path.join('src', 'common.py')
     pyproject_file = 'pyproject.toml'
     setup_file = 'setup_freeze.py'
     version = '1.1.37'
@@ -40,12 +41,14 @@ def sync_version():
 def build_with_cx_freeze():
     print('Running cx_Freeze build...')
     subprocess.check_call([PYTHON_EXE, 'setup_freeze.py', 'build'])
-    lib_folder = os.path.join('PST_standalone', 'Src', 'palworld_save_tools', 'lib')
+    lib_folder = os.path.join('PST_standalone', 'src', 'palworld_save_tools', 'lib')
     if os.path.exists(lib_folder):
         print(f'Removing {lib_folder}...')
         shutil.rmtree(lib_folder)
 def clean_build_artifacts():
-    items = ['build', 'PalworldSaveTools.egg-info', 'Backups', 'PST_standalone', 'Scan Save Logger', 'psp_windows', 'ppe_windows', 'updated_worldmap.png', 'PalDefender', 'XGP_converted_saves', 'saves', '.pst_venv', 'pst_venv']
+    items = ['build', 'PalworldSaveTools.egg-info', 'Backups', 'PST_standalone', 'Scan Save Logger', 'psp_windows', 'ppe_windows', 'updated_worldmap.png', 'PalDefender', 'XGP_converted_saves', 'saves']
+    if not USE_EXISTING_VENV:
+        items.extend(['.pst_venv', 'pst_venv'])
     for item in items:
         if os.path.exists(item):
             print(f'Removing {item}...')
@@ -59,7 +62,7 @@ def clean_build_artifacts():
                 path = os.path.join(root, d)
                 shutil.rmtree(path, ignore_errors=True)
 def get_app_version():
-    common_file = os.path.join('Src', 'common.py')
+    common_file = os.path.join('src', 'common.py')
     if not os.path.exists(common_file):
         return 'unknown'
     with open(common_file, 'r', encoding='utf-8') as f:
@@ -89,11 +92,19 @@ def print_logo():
     print(msg)
     print('=' * 40)
 def main():
+    global USE_EXISTING_VENV
+    parser = argparse.ArgumentParser(description='PalworldSaveTools Exe Builder')
+    parser.add_argument('--use-venv', action='store_true', help='Reuse existing venv, do not recreate it')
+    args = parser.parse_args()
+    USE_EXISTING_VENV = args.use_venv
     clean_build_artifacts()
     print_logo()
-    create_venv()
-    print_logo()
-    install_deps()
+    if not USE_EXISTING_VENV:
+        create_venv()
+        print_logo()
+        install_deps()
+    else:
+        print('Using existing virtual environment...')
     print_logo()
     sync_version()
     print_logo()

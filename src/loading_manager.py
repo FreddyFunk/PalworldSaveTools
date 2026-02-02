@@ -8,7 +8,7 @@ def get_base_directory():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def get_src_directory():
     base_dir = get_base_directory()
-    return os.path.join(base_dir, 'Src')
+    return os.path.join(base_dir, 'src')
 def get_resources_directory():
     return os.path.join(get_base_directory(), 'resources')
 def get_path(filename):

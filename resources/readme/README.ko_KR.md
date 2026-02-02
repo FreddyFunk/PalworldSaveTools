@@ -52,7 +52,7 @@
 > ⚠️ PST의 완전히 잠금 해제된 지도로 현재 진행 상황이 덮어쓰여집니다.
 
 ### 1️⃣ 잠금 해제 지도 파일 복사
-`Src\resources\LocalData.sav`에서 `LocalData.sav` 복사.
+`src\resources\LocalData.sav`에서 `LocalData.sav` 복사.
 
 ### 2️⃣ 새 서버/월드 ID 확인
 - **새 서버/월드에 접속**.  
@@ -70,7 +70,7 @@
 - 덮어쓰기 확인 메시지가 나오면 **덮어쓰기** 선택.
 
 ### 🎉 완료!
-**새 서버/월드** 실행 — PST `Src\resources`의 잠금 해제 지도와 동일하게 안개와 아이콘 표시.
+**새 서버/월드** 실행 — PST `src\resources`의 잠금 해제 지도와 동일하게 안개와 아이콘 표시.
 
 ---
 

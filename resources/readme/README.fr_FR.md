@@ -52,7 +52,7 @@
 > ⚠️ Cela écrasera votre progression actuelle avec la carte totalement débloquée de PST.
 
 ### 1️⃣ Copier le fichier de carte débloquée
-Copiez le fichier `LocalData.sav` depuis `Src\resources\LocalData.sav`.
+Copiez le fichier `LocalData.sav` depuis `src\resources\LocalData.sav`.
 
 ### 2️⃣ Trouver l’ID de votre nouveau serveur/monde
 - **Rejoignez votre nouveau serveur/monde**.  

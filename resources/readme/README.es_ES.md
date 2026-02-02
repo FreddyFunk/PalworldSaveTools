@@ -51,7 +51,7 @@
 > ⚠️ Esto sobrescribirá tu progreso actual del mapa con el mapa totalmente desbloqueado de PST.
 
 ### 1️⃣ Copiar el archivo de mapa desbloqueado
-Copia el archivo `LocalData.sav` desde `Src\resources\LocalData.sav`.
+Copia el archivo `LocalData.sav` desde `src\resources\LocalData.sav`.
 
 ### 2️⃣ Encuentra la ID de tu nuevo servidor/mundo
 - **Únete a tu nuevo servidor/mundo**.  

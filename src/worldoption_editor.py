@@ -6,12 +6,12 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QCursor
 from i18n import t
 def get_src_path():
-    env = os.environ.get('SRC_PATH')
+    env = os.environ.get('src_PATH')
     if env:
         return os.path.abspath(env)
     if getattr(sys, 'frozen', False):
         exe_dir = os.path.dirname(sys.executable)
-        src = os.path.join(exe_dir, 'Src')
+        src = os.path.join(exe_dir, 'src')
         if os.path.isdir(src):
             return src
     try:

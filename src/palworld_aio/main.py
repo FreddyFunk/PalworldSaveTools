@@ -38,9 +38,9 @@ if getattr(sys, 'frozen', False):
 else:
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if getattr(sys, 'frozen', False):
-    src_dir = os.path.join(base_dir, 'Src')
+    src_dir = os.path.join(base_dir, 'src')
 else:
-    src_dir = base_dir if os.path.basename(base_dir) == 'Src' else os.path.join(base_dir, 'Src')
+    src_dir = base_dir if os.path.basename(base_dir) == 'src' else os.path.join(base_dir, 'src')
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 for sub in ['palworld_coord', 'palworld_save_tools', 'palworld_xgp_import', 'resources', 'palworld_aio']:

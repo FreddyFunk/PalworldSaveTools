@@ -10,7 +10,7 @@ Pal Logger/
 PST_standalone/
 build/
 PalworldSaveTools.egg-info/
-Src/data/configs/
+src/data/configs/
 .pst_venv/
 CLAUDE.md
 .claude/

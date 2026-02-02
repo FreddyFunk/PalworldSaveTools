@@ -51,7 +51,7 @@
 > ⚠️ This will overwrite your current map progress with the fully unlocked map from PST.
 
 ### 1️⃣ Copy the Unlocked Map File
-Copy the `LocalData.sav` file from `Src\resources\LocalData.sav`.
+Copy the `LocalData.sav` file from `src\resources\LocalData.sav`.
 
 ### 2️⃣ Find Your New Server/World ID
 - **Join your new server/world**.
@@ -70,7 +70,7 @@ Copy the `LocalData.sav` file from `Src\resources\LocalData.sav`.
 - If prompted, **confirm the overwrite** to replace the existing file.
 
 ### 🎉 Done!
-Launch your **new server/world** — your fog and icons will now match the unlocked map from the PST `Src\resources` file.
+Launch your **new server/world** — your fog and icons will now match the unlocked map from the PST `src\resources` file.
 
 ---
 

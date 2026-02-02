@@ -37,7 +37,7 @@ class LoadingPopup(QWidget):
     def _get_gif_path(self):
         if getattr(sys, 'frozen', False):
             base_dir = os.path.dirname(sys.executable)
-            src_dir = os.path.join(base_dir, 'Src')
+            src_dir = os.path.join(base_dir, 'src')
         else:
             current_file = os.path.abspath(__file__)
             src_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))

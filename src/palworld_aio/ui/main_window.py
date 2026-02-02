@@ -14,7 +14,7 @@ from i18n import t, set_language, load_resources
 from common import get_versions
 from import_libs import run_with_loading
 from .tools_tab import center_on_parent
-GITHUB_RAW_URL = 'https://raw.githubusercontent.com/deafdudecomputers/PalworldSaveTools/main/Src/common.py'
+GITHUB_RAW_URL = 'https://raw.githubusercontent.com/deafdudecomputers/PalworldSaveTools/main/src/common.py'
 GITHUB_LATEST_ZIP = 'https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest'
 try:
     from palworld_aio import constants
