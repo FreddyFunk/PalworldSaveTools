@@ -1,6 +1,6 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('src'))
-sys.path.insert(0, os.path.abspath('src/resources'))
+sys.path.insert(0, os.path.abspath('resources'))
 sys.path.insert(0, os.path.abspath('resources'))
 from cx_Freeze import setup, Executable
 def find_ooz_library():
@@ -27,4 +27,4 @@ if ooz_l:
 ps6_a = find_pyside6_assets()
 if ps6_a:
     build_exe_options['include_files'].append(ps6_a)
-setup(name='PalworldSaveTools', version="1.1.64", options={'build_exe': build_exe_options}, executables=[Executable('src/palworld_aio/main.py', base='gui', target_name='PalworldSaveTools.exe', icon='src/resources/pal.ico')])
+setup(name='PalworldSaveTools', version="1.1.64", options={'build_exe': build_exe_options}, executables=[Executable('src/palworld_aio/main.py', base='gui', target_name='PalworldSaveTools.exe', icon='resources/pal.ico')])
