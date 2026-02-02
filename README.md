@@ -1,6 +1,6 @@
-[English](Assets/resources/readme/README.en_US.md) | [简体中文](Assets/resources/readme/README.zh_CN.md) | [Deutsch](Assets/resources/readme/README.de_DE.md) | [Español](Assets/resources/readme/README.es_ES.md) | [Français](Assets/resources/readme/README.fr_FR.md) | [Русский](Assets/resources/readme/README.ru_RU.md) | [日本語](Assets/resources/readme/README.ja_JP.md) | [한국어](Assets/resources/readme/README.ko_KR.md)
+[English](Src/resources/readme/README.en_US.md) | [简体中文](Src/resources/readme/README.zh_CN.md) | [Deutsch](Src/resources/readme/README.de_DE.md) | [Español](Src/resources/readme/README.es_ES.md) | [Français](Src/resources/readme/README.fr_FR.md) | [Русский](Src/resources/readme/README.ru_RU.md) | [日本語](Src/resources/readme/README.ja_JP.md) | [한국어](Src/resources/readme/README.ko_KR.md)
 
-![PalworldSaveTools Logo](Assets/resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools Logo](Src/resources/PalworldSaveTools_Blue.png)
 ---
 - **Contact me on Discord:** Pylar1991
 ---
@@ -51,7 +51,7 @@
 > ⚠️ This will overwrite your current map progress with the fully unlocked map from PST.
 
 ### 1️⃣ Copy the Unlocked Map File
-Copy the `LocalData.sav` file from `Assets\resources\LocalData.sav`.
+Copy the `LocalData.sav` file from `Src\resources\LocalData.sav`.
 
 ### 2️⃣ Find Your New Server/World ID
 - **Join your new server/world**.
@@ -70,7 +70,7 @@ Copy the `LocalData.sav` file from `Assets\resources\LocalData.sav`.
 - If prompted, **confirm the overwrite** to replace the existing file.
 
 ### 🎉 Done!
-Launch your **new server/world** — your fog and icons will now match the unlocked map from the PST `Assets\resources` file.
+Launch your **new server/world** — your fog and icons will now match the unlocked map from the PST `Src\resources` file.
 
 ---
 

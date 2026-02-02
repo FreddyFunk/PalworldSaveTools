@@ -10,10 +10,14 @@ Pal Logger/
 PST_standalone/
 build/
 PalworldSaveTools.egg-info/
-Assets/data/configs/
-pst_venv/
+Src/data/configs/
+.pst_venv/
 CLAUDE.md
 .claude/
 Scan Save Logger/
 updated_worldmap.png
 task_progress.md
+Backups/
+save.coderef/
+PSP.coderef/
+.scripts/

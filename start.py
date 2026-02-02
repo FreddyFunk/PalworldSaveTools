@@ -127,10 +127,10 @@ def run_and_watch(cmd, cwd=None, env=None, filter_keys=None, update_callback=Non
         if proc.poll() is not None and proc in child_procs:
             child_procs.remove(proc)
     return proc.wait()
-VENV_DIR = PROJECT_DIR / 'pst_venv'
+VENV_DIR = PROJECT_DIR / '.pst_venv'
 REQ_FILE = PROJECT_DIR / 'requirements.txt'
 PYPROJECT = PROJECT_DIR / 'pyproject.toml'
-TEMP_REQ_FILE_NAME = 'Assets/resources/temp_req.txt'
+TEMP_REQ_FILE_NAME = 'resources/temp_req.txt'
 DARK_STYLE_SPLASH = '\nQWidget { color: #dfeefc; font-family: "Segoe UI",Roboto,Arial; }\nQFrame#glass {\n    background: rgba(18,20,24,0.92);\n    border-radius: 12px;\n    border: 1px solid rgba(255,255,255,0.04);\n    padding: 12px;\n}\nQFrame#logoBox {\n    background: rgba(10,12,16,0.6);\n    border-radius: 8px;\n    border: 1px solid rgba(255,255,255,0.03);\n    min-height: 84px;\n    max-height: 140px;\n}\nQLabel#short {\n    font-size: 13px;\n    color: #dfeefc;\n    font-weight: 600;\n}\nQLabel#tiny {\n    font-size: 11px;\n    color: rgba(223,238,252,0.7);\n}\nQProgressBar {\n    border: 1px solid rgba(255,255,255,0.04);\n    border-radius: 8px;\n    height: 14px;\n    text-align: center;\n    background: rgba(18,20,24,0.60);\n    color: #dfeefc;\n}\nQProgressBar::chunk {\n    background: qlineargradient(spread:pad,x1:0,y1:0,x2:1,y2:0,stop:0 #7DD3FC,stop:1 #A78BFA);\n    border-radius: 8px;\n}\n'
 app = None
 splash_window = None
@@ -179,7 +179,7 @@ def unlock_self_folder():
     except Exception:
         pass
 def get_config_value(key: str, default=None):
-    config_path = PROJECT_DIR / 'Assets' / 'data' / 'configs' / 'config.json'
+    config_path = PROJECT_DIR / 'Src' / 'data' / 'configs' / 'config.json'
     try:
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -208,7 +208,7 @@ if GUI_AVAILABLE:
         started = Signal()
     _signals: Optional[WorkerSignals] = None
 def load_splash_styles():
-    user_cfg_path = os.path.join(PROJECT_DIR, 'Assets', 'data', 'configs', 'user.cfg')
+    user_cfg_path = os.path.join(PROJECT_DIR, 'Src', 'data', 'configs', 'user.cfg')
     theme = 'dark'
     if os.path.exists(user_cfg_path):
         try:
@@ -217,7 +217,7 @@ def load_splash_styles():
             theme = data.get('theme', 'dark')
         except:
             pass
-    qss_path = os.path.join(PROJECT_DIR, 'Assets', 'data', 'gui', f'{theme}mode.qss')
+    qss_path = os.path.join(PROJECT_DIR, 'Src', 'data', 'gui', f'{theme}mode.qss')
     if os.path.exists(qss_path):
         with open(qss_path, 'r') as f:
             return f.read()
@@ -245,7 +245,7 @@ def build_splash_ui():
     logo_layout.addWidget(logo_label)
     logo_layout.addItem(QSpacerItem(8, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
     layout.addWidget(logo_box)
-    logo_path = PROJECT_DIR / 'Assets' / 'resources' / 'PalworldSaveTools_Blue.png'
+    logo_path = PROJECT_DIR / 'resources' / 'PalworldSaveTools_Blue.png'
     if logo_path.exists():
         pix = QPixmap(str(logo_path))
         if not pix.isNull():
@@ -564,7 +564,7 @@ def spawn_aio_and_exit(venv_py: Path):
                 app.processEvents()
             except Exception:
                 pass
-        main_py = PROJECT_DIR / 'Assets' / 'palworld_aio' / 'main.py'
+        main_py = PROJECT_DIR / 'Src' / 'palworld_aio' / 'main.py'
         result = subprocess.run([str(venv_py), str(main_py)], cwd=str(PROJECT_DIR))
         sys.exit(result.returncode)
     except KeyboardInterrupt:
@@ -724,7 +724,7 @@ def main():
             if rc_final == 0:
                 if get_config_value('checkstartlogs', False):
                     input('Press Enter to continue to palworld_aio...')
-                main_py = PROJECT_DIR / 'Assets' / 'palworld_aio' / 'main.py'
+                main_py = PROJECT_DIR / 'Src' / 'palworld_aio' / 'main.py'
                 try:
                     subprocess.run([str(venv_py), str(main_py)], cwd=str(PROJECT_DIR))
                 except Exception:
