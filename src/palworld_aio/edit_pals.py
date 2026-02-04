@@ -584,6 +584,11 @@ class EditPalsDialog(FramelessDialog):
         self.palbox_tab = self._create_tab(t('edit_pals.palbox'))
         self.tabs.addTab(self.party_tab, t('edit_pals.party'))
         self.tabs.addTab(self.palbox_tab, t('edit_pals.palbox'))
+        self.dps_tab = None
+        #if self.dps_file_path:
+            #self.dps_tab = self._create_tab(t('edit_pals.dps'))
+            #self.tabs.addTab(self.dps_tab, t('edit_pals.dps'))
+        #self.tabs.currentChanged.connect(self._on_tab_changed)
         self.skill_filter_timer = QTimer(self)
         self.skill_filter_timer.setSingleShot(True)
         self.skill_filter_timer.timeout.connect(self._do_filter_skills)
@@ -595,6 +600,8 @@ class EditPalsDialog(FramelessDialog):
         self.party_container = None
         self.palbox_container = None
         self.player_sav_path = None
+        self.dps_file_path = None
+        self.dps_loaded = False
         players_dir = os.path.join(constants.current_save_path, 'Players')
         target_uid = self.player_uid.replace('-', '').lower()
         if os.path.exists(players_dir):
@@ -610,6 +617,10 @@ class EditPalsDialog(FramelessDialog):
                             self.palbox_container = p_prop.get('PalStorageContainerId', {}).get('value', {}).get('ID', {}).get('value')
                         except:
                             pass
+                elif filename.endswith('.sav') and '_dps' in filename:
+                    p_uid_raw = filename.replace('_dps.sav', '').lower()
+                    if p_uid_raw == target_uid:
+                        self.dps_file_path = os.path.join(players_dir, filename)
     def _create_tab(self, tab_name):
         tab = QWidget()
         tab.layout = QVBoxLayout(tab)
@@ -1051,6 +1062,32 @@ class EditPalsDialog(FramelessDialog):
         if total_slots >= 960:
             self.party_tab.slot_label.setStyleSheet('color: red; font-weight: bold;')
             self.palbox_tab.slot_label.setStyleSheet('color: red; font-weight: bold;')
+    def _on_tab_changed(self, index):
+        if self.dps_tab and self.tabs.widget(index) == self.dps_tab and not self.dps_loaded:
+            self._load_dps_pals()
+    def _load_dps_pals(self):
+        if not self.dps_file_path or self.dps_loaded:
+            return
+        try:
+            gvas_file = sav_to_gvasfile(self.dps_file_path)
+            save_param_array = gvas_file.properties.get('SaveParameterArray', {}).get('value', {}).get('values', [])
+            dps_pals = []
+            for entry in save_param_array:
+                try:
+                    sp = entry.get('SaveParameter', {}).get('value', {})
+                    char_id = extract_value(sp, 'CharacterID', 'None')
+                    if char_id == 'None' or not char_id:
+                        continue
+                    slot_index = sp.get('SlotId', {}).get('value', {}).get('SlotIndex', {}).get('value', 0)
+                    pal_item = {'index': slot_index, 'data': sp, 'value': {'RawData': {'value': {'object': {'SaveParameter': {'value': sp}}}}}}
+                    dps_pals.append(pal_item)
+                except Exception as e:
+                    print(f'Error processing DPS pal: {e}')
+                    continue
+            self._populate_tab(self.dps_tab, dps_pals, 'DPS')
+            self.dps_loaded = True
+        except Exception as e:
+            print(f'Error loading DPS file: {e}')
     def _populate_tab(self, tab, pals, tab_name):
         tab.pal_data = pals
         max_slots = tab.max_slots
