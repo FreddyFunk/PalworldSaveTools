@@ -1530,7 +1530,14 @@ def fix_illegal_pals_in_save(parent=None):
                         location = 'Current Party'
                     elif str(container_id).lower() == containers['PalBox']:
                         location = 'PalBox Storage'
-                illegal_info = {'name': pal_name, 'nickname': nick, 'cid': cid, 'level': level, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'illegal_markers': illegal_markers, 'instance_id': inst_id, 'container_id': container_id, 'owner_uid': owner_uid, 'location': location}
+                passive_skills = sp.get('PassiveSkillList', {}).get('value', {}).get('values', [])
+                passive_count = len(passive_skills) if isinstance(passive_skills, list) else 0
+                active_skills = sp.get('EquipWaza', {}).get('value', {}).get('values', [])
+                active_count = sum((1 for s in active_skills if s and s.strip())) if isinstance(active_skills, list) else 0
+                passive_skills_list = list(passive_skills) if isinstance(passive_skills, list) else []
+                active_skills_list = list(active_skills) if isinstance(active_skills, list) else []
+                rank = extract_value(sp, 'Rank', 1)
+                illegal_info = {'name': pal_name, 'nickname': nick, 'cid': cid, 'level': level, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'rank': rank, 'passive_count': passive_count, 'active_count': active_count, 'passive_skills': passive_skills_list, 'active_skills': active_skills_list, 'illegal_markers': illegal_markers, 'instance_id': inst_id, 'container_id': container_id, 'owner_uid': owner_uid, 'location': location}
                 illegal_pals_by_owner[uid_str].append(illegal_info)
                 changed = False
                 if level > 65:

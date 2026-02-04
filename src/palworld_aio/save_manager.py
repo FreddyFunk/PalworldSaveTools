@@ -121,6 +121,12 @@ class SaveManager(QObject):
                 except:
                     pass
             os.makedirs(log_folder, exist_ok=True)
+            illegal_log_folder = os.path.join(base_path, 'Illegal Pal Logger')
+            if os.path.exists(illegal_log_folder):
+                try:
+                    shutil.rmtree(illegal_log_folder)
+                except:
+                    pass
             player_pals_count = {}
             illegal_pals_by_owner, owner_nicknames = self._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
             constants.PLAYER_PAL_COUNTS = player_pals_count
@@ -167,6 +173,12 @@ class SaveManager(QObject):
             except:
                 pass
         os.makedirs(log_folder, exist_ok=True)
+        illegal_log_folder = os.path.join(base_path, 'Illegal Pal Logger')
+        if os.path.exists(illegal_log_folder):
+            try:
+                shutil.rmtree(illegal_log_folder)
+            except:
+                pass
         player_pals_count = {}
         illegal_pals_by_owner, owner_nicknames = self._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
         constants.PLAYER_PAL_COUNTS = player_pals_count
@@ -348,7 +360,9 @@ class SaveManager(QObject):
             owner_pals_grouped[target_id][lbl].append(info)
             is_illegal, illegal_markers = check_is_illegal_pal(item)
             if is_illegal:
-                illegal_info = {'name': name, 'nickname': nick, 'cid': cid, 'level': lvl, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'illegal_markers': illegal_markers, 'instance_id': inst, 'container_id': base, 'location': lbl}
+                passive_count = len(p_list) if isinstance(p_list, list) else 0
+                active_count = sum((1 for s in e_list if s and s.strip())) if isinstance(e_list, list) else 0
+                illegal_info = {'name': name, 'nickname': nick, 'cid': cid, 'level': lvl, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'rank': rk, 'passive_count': passive_count, 'active_count': active_count, 'passive_skills': list(p_list) if isinstance(p_list, list) else [], 'active_skills': list(e_list) if isinstance(e_list, list) else [], 'illegal_markers': illegal_markers, 'instance_id': inst, 'container_id': base, 'location': lbl}
                 illegal_pals_by_owner[target_id][lbl].append(illegal_info)
             if is_worker:
                 player_pals_count['worker_dropped'] = player_pals_count.get('worker_dropped', 0) + 1
