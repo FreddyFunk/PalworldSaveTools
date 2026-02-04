@@ -585,10 +585,6 @@ class EditPalsDialog(FramelessDialog):
         self.tabs.addTab(self.party_tab, t('edit_pals.party'))
         self.tabs.addTab(self.palbox_tab, t('edit_pals.palbox'))
         self.dps_tab = None
-        #if self.dps_file_path:
-            #self.dps_tab = self._create_tab(t('edit_pals.dps'))
-            #self.tabs.addTab(self.dps_tab, t('edit_pals.dps'))
-        #self.tabs.currentChanged.connect(self._on_tab_changed)
         self.skill_filter_timer = QTimer(self)
         self.skill_filter_timer.setSingleShot(True)
         self.skill_filter_timer.timeout.connect(self._do_filter_skills)
@@ -1063,7 +1059,7 @@ class EditPalsDialog(FramelessDialog):
             self.party_tab.slot_label.setStyleSheet('color: red; font-weight: bold;')
             self.palbox_tab.slot_label.setStyleSheet('color: red; font-weight: bold;')
     def _on_tab_changed(self, index):
-        if self.dps_tab and self.tabs.widget(index) == self.dps_tab and not self.dps_loaded:
+        if self.dps_tab and self.tabs.widget(index) == self.dps_tab and (not self.dps_loaded):
             self._load_dps_pals()
     def _load_dps_pals(self):
         if not self.dps_file_path or self.dps_loaded:

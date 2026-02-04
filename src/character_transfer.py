@@ -527,11 +527,6 @@ def transfer_all_characters():
         source_player_list.clearSelection()
         target_player_list.clearSelection()
         show_information(None, t('Transfer Successful'), t('All players transferred!'))
-        try:
-            msg.setWindowIcon(QIcon(ICON_PATH))
-        except:
-            pass
-        msg.exec()
     thread = threading.Thread(target=worker)
     thread.start()
     thread.join()
@@ -578,11 +573,6 @@ def main(skip_msgbox=False, skip_gui=False):
         print(f'Error: Source player must be at least level 2. Current level: {source_player_level}')
         error_msg = t('character_transfer.source_player_level_2', level=source_player_level) if source_player_level > 0 else t('character_transfer.source_player_not_leveled')
         show_warning(None, t('Error!'), error_msg)
-        try:
-            msg.setWindowIcon(QIcon(ICON_PATH))
-        except Exception:
-            pass
-        msg.exec()
         selected_source_player = None
         selected_target_player = None
         host_guid = None
@@ -599,11 +589,6 @@ def main(skip_msgbox=False, skip_gui=False):
             print(f'Error: Target player must be at least level 2. Current level: {target_player_level}')
             error_msg = t('character_transfer.target_player_level_2', level=target_player_level) if target_player_level > 0 else t('character_transfer.target_player_not_leveled')
             show_warning(None, t('Error!'), error_msg)
-            try:
-                msg.setWindowIcon(QIcon(ICON_PATH))
-            except Exception:
-                pass
-            msg.exec()
             selected_source_player = None
             selected_target_player = None
             host_guid = None
@@ -654,11 +639,6 @@ def main(skip_msgbox=False, skip_gui=False):
         target_player_list.clearSelection()
     if not skip_msgbox:
         show_information(None, t('Transfer Successful'), t("Transfer successful in memory! Hit 'Save Changes' to save."))
-        try:
-            msg.setWindowIcon(QIcon(ICON_PATH))
-        except Exception:
-            pass
-        msg.exec()
 def gather_and_update_dynamic_containers():
     global targ_lvl, dynamic_guids
     src_containers = level_json['DynamicItemSaveData']['value']['values']
@@ -1000,11 +980,6 @@ def save_and_backup():
     def on_finished(success):
         if success:
             show_information(None, t('Success'), t('Transfer complete and backup created!'))
-            try:
-                msg.setWindowIcon(QIcon(ICON_PATH))
-            except:
-                pass
-            msg.exec()
             print('Done saving all modified target players!')
     run_with_loading(on_finished, task)
 def sav_to_gvas(file):
@@ -1075,11 +1050,6 @@ def source_level_file():
         return
     if not tmp.endswith('Level.sav'):
         show_warning(None, t('Error!'), t('This is NOT Level.sav.Please select Level.sav file.'))
-        try:
-            msg.setWindowIcon(QIcon(ICON_PATH))
-        except Exception:
-            pass
-        msg.exec()
         return
     level_json = None
     import gc
@@ -1105,11 +1075,6 @@ def source_level_file():
         global level_sav_path, selected_source_player
         if result is None:
             show_warning(None, t('Error!'), t('Invalid file,must be Level.sav!'))
-            try:
-                msg.setWindowIcon(QIcon(ICON_PATH))
-            except Exception:
-                pass
-            msg.exec()
             return
         path, group_section = result
         level_sav_path = path
@@ -1132,11 +1097,6 @@ def target_level_file():
         return
     if not tmp.endswith('Level.sav'):
         show_warning(None, t('Error!'), t('This is NOT Level.sav.Please select Level.sav file.'))
-        try:
-            msg.setWindowIcon(QIcon(ICON_PATH))
-        except Exception:
-            pass
-        msg.exec()
         return
     targ_lvl = None
     target_raw_gvas = None
@@ -1165,11 +1125,6 @@ def target_level_file():
         global t_level_sav_path, target_raw_gvas, target_save_type, selected_target_player
         if result is None:
             show_warning(None, t('Error!'), t('Invalid file,must be Level.sav!'))
-            try:
-                msg.setWindowIcon(QIcon(ICON_PATH))
-            except Exception:
-                pass
-            msg.exec()
             return
         path, raw_gvas, save_type, group_section = result
         t_level_sav_path = path

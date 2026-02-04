@@ -352,29 +352,29 @@ class SaveManager(QObject):
             dn = f'{name}(Nickname: {nick})' if nick != 'Unknown' else name
             passive_count = len(p_list) if isinstance(p_list, list) else 0
             active_count = sum((1 for s in e_list if s and s.strip())) if isinstance(e_list, list) else 0
-            skills_str = f"Active: {active_count}/3, Passive: {passive_count}/4"
-            soul_str = f"HP Soul: {rank_hp}, ATK Soul: {rank_attack}, DEF Soul: {rank_defense}, Craft: {rank_craftspeed}"
-            rank_str = f"{rk} stars ({rk - 1}☆)"
-            info = f"\n[{dn}]\n"
-            info += f"  Level:    {lvl}\n"
-            info += f"  Rank:     {rank_str}\n"
-            info += f"  Gender:   {ginfo}\n"
-            info += f"  Skills:   {skills_str}\n"
+            skills_str = f'Active: {active_count}/3, Passive: {passive_count}/4'
+            soul_str = f'HP Soul: {rank_hp}, ATK Soul: {rank_attack}, DEF Soul: {rank_defense}, Craft: {rank_craftspeed}'
+            rank_str = f'{rk} stars ({rk - 1}☆)'
+            info = f'\n[{dn}]\n'
+            info += f'  Level:    {lvl}\n'
+            info += f'  Rank:     {rank_str}\n'
+            info += f'  Gender:   {ginfo}\n'
+            info += f'  Skills:   {skills_str}\n'
             if active:
                 info += f"    Active Skills:   {','.join(active)}\n"
             else:
-                info += f"    Active Skills:   None\n"
+                info += f'    Active Skills:   None\n'
             if pskills:
                 info += f"    Passive Skills: {','.join(pskills)}\n"
             else:
-                info += f"    Passive Skills: None\n"
+                info += f'    Passive Skills: None\n'
             if learned:
                 info += f"    Learned Skills:  {','.join(learned)}\n"
             else:
-                info += f"    Learned Skills:  None\n"
-            info += f"  IVs:      {iv_str}\n"
-            info += f"  Souls:    {soul_str}\n"
-            info += f"  IDs:      Container: {base} | Instance: {inst} | Guild: {gid}\n"
+                info += f'    Learned Skills:  None\n'
+            info += f'  IVs:      {iv_str}\n'
+            info += f'  Souls:    {soul_str}\n'
+            info += f'  IDs:      Container: {base} | Instance: {inst} | Guild: {gid}\n'
             lbl = 'Base Worker'
             if not is_worker and u_str in player_containers:
                 if base == player_containers[u_str]['Party']:
@@ -671,7 +671,7 @@ class SaveManager(QObject):
                                 if learned_skills_display:
                                     info_block += f"    Learned Skills:  {', '.join(learned_skills_display)}\n"
                                 else:
-                                    info_block += f"    Learned Skills:  None\n"
+                                    info_block += f'    Learned Skills:  None\n'
                                 info_block += f'  IVs:      {iv_str}\n'
                                 info_block += f'  Souls:    {soul_str}\n'
                                 instance_id = info.get('instance_id', 'Unknown')
@@ -766,7 +766,7 @@ class SaveManager(QObject):
                                 if learned_skills_display:
                                     info_block += f"    Learned Skills:  {', '.join(learned_skills_display)}\n"
                                 else:
-                                    info_block += f"    Learned Skills:  None\n"
+                                    info_block += f'    Learned Skills:  None\n'
                                 info_block += f'  IVs:      {iv_str}\n'
                                 info_block += f'  Souls:    {soul_str}\n'
                                 instance_id = info.get('instance_id', 'Unknown')
@@ -948,29 +948,29 @@ def _process_dps_scan_worker(args):
                 dn = f'{name}(Nickname: {nick})' if nick != 'Unknown' and nick else name
                 passive_count = len(p_list) if isinstance(p_list, list) else 0
                 active_count = sum((1 for s in e_list if s and s.strip())) if isinstance(e_list, list) else 0
-                skills_str = f"Active: {active_count}/3, Passive: {passive_count}/4"
-                soul_str = f"HP Soul: {rank_hp}, ATK Soul: {rank_attack}, DEF Soul: {rank_defense}, Craft: {rank_craftspeed}"
-                rank_str = f"{rank} stars ({rank - 1}☆)"
-                info = f"\n[{dn}]\n"
-                info += f"  Level:    {level}\n"
-                info += f"  Rank:     {rank_str}\n"
-                info += f"  Gender:   {ginfo}\n"
-                info += f"  Skills:   {skills_str}\n"
+                skills_str = f'Active: {active_count}/3, Passive: {passive_count}/4'
+                soul_str = f'HP Soul: {rank_hp}, ATK Soul: {rank_attack}, DEF Soul: {rank_defense}, Craft: {rank_craftspeed}'
+                rank_str = f'{rank} stars ({rank - 1}☆)'
+                info = f'\n[{dn}]\n'
+                info += f'  Level:    {level}\n'
+                info += f'  Rank:     {rank_str}\n'
+                info += f'  Gender:   {ginfo}\n'
+                info += f'  Skills:   {skills_str}\n'
                 if active:
                     info += f"    Active Skills:   {','.join(active)}\n"
                 else:
-                    info += f"    Active Skills:   None\n"
+                    info += f'    Active Skills:   None\n'
                 if pskills:
                     info += f"    Passive Skills: {','.join(pskills)}\n"
                 else:
-                    info += f"    Passive Skills: None\n"
+                    info += f'    Passive Skills: None\n'
                 if learned:
                     info += f"    Learned Skills:  {','.join(learned)}\n"
                 else:
-                    info += f"    Learned Skills:  None\n"
-                info += f"  IVs:      {iv_str}\n"
-                info += f"  Souls:    {soul_str}\n"
-                info += f"  IDs:      Container: {container_id}\n\n"
+                    info += f'    Learned Skills:  None\n'
+                info += f'  IVs:      {iv_str}\n'
+                info += f'  Souls:    {soul_str}\n'
+                info += f'  IDs:      Container: {container_id}\n\n'
                 formatted_pals.append(info)
                 is_illegal, illegal_markers = check_is_illegal_pal(entry)
                 if is_illegal:

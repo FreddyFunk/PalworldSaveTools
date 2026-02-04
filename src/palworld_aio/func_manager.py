@@ -1720,7 +1720,7 @@ def fix_illegal_pals_in_save(parent=None):
                             if learned_skills_display:
                                 info_block += f"    Learned Skills:  {', '.join(learned_skills_display)}\n"
                             else:
-                                info_block += f"    Learned Skills:  None\n"
+                                info_block += f'    Learned Skills:  None\n'
                             info_block += f'  IVs:      {iv_str}\n'
                             info_block += f'  Souls:    {soul_str}\n'
                             instance_id = info.get('instance_id', 'Unknown')
@@ -1808,7 +1808,7 @@ def fix_illegal_pals_in_save(parent=None):
                             if learned_skills_display:
                                 info_block += f"    Learned Skills:  {', '.join(learned_skills_display)}\n"
                             else:
-                                info_block += f"    Learned Skills:  None\n"
+                                info_block += f'    Learned Skills:  None\n'
                             info_block += f'  IVs:      {iv_str}\n'
                             info_block += f'  Souls:    {soul_str}\n'
                             instance_id = info.get('instance_id', 'Unknown')
