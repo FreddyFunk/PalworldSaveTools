@@ -202,7 +202,7 @@
   "deletion.menu.fix_illegal_pals": "修复非法帕鲁",
   "deletion.remove_illegal_pals_confirm": "这将移除所有非法帕鲁（等级>65、IVs>100、灵魂>20）从存档中。是否继续？",
   "deletion.reset_illegal_pals_confirm": "这将重置所有非法帕鲁到1级，随机IVs(0-100)。是否继续？",
-  "deletion.fix_illegal_pals_confirm": "这将修复所有非法帕鲁，将其属性设置为合法最大值（等级65，IVs 100，灵魂 20）。是否继续？",
+  "deletion.fix_illegal_pals_confirm": "这将通过将非法好友的统计数据设置为合法最大值来修复所有非法好友：\n- 65级\n- IV 100\n- 灵魂 20\n- 排名 4 星 (5)\n- 最多 3 个主动技能\n- 最多 4 个被动技能\n\n继续吗？",
   "deletion.illegal_pals_removed": "已从存档中移除 {count} 个非法帕鲁。",
   "deletion.illegal_pals_reset": "已重置 {count} 个非法帕鲁到1级，随机IVs。",
   "deletion.illegal_pals_fixed": "已将 {count} 个非法帕鲁修复为合法最大值。",
@@ -851,5 +851,6 @@
   "levelmeta.editor.save": "保存更改",
   "levelmeta.editor.cancel": "取消",
   "levelmeta.editor.no_file_path": "未提供文件路径。无法保存。",
-  "levelmeta.editor.save_failed": "保存失败："
+  "levelmeta.editor.save_failed": "保存失败：",
+  "xgp.err.no_valid_saves": "未找到要转换的有效存档"
 }

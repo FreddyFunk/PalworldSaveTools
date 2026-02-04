@@ -238,7 +238,7 @@
   "deletion.warn.none_selected": "Keine {kind} ausgewählt!",
   "deletion.remove_illegal_pals_confirm": "Dies wird alle illegalen Pals (Level > 65, IVs > 100, Seelen > 20) aus dem Speicher entfernen. Fortfahren?",
   "deletion.reset_illegal_pals_confirm": "Dies wird alle illegalen Pals auf Level 1 mit zufälligen IVs (0-100) zurücksetzen. Fortfahren?",
-  "deletion.fix_illegal_pals_confirm": "Dies wird alle illegalen Pals korrigieren, indem ihre Werte auf erlaubte Maxima gesetzt werden (Level 65, IVs 100, Seelen 20). Fortfahren?",
+  "deletion.fix_illegal_pals_confirm": "Dadurch werden alle illegalen Freunde behoben, indem ihre Statistiken auf die zulässigen Höchstwerte gesetzt werden:\n- Stufe 65\n- IVs 100\n- Seelen 20\n- Rang 4 Sterne (5)\n- Max. 3 aktive Fertigkeiten\n- Max. 4 passive Fertigkeiten\n\nWeitermachen?",
   "deletion.illegal_pals_removed": "{count} illegale Pals aus dem Speicher entfernt.",
   "deletion.illegal_pals_reset": "{count} illegale Pals auf Level 1 mit zufälligen IVs zurückgesetzt.",
   "deletion.illegal_pals_fixed": "{count} illegale Pals auf erlaubte Maxima korrigiert.",
@@ -872,5 +872,6 @@
   "levelmeta.editor.save": "Änderungen speichern",
   "levelmeta.editor.cancel": "Stornieren",
   "levelmeta.editor.no_file_path": "Kein Dateipfad angegeben. Kann nicht gespeichert werden.",
-  "levelmeta.editor.save_failed": "Speichern fehlgeschlagen:"
+  "levelmeta.editor.save_failed": "Speichern fehlgeschlagen:",
+  "xgp.err.no_valid_saves": "Keine gültigen Speicherstände zum Konvertieren gefunden"
 }

@@ -229,7 +229,7 @@
   "deletion.warn.none_selected": "¡No se seleccionó ningún {kind}!",
   "deletion.remove_illegal_pals_confirm": "Esto eliminará todos los pals ilegales (nivel > 65, IVs > 100, almas > 20) del guardado. ¿Continuar?",
   "deletion.reset_illegal_pals_confirm": "Esto restablecerá todos los pals ilegales a nivel 1 con IVs aleatorios (0-100). ¿Continuar?",
-  "deletion.fix_illegal_pals_confirm": "Esto corregirá todos los pals ilegales estableciendo sus estadísticas a los máximos legales (nivel 65, IVs 100, almas 20). ¿Continuar?",
+  "deletion.fix_illegal_pals_confirm": "Esto arreglará a todos los amigos ilegales estableciendo sus estadísticas en máximos legales:\n- Nivel 65\n- IV 100\n- Almas 20\n- Clasificación 4 estrellas (5)\n- Máximo 3 habilidades activas\n- Máximo 4 habilidades pasivas\n\n¿Continuar?",
   "deletion.illegal_pals_removed": "Se eliminaron {count} pals ilegales del guardado.",
   "deletion.illegal_pals_reset": "Se restablecieron {count} pals ilegales a nivel 1 con IVs aleatorios.",
   "deletion.illegal_pals_fixed": "Corregidos {count} pals ilegales a máximos legales.",
@@ -842,5 +842,6 @@
   "levelmeta.editor.save": "Guardar cambios",
   "levelmeta.editor.cancel": "Cancelar",
   "levelmeta.editor.no_file_path": "No se proporcionó ninguna ruta de archivo. No se puede guardar.",
-  "levelmeta.editor.save_failed": "No se pudo guardar:"
+  "levelmeta.editor.save_failed": "No se pudo guardar:",
+  "xgp.err.no_valid_saves": "No se encontraron guardados válidos para convertir"
 }

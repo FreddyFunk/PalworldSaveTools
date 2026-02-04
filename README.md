@@ -8,7 +8,8 @@
 
 [![Downloads](https://img.shields.io/github/downloads/deafdudecomputers/PalworldSaveTools/total)](https://github.com/deafdudecomputers/PalworldTools/releases/latest)
 [![License](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
-[![Discord](https://img.shields.io/badge/Discord-Pylar1991-blue)](https://discord.gg/)
+[![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
+[![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
 [English](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
@@ -111,16 +112,21 @@ The **All-in-One Tools** suite provides comprehensive save management:
 
 ### Prerequisites
 
-- Windows 10/11 or Linux
+**For standalone (Windows):**
+- Windows 10/11
 - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (2015-2022)
 
-### Standalone (Recommended)
+**For running from source (Linux or development):**
+- Python 3.10 or higher
+- pip (Python package manager)
+
+### Standalone (Windows - Recommended)
 
 1. Download the latest release from [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)
 2. Extract the zip file
-3. Run `PalworldSaveTools.exe` (Windows) or `start_linux.sh` (Linux)
+3. Run `PalworldSaveTools.exe`
 
-### From Source
+### From Source (Linux or for development)
 
 ```bash
 git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
@@ -294,11 +300,10 @@ Both players (old host and new host) must have their regular saves generated. Th
 4. Save as `.json` file
 
 **Importing a Base:**
-1. Load target save (must have at least one base)
-2. Go to Bases tab
-3. Click Import Base
+1. Go to Bases tab or Base Map Viewer
+2. Right-click on the Guild you want to import the base to
+3. Select Import Base
 4. Select your exported `.json` file
-5. Choose target guild
 
 **Cloning a Base:**
 1. Right-click a base → Clone Base
@@ -381,9 +386,9 @@ The developers are not responsible for any loss of save data or issues that may 
 
 ## Support
 
-- **Discord:** [Pylar1991](https://discord.gg/)
+- **Discord:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub Issues:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
-- **Documentation:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki)
+- **Documentation:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
 ---
 

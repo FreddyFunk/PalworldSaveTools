@@ -238,7 +238,7 @@
   "deletion.warn.none_selected": "Aucun {kind} sélectionné !",
   "deletion.remove_illegal_pals_confirm": "Cela va supprimer tous les Pals illégaux (niveau > 65, IVs > 100, âmes > 20) de la sauvegarde. Continuer ?",
   "deletion.reset_illegal_pals_confirm": "Cela va réinitialiser tous les Pals illégaux au niveau 1 avec IV aléatoires (0-100). Continuer ?",
-  "deletion.fix_illegal_pals_confirm": "Cela va corriger tous les Pals illégaux en définissant leurs stats aux maximums légaux (niveau 65, IVs 100, âmes 20). Continuer ?",
+  "deletion.fix_illegal_pals_confirm": "Cela corrigera tous les amis illégaux en définissant leurs statistiques sur les maximums légaux:\n- Niveau 65\n- IV 100\n- Âmes 20\n- Rang 4 étoiles (5)\n- Max 3 compétences actives\n- Max 4 compétences passives\n\nContinuer?",
   "deletion.illegal_pals_removed": "{count} Pals illégaux supprimés de la sauvegarde.",
   "deletion.illegal_pals_reset": "{count} Pals illégaux réinitialisés au niveau 1 avec IV aléatoires.",
   "deletion.illegal_pals_fixed": "Corrigé {count} Pals illégaux aux maximums légaux.",
@@ -831,5 +831,6 @@
   "levelmeta.editor.save": "Enregistrer les modifications",
   "levelmeta.editor.cancel": "Annuler",
   "levelmeta.editor.no_file_path": "Aucun chemin de fichier fourni. Impossible de sauvegarder.",
-  "levelmeta.editor.save_failed": "Échec de l'enregistrement :"
+  "levelmeta.editor.save_failed": "Échec de l'enregistrement :",
+  "xgp.err.no_valid_saves": "Aucune sauvegarde valide trouvée à convertir"
 }

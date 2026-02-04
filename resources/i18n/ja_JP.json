@@ -238,7 +238,7 @@
   "deletion.warn.none_selected": "何も選択されていません：{kind}！",
   "deletion.remove_illegal_pals_confirm": "これはセーブデータからすべての不正パル（レベル > 65、個体値 > 100、ソウル > 20）を削除します。続行しますか？",
   "deletion.reset_illegal_pals_confirm": "これはすべての不正パルをレベル1、ランダムなIVs(0-100)にリセットします。続行しますか？",
-  "deletion.fix_illegal_pals_confirm": "これはすべての不正パルを合法な最大値（レベル65、個体値100、ソウル20）に設定して修正します。続行しますか？",
+  "deletion.fix_illegal_pals_confirm": "これにより、ステータスを合法的な最大値に設定することで、すべての違法な仲間が修正されます。\n- レベル65\n- IV 100\n- ソウル20\n- ランク 4 星 (5)\n- 最大3つのアクティブスキル\n- 最大4つのパッシブスキル\n\n続けますか？",
   "deletion.illegal_pals_removed": "セーブデータから {count} 匹の不正パルを削除しました。",
   "deletion.illegal_pals_reset": "{count} 匹の不正パルをレベル1、ランダムなIVsでリセットしました。",
   "deletion.illegal_pals_fixed": "{count} 匹の不正パルを合法な最大値に修正しました。",
@@ -851,5 +851,6 @@
   "levelmeta.editor.save": "変更を保存",
   "levelmeta.editor.cancel": "キャンセル",
   "levelmeta.editor.no_file_path": "ファイルパスが指定されていません。保存できません。",
-  "levelmeta.editor.save_failed": "保存に失敗しました:"
+  "levelmeta.editor.save_failed": "保存に失敗しました:",
+  "xgp.err.no_valid_saves": "変換する有効なセーブが見つかりません"
 }

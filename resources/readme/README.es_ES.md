@@ -1,184 +1,414 @@
-[English](README.en_US.md) | [简体中文](README.zh_CN.md) | [Deutsch](README.de_DE.md) | [Español](README.es_ES.md) | [Français](README.fr_FR.md) | [Русский](README.ru_RU.md) | [日本語](README.ja_JP.md) | [한국어](README.ko_KR.md)
+<div align="center">
 
-![PalworldSaveTools Logo](../PalworldSaveTools_Blue.png)
----
-- **Contacto en Discord:** Pylar1991
----
----
-- **Descarga la carpeta independiente desde [https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) para poder usar el .exe!**
----
+![Logotipo de PalworldSaveTools](recursos/PalworldSaveTools_Blue.png)
 
-## Características
+# __TECNOLOGÍA_19__
 
-- Herramienta de **lectura/análisis rápida**, una de las más veloces disponibles.  
-- Lista todos los jugadores/gremios.  
-- Lista todos los pals y sus detalles.  
-- Muestra la última vez en línea de los jugadores.  
-- Registra jugadores y datos en `players.log`.  
-- Registra y ordena jugadores por la cantidad de pals que poseen.  
-- Proporciona una **vista del mapa de bases**.  
-- Genera comandos automáticos `killnearestbase` para PalDefender contra bases inactivas.  
-- Transfiere guardados entre servidores dedicados y mundos individuales/coop.  
-- Repara el guardado del host mediante edición de GUID.  
-- Incluye conversión de Steam ID.  
-- Incluye conversión de coordenadas.  
-- Incluye conversión GamePass ⇔ Steam.  
-- Inyector de slots para aumentar los espacios por jugador, compatible con Bigger PalBox mod.  
-- Copias de seguridad automáticas entre usos de la herramienta.  
-- **All in One Tools** (antes All in One Deletion Tool):
-  - Eliminar jugadores  
-  - Eliminar bases  
-  - Eliminar gremios  
-  - **Reconstruir todos los gremios**  
-    - Reasigna cada pal a su gremio correcto  
-    - Corrige IDs de grupo  
-    - Elimina banderas de expedición  
-    - Restablece aptitud laboral  
-    - Reconstruye los handles sin duplicados  
-  - Restablecer torretas antiaéreas  
-  - Eliminar datos no referenciados  
-  - Restablecer misiones  
-  - Desbloquear cofres privados  
-  - Eliminar objetos/pals no válidos o modificados 
-  - Sistema de exclusiones para jugadores/gremios/bases protegidos  
-  - Mover jugadores entre gremios  
-  - Convertir un jugador en líder del gremio  
-  - Integración de herramientas adicionales en el menú Archivo  
+**Un completo kit de herramientas de edición de archivos guardados para Palworld**
 
-## 🗺️ Pasos para desbloquear el mapa
+[![Descargas](https://img.shields.io/github/downloads/deafdudecomputers/PalworldSaveTools/total)](https://github.com/deafdudecomputers/PalworldTools/releases/latest)
+[![Licencia](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
+[![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
+[![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-> **Nota:** Solo aplica si **NO** quieres usar la opción "Restore Map".  
-> ⚠️ Esto sobrescribirá tu progreso actual del mapa con el mapa totalmente desbloqueado de PST.
-
-### 1️⃣ Copiar el archivo de mapa desbloqueado
-Copia el archivo `LocalData.sav` desde `src\resources\LocalData.sav`.
-
-### 2️⃣ Encuentra la ID de tu nuevo servidor/mundo
-- **Únete a tu nuevo servidor/mundo**.  
-- Abre el explorador y pega:
-
-%localappdata%\Pal\Saved\SaveGames\
-
-
-
-- Busca una carpeta con una **ID aleatoria** — esta es tu **Steam ID**.  
-- Abre esa carpeta y ordena los subdirectorios por **"Última modificación"**.  
-- Encuentra la carpeta que corresponde a tu **nueva ID de servidor/mundo**.
-
-### 3️⃣ Reemplaza el archivo de mapa
-- Pega el `LocalData.sav` copiado en esta **nueva carpeta del servidor/mundo**.  
-- Confirma la sobrescritura si se solicita.
-
-### 🎉 ¡Listo!
-Lanza tu **nuevo servidor/mundo** — la niebla y los íconos ahora coinciden con el mapa desbloqueado de PST.
+[Inglés](../resources/readme/README.en_US.md) | [简体中文](recursos/léame/README.zh_CN.md) | [Deutsch](recursos/léame/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Francés](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](recursos/léame/README.ja_JP.md) | [한국어](recursos/léame/README.ko_KR.md)
 
 ---
 
-## 🔁 Para mover de Host/Coop a Servidor o viceversa
+### **Descargue la versión independiente de [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
 
-Para **Host/Coop**, la carpeta de guardado normalmente está en:
+---
 
+</div>
+
+## Table of Contents
+
+- [Features](#características)
+- [Installation](#instalación)
+- [Quick Start](#inicio rápido)
+- [Descripción general de herramientas](#herramientas-descripción general)
+- [Guías](#guías)
+- [Troubleshooting](#solución de problemas)
+- [Contributing](#contribuyendo)
+- [Licencia](#licencia)
+
+---
+
+## Features
+
+### Funcionalidad principal
+
+| Característica | Descripción |
+| --------- | ------------- |
+| **Análisis de guardado rápido** | Uno de los lectores de archivos guardados más rápidos disponibles |
+| **Gestión de jugadores** | Ver, editar, cambiar nombre, cambiar nivel, desbloquear tecnologías y administrar jugadores |
+| **Gestión del gremio** | Crea, cambia el nombre, mueve jugadores, desbloquea investigaciones de laboratorio y gestiona gremios. |
+| **Amigo editor** | Editor completo para estadísticas, habilidades, IV, rango, almas, género, jefe/cambio de suerte |
+| **Herramientas del campamento base** | Exportar, importar, clonar, ajustar radios y gestionar bases |
+| **Visor de mapas** | Mapa interactivo de base y jugador con coordenadas y detalles. |
+| **Transferencia de personaje** | Transferir personajes entre diferentes mundos/servidores (guardado cruzado) |
+| **Guardar conversión** | Convertir entre formatos Steam y GamePass |
+| **Configuración mundial** | Editar la configuración de WorldOption y LevelMeta |
+| **Herramientas de marca de tiempo** | Corregir marcas de tiempo negativas y restablecer los tiempos de los jugadores. |
+
+### Herramientas todo en uno
+
+El paquete **Herramientas todo en uno** proporciona una gestión integral de guardado:
+
+- **Herramientas de eliminación**
+  - Eliminar Players, bases o gremios
+  - Eliminar jugadores inactivos según los umbrales de tiempo
+  - Elimina jugadores duplicados y gremios vacíos.
+  - Eliminar datos sin referencia/huérfanos
+
+- **Herramientas de limpieza**
+  - Eliminar elementos no válidos/modificados
+  - Eliminar amigos inválidos y pasivos
+  - Corregir amigos ilegales (límite máximo de estadísticas legales)
+  - Eliminar estructuras no válidas
+  - Restablecer torretas antiaéreas
+  - Desbloquear cofres privados
+
+- **Herramientas del gremio**
+  - Reconstruir todos los gremios
+  - Mover jugadores entre gremios
+  - Hacer líder del gremio de jugadores
+  - Cambiar el nombre de los gremios
+  - Nivel máximo de gremio
+  - Desbloquear toda la investigación de laboratorio
+
+- **Herramientas del jugador**
+  - Editar estadísticas y habilidades de amigos jugadores
+  - Desbloquear todas las tecnologías
+  - Desbloquear la jaula de visualización
+  - Subir/bajar jugadores de nivel
+  - Cambiar el nombre de los jugadores
+
+- **Guardar utilidades**
+  - Restablecer misiones
+  - Reiniciar mazmorras
+  - Corregir marcas de tiempo
+  - Recortar inventarios sobresaturados
+  - Generar comandos PalDefender
+
+### Herramientas adicionales
+
+| Herramienta | Descripción |
+| ------ | ------------- |
+| **Editar amigos jugadores** | Editor de amigos completo con estadísticas, habilidades, IV, talentos, almas, rango y género. |
+| **SteamID Convertidor** | Convierta los ID de Steam a Palworld UIDs |
+| **Reparar el guardado del host** | Intercambiar UIDs entre dos jugadores (por ejemplo, para intercambio de host) |
+| **Intercambiar jugador UIDs** | Intercambia UIDs entre dos jugadores |
+| **Inyector de ranura** | Aumentar espacios de palbox por jugador |
+| **Restaurar mapa** | Aplicar el progreso del mapa desbloqueado en todos los mundos/servidores. |
+| **Cambiar nombre del mundo** | Cambiar nombre mundial en LevelMeta |
+| **WorldOption Editor** | Editar ajustes y configuración del mundo |
+| **LevelMeta Editor** | Editar metadatos mundiales (nombre, host, nivel) |
+| **Convertidor de coordenadas** | Convertir coordenadas en el juego |
+
+---
+
+## Installation
+
+### Requisitos previos
+
+**Para independiente (Windows):**
+- __TECNOLOGÍA_14__ 10/11
+- [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (2015-2022)
+
+**Para ejecutar desde el código fuente (Linux o desarrollo):**
+- Python 3.10 o superior
+- pip (Python administrador de paquetes)
+
+### Independiente (Windows - Recomendado)
+
+1. Descargue la última versión de [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)
+2. Extrae el archivo zip
+3. Ejecute `PalworldSaveTools.exe`
+
+### De la fuente (Linux o para desarrollo)
+
+```golpecito
+clon de git https://github.com/deafdudecomputers/PalworldSaveTools.git
+disco compacto PalworldSaveTools
+pip instalar -r requisitos.txt
+inicio de Python.py
+```
+
+---
+
+## Quick Start
+
+1. **Carga tu guardado**
+   - Haga clic en **Archivo → Cargar Guardar**
+   - Navegue a su carpeta de guardado Palworld
+   - Seleccione `Level.sav`
+
+2. **Explore sus datos**
+   - Utilice las pestañas para ver Players, gremios, bases o el mapa.
+   - Busque y filtre para encontrar entradas específicas
+
+3. **Hacer cambios**
+   - Seleccionar elementos para editar, eliminar o modificar
+   - Utilice menús contextuales para opciones adicionales
+
+4. **Guarde sus cambios**
+   - Haga clic en **Archivo → Guardar cambios**
+   - Las copias de seguridad se crean automáticamente
+
+---
+
+## Descripción general de las herramientas
+
+### Herramientas todo en uno (AIO)
+
+La interfaz principal para una gestión integral de guardados con tres pestañas:
+
+**Players Tab** - Ver y administrar todos los jugadores en el servidor
+- Editar nombres de jugadores, niveles y recuentos de amigos.
+- Eliminar jugadores inactivos
+- Ver gremios de jugadores y el último tiempo en línea
+
+**Pestaña Gremios** - Administrar gremios y sus bases
+- Cambiar el nombre de los gremios, cambiar los líderes
+- Ver ubicaciones y niveles de bases
+- Eliminar gremios vacíos o inactivos
+
+**Pestaña Bases** - Ver todos los campamentos base
+- Exportar/importar planos base
+- Clonar bases a otros gremios.
+- Ajustar el radio de la base
+
+### Visor de mapas
+
+Visualización interactiva de tu mundo:
+- Ver todas las ubicaciones de las bases y posiciones de los jugadores.
+- Filtrar por gremio o nombre de jugador
+- Haga clic en los marcadores para obtener información detallada.
+- Generar comandos `killnearestbase` para PalDefender
+
+### Transferencia de personajes
+
+Transferir personajes entre diferentes mundos/servidores (guardado cruzado):
+- Transferir uno o todos los jugadores
+- Conserva personajes, amigos, inventario y tecnología.
+- Útil para migrar entre cooperativo y dedicated servers
+
+### Reparar host Guardar
+
+Intercambia UIDs entre dos jugadores:
+- Transferir el progreso de un jugador a otro
+- Esencial para transferencias de host/co-op al servidor
+- Útil para intercambiar roles de anfitrión entre jugadores.
+- Útil para cambios de plataforma (Xbox ↔ Steam)
+- Resuelve problemas de asignación de host/servidor UID
+- **Nota:** Affected player must have a character created on the target save first
+
+---
+
+## Guías
+
+### Guardar ubicaciones de archivos
+
+**Anfitrión/Cooperativo:**
+```
 %localappdata%\Pal\Saved\SaveGames\YOURID\RANDOMID\
+```
 
-
-Para **servidores dedicados**:
-
+**Servidor Dedicado:**
+```
 steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
+```
 
+### Desbloqueo del mapa
+
+<detalles>
+<summary>Haga clic para ampliar las instrucciones de desbloqueo del mapa</summary>
+
+1. Copia `LocalData.sav` de `src\resources\`
+2. Encuentra tu carpeta de guardado de servidor/mundo
+3. Reemplace el `LocalData.sav` existente con el archivo copiado
+4. Inicie el juego con un mapa completamente desbloqueado.
+
+> **Nota:** Utilice la opción **Herramientas → Restaurar mapa** en PST para aplicar el mapa desbloqueado a TODOS sus mundos/servidores a la vez con copias de seguridad automáticas.
+
+</detalles>
+
+### Host → Transferencia de servidor
+
+<detalles>
+<summary>Haga clic para expandir la guía de transferencia de host a servidor</summary>
+
+1. Copie las carpetas `Level.sav` y `Players` desde el guardado del host
+2. Pegar en la carpeta de guardado dedicated server
+3. Iniciar servidor, crear un nuevo personaje.
+4. Espere a que se guarde automáticamente y luego cierre
+5. Utilice **Fix Host Save** para migrar GUIDs
+6. Copie los archivos y ejecútelos
+
+**Utilizando Fix Host Save:**
+- Seleccione `Level.sav` de su carpeta temporal
+- Elija el **carácter antiguo** (del guardado original)
+- Elige el **nuevo personaje** (que acabas de crear)
+- Haga clic en **Migrar**
+
+</detalles>
+
+### Intercambio de host (cambio de host)
+
+<detalles>
+<summary>Haga clic para expandir la guía de intercambio de host</summary>
+
+**Fondo:**
+- El anfitrión siempre usa `0001.sav`: el mismo UID para quien sea el anfitrión
+- Cada cliente utiliza un guardado UID único y regular (por ejemplo, `123xxx.sav`, `987xxx.sav`)
+
+**Requisitos previos:**
+Ambos jugadores (antiguo anfitrión y nuevo anfitrión) deben generar sus partidas guardadas habituales. Esto sucede al unirse al mundo del anfitrión y crear un nuevo personaje.
+
+**Pasos:**
+
+1. **Asegúrese de que existan guardados regulares**
+   - El jugador A (antiguo anfitrión) debe tener un guardado regular (por ejemplo, `123xxx.sav`)
+   - El jugador B (nuevo anfitrión) debe tener un guardado regular (por ejemplo, `987xxx.sav`).
+
+2. **Cambiar el guardado del host anterior al guardado normal**
+   - Utilice PalworldSaveTools **Fix Host Save** para intercambiar:
+   - `0001.sav` del antiguo host → `123xxx.sav`
+   - (Esto mueve el progreso del antiguo anfitrión del puesto de anfitrión al puesto de jugador habitual)
+
+3. **Cambiar el guardado habitual del nuevo anfitrión por el guardado del anfitrión**
+   - Utilice PalworldSaveTools **Fix Host Save** para intercambiar:
+   - `987xxx.sav` → `0001.sav` del nuevo host
+   - (Esto mueve el progreso del nuevo anfitrión al espacio de anfitrión)
+
+**Resultado:**
+- El jugador B ahora es el anfitrión con su propio personaje y amigos en `0001.sav`
+- El jugador A se convierte en cliente con su progreso original en `123xxx.sav`
+
+</detalles>
+
+### Exportación/Importación básica
+
+<detalles>
+<summary>Haga clic para expandir la guía básica de exportación/importación</summary>
+
+**Exportando una Base:**
+1. Carga tu guardado en PST
+2. Ir a la pestaña Bases
+3. Haga clic derecho en una base → Exportar base
+4. Guardar como archivo `.json`
+
+**Importando una base:**
+1. Vaya a la pestaña Bases o al Visor de mapas base
+2. Haga clic derecho en el gremio al que desea importar la base.
+3. Seleccione Importar base
+4. Seleccione su archivo `.json` exportado
+
+**Clonación de una base:**
+1. Haga clic derecho en una base → Clonar base
+2. Seleccionar gremio objetivo
+3. La base se clonará con posicionamiento desplazado.
+
+**Ajuste del radio de la base:**
+1. Haga clic derecho en una base → Ajustar radio
+2. Ingrese un nuevo radio (50% - 1000%)
+3. Guarde y cargue el guardado en el juego para las estructuras que se van a reasignar.
+
+</detalles>
 
 ---
 
-### 🧪 Proceso de transferencia
+## Troubleshooting
 
-1. Copia **`Level.sav` y la carpeta `Players`** desde tu guardado de **Host/Coop** o **Servidor Dedicado**.  
-2. Pégalo en la otra carpeta de tipo guardado (Host ↔ Servidor).  
-3. Inicia el juego o servidor.  
-4. Cuando se te pida, crea un **nuevo personaje**.  
-5. Espera ~2 minutos para el auto-guardado y luego cierra juego/servidor.  
-6. Copia el actualizado **`Level.sav` y `Players`** desde ese mundo.  
-7. Pégalos en una **carpeta temporal** en tu PC.  
-8. Abre **PST(PalworldSaveTools)** y selecciona **Fix Host Save**.  
-9. Selecciona **`Level.sav`** de la carpeta temporal.  
-10. Elige:
-    - **Personaje viejo** (del guardado original)  
-    - **Personaje nuevo** (recién creado)  
-11. Haz clic en **Migrate**.  
-12. Copia tras la migración los actualizados **`Level.sav` y `Players`** de la carpeta temporal.  
-13. Pégalos en tu carpeta de guardado real (Host o Servidor).  
-14. Inicia juego/servidor y disfruta de tu personaje con todo el progreso intacto.
+### "No se encontró VCRUNTIME140.dll"
 
----
+**Solución:** Instalar [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 
-# Proceso de intercambio de Host en Palworld (UID explicado)
+### `struct.error` al analizar guardar
 
-## Antecedentes
-- **El Host siempre usa `0001.sav`** — misma UID para cualquiera que hostee.  
-- Cada cliente usa un **guardado UID regular** (ej. `123xxx.sav`, `987xxx.sav`).
+**Causa:** Formato de archivo guardado desactualizado
 
-## Requisito clave
-Ambos jugadores (Host antiguo y nuevo) **deben tener sus guardados regulares**.  
-Se crea un personaje automáticamente si no existe.
+**Solución:**
+1. Cargue el guardado en el juego (modo Solo, Cooperativo o Servidor Dedicado)
+2. Esto desencadena una actualización automática de la estructura.
+3. Asegúrate de que el guardado se haya actualizado a partir del último parche del juego.
+
+### El convertidor GamePass no funciona
+
+**Solución:**
+1. Cierre la versión GamePass de Palworld
+2. Espera unos minutos
+3. Ejecute el convertidor Steam → GamePass
+4. Inicie Palworld en GamePass para verificar
 
 ---
 
-## Pasos para intercambio de Host
+## Construyendo desde la fuente
 
-### 1. Asegurar que existan guardados regulares
-- Jugador A (Host antiguo) tiene un guardado regular (`123xxx.sav`).  
-- Jugador B (Host nuevo) tiene un guardado regular (`987xxx.sav`).
+```golpecito
+# Clonar el repositorio
+clon de git https://github.com/deafdudecomputers/PalworldSaveTools.git
 
-### 2. Transferir guardado del Host antiguo a guardado regular
-- Usando **Fix Host Save**:  
-  `0001.sav` → `123xxx.sav`  
-  (Transfiere progreso del antiguo Host a su slot regular)
+# Instalar dependencias
+pip instalar -r requisitos.txt
 
-### 3. Transferir guardado del nuevo Host a slot Host
-- Usando **Fix Host Save**:  
-  `987xxx.sav` → `0001.sav`  
-  (Transfiere progreso del nuevo Host a slot Host)
+# Ejecute la aplicación
+inicio de Python.py
+```
 
----
-
-## Resultado
-- Jugador B ahora es el Host con su personaje y Pals en `0001.sav`.  
-- Jugador A es cliente, su progreso original en `123xxx.sav`.
+Para crear el ejecutable independiente, utilice el script de compilación:
+```golpecito
+scripts de Python/build.py
+```
 
 ---
 
-## Resumen
-- **`0001.sav` antiguo Host → guardado UID regular**  
-- **Guardado UID regular nuevo Host → `0001.sav`**
+## __TECNOLOGÍA_3__
+
+¡Las contribuciones son bienvenidas! No dude en enviar una solicitud de extracción.
+
+1. Bifurcar el repositorio
+2. Crea tu rama de funciones (`git checkout -b feature/AmazingFeature`)
+3. Confirme sus cambios (`git commit -m 'Agregar alguna característica increíble'`)
+4. Empujar a la rama (`git push origin feature/AmazingFeature`)
+5. Abrir una solicitud de extracción
 
 ---
 
-# 🐞 Errores / Problemas conocidos
+## Descargo de responsabilidad
 
-## 1. Convertidor Steam ➝ GamePass no funciona
-**Problema:** Los cambios no se aplican.  
-**Solución:**  
-1. Cierra la versión GamePass de Palworld.  
-2. Espera unos minutos.  
-3. Ejecuta el convertidor Steam ➝ GamePass.  
-4. Espera nuevamente.  
-5. Inicia Palworld en GamePass y verifica el guardado actualizado.
+**Utilice esta herramienta bajo su propia responsabilidad. Siempre haga una copia de seguridad de sus archivos guardados antes de realizar modificaciones.**
+
+Los desarrolladores no son responsables de ninguna pérdida de datos guardados o problemas que puedan surgir al utilizar esta herramienta.
 
 ---
 
-## 2. `struct.error` al parsear el guardado
-**Causa:** Guardado desactualizado y no compatible con herramientas actuales.  
-**Solución:**  
-- Carga el guardado en Solo, Coop o Servidor Dedicado.  
-- Ejecuta el juego una vez para activar **actualización automática de estructura**.  
-- Asegúrate que el guardado sea **posterior al último parche**.
+## Apoyo
+
+- **__TECNOLOGÍA_1__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **GitHub Problemas:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
+- **Documentación:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
 ---
 
-## 3. `PalworldSaveTools.exe - Error del sistema`
-**Mensaje de error:**
-The code execution cannot proceed because VCRUNTIME140.dll was not found.
-Reinstalling the program may fix this problem.
+## Licencia
 
-**Causa:** Algunos PCs (sistemas mínimos, sandbox o VM) no tienen esta DLL.  
-**Solución:**  
-- Instala la **Microsoft Visual C++ Redistributable 2015–2022**  
-- [Enlace oficial de Microsoft](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable)
+Este proyecto tiene la licencia MIT License; consulte el archivo [LICENSE](LICENSE) para obtener más detalles.
+
+---
+
+## Agradecimientos
+
+- **__TECNOLOGÍA_35__** developed by Pocketpair, Inc.
+- Gracias a todos los contribuyentes y miembros de la comunidad que han ayudado a mejorar esta herramienta.
+
+---
+
+<div align="center">
+
+**Hecho con ❤️ para la comunidad Palworld**
+
+[⬆ Volver arriba](#palworldsavetools)
+
+</div>
