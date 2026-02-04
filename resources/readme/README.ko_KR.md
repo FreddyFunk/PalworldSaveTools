@@ -23,14 +23,14 @@
 
 ## Table of Contents
 
-- Features
-- Installation
-- [Quick Start](#빠른 시작)
-- [도구 개요](#tools-overview)
-- 가이드
-- [Troubleshooting](#문제 해결)
-- Contributing
-- 라이센스
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Tools Overview](#tools-overview)
+- [Guides](#guides)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 

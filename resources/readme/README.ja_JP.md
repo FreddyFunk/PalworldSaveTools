@@ -23,14 +23,14 @@
 
 ## Table of Contents
 
-- Features
-- Installation
-- Quick Start
-- [ツールの概要](#tools-overview)
-- ガイド
-- Troubleshooting
-- Contributing
-- ライセンス
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Tools Overview](#tools-overview)
+- [Guides](#guides)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 

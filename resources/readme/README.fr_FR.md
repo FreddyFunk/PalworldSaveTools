@@ -23,14 +23,14 @@
 
 ## Table of Contents
 
-- Features
-- Installation
-- [Quick Start](#démarrage rapide)
-- [Présentation des outils](#tools-overview)
-- Guides
-- Troubleshooting
-- Contributing
-- Licence
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Tools Overview](#tools-overview)
+- [Guides](#guides)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -53,7 +53,7 @@
 
 ### Outils tout-en-un
 
-La suite **All-in-One Tools** offre une gestion complète des sauvegardes :
+La suite **All-in-One Tools** offre une gestion complète des sauvegardes:
 
 - **Outils de suppression**
   - Supprimer Players, bases ou guildes

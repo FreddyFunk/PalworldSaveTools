@@ -23,14 +23,14 @@
 
 ## Table of Contents
 
-- Features
-- Installation
-- Quick Start
-- [工具概述](#tools-overview)
-- 指南
-- [Troubleshooting]（#故障排除）
-- [Contributing]（#贡献）
-- 许可证
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Tools Overview](#tools-overview)
+- [Guides](#guides)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 

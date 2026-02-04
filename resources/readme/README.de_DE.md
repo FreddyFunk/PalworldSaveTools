@@ -23,14 +23,14 @@
 
 ## Table of Contents
 
-- Features
-- Installation
-- Quick Start
-- [Tools-Übersicht](#tools-overview)
-- Anleitungen
-- Troubleshooting
-- Contributing
-- Lizenz
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Tools Overview](#tools-overview)
+- [Guides](#guides)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
