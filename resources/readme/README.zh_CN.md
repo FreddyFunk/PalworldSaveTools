@@ -4,7 +4,7 @@
 
 # Palworld保存工具
 
-**用于 Palworld** 的综合保存文件编辑工具包
+**用于Palworld的综合保存文件编辑工具包**
 
 [![下载](https://img.shields.io/github/downloads/deafdudecomputers/PalworldSaveTools/total)](https://github.com/deafdudecomputers/PalworldTools/releases/latest)
 [！[执照](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
@@ -97,7 +97,7 @@
 | ------ | ------------- |
 | **编辑玩家好友** | 完整的好友编辑器，包含统计数据、技能、IV、天赋、灵魂、等级和性别 |
 | **SteamID 转换器** | 将 Steam ID 转换为 Palworld UIDs |
-| **修复主机保存** | 在两个玩家之间交换 UIDs（例如，主机交换） |
+| **修复主机保存** | 在两个玩家之间交换 UIDs（例如，用于主机交换） |
 | **交换玩家UIDs** | 在两个玩家之间交换 UIDs |
 | **槽式注入器** | 增加每位玩家的 palbox 槽位 |
 | **恢复地图** | 在所有世界/服务器上应用解锁的地图进度 |
@@ -112,8 +112,8 @@
 
 ### 先决条件
 
-**对于独立版 (Windows)：**
-- Windows 10/11
+**对于独立 (Windows)：**
+- __技术_5__ 10/11
 - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (2015-2022)
 
 **对于从源代码运行（Linux 或开发）：**
@@ -126,7 +126,7 @@
 2. 提取 zip 文件
 3. 运行“PalworldSaveTools.exe”
 
-### 来自源头（Linux 或用于开发）
+### 来自来源（Linux 或用于开发）
 
 ```bash
 git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
@@ -192,11 +192,11 @@ python start.py
 在不同世界/服务器之间转移角色（交叉保存）：
 - 转移单个或所有玩家
 - 保留角色、伙伴、库存和技术
-- 对于在合作社和 dedicated server 之间迁移很有用
+- 对于在合作社和 dedicated servers 之间迁移很有用
 
 ### 修复主机保存
 
-在两个玩家之间交换 UID：
+在两个玩家之间交换 UIDs：
 - 将进度从一名玩家转移到另一名玩家
 - host/co-op 到服务器传输所必需的
 - 对于在玩家之间交换主机角色很有用
@@ -386,7 +386,7 @@ python scripts/build.py
 
 ＃＃ 支持
 
-- **Discord：** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__技术_23__：** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub 问题：** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **文档：** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -400,7 +400,7 @@ python scripts/build.py
 
 ## 致谢
 
-- **__技术_22__** developed by Pocketpair, Inc.
+- **__技术_0__** developed by Pocketpair, Inc.
 - 感谢所有帮助改进此工具的贡献者和社区成员
 
 ---

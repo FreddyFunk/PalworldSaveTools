@@ -2,7 +2,7 @@
 
 ![PalworldLogotipo de SaveTools](resources/PalworldSaveTools_Blue.png)
 
-# PalworldGuardarHerramientas
+# PalworldSaveTools
 
 **Un completo kit de herramientas de edición de archivos guardados para Palworld**
 
@@ -21,7 +21,7 @@
 
 </div>
 
-## Table of Contents
+## __TECNOLOGÍA_6__
 
 - [Features](#características)
 - [Installation](#instalación)
@@ -34,7 +34,7 @@
 
 ---
 
-## __TECNOLOGÍA_7__
+## Features
 
 ### Funcionalidad principal
 
@@ -96,7 +96,7 @@ El paquete **Herramientas todo en uno** proporciona una gestión integral de gua
 | Herramienta | Descripción |
 | ------ | ------------- |
 | **Editar amigos jugadores** | Editor de amigos completo con estadísticas, habilidades, IV, talentos, almas, rango y género. |
-| **SteamID Convertidor** | Convertir ID de Steam a Palworld UIDs |
+| **SteamID Convertidor** | Convertir Steam ID a Palworld UIDs |
 | **Reparar el guardado del host** | Intercambiar UIDs entre dos jugadores (por ejemplo, para intercambio de host) |
 | **Intercambiar jugador UIDs** | Intercambia UIDs entre dos jugadores |
 | **Inyector de ranura** | Aumentar espacios de palbox por jugador |
@@ -113,7 +113,7 @@ El paquete **Herramientas todo en uno** proporciona una gestión integral de gua
 ### Requisitos previos
 
 **Para independiente (Windows):**
-- __TECNOLOGÍA_13__ 10/11
+- __TECNOLOGÍA_5__ 10/11
 - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (2015-2022)
 
 **Para ejecutar desde el código fuente (Linux o desarrollo):**
@@ -141,7 +141,7 @@ python start.py
 
 1. **Carga tu guardado**
    - Haga clic en **Archivo → Cargar Guardar**
-   - Navegue a su carpeta de guardado Palworld
+   - Navega a tu carpeta de guardado Palworld
    - Seleccione `Level.sav`
 
 2. **Explore sus datos**
@@ -164,7 +164,7 @@ python start.py
 
 La interfaz principal para una gestión integral de guardados con tres pestañas:
 
-**Pestaña Players** - Ver y administrar todos los jugadores en el servidor
+**Players Tab** - Ver y administrar todos los jugadores en el servidor
 - Editar nombres de jugadores, niveles y recuentos de amigos.
 - Eliminar jugadores inactivos
 - Ver gremios de jugadores y el último tiempo en línea
@@ -364,7 +364,7 @@ python scripts/build.py
 
 ---
 
-## Contributing
+## __TECNOLOGÍA_4__
 
 ¡Las contribuciones son bienvenidas! No dude en enviar una solicitud de extracción.
 
@@ -386,7 +386,7 @@ Los desarrolladores no son responsables de ninguna pérdida de datos guardados o
 
 ## Apoyo
 
-- **__TECNOLOGÍA_36__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__TECNOLOGÍA_23__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub Problemas:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **Documentación:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -400,7 +400,7 @@ Este proyecto tiene la licencia MIT License; consulte el archivo [LICENSE](LICEN
 
 ## Agradecimientos
 
-- **__TECNOLOGÍA_22__** developed by Pocketpair, Inc.
+- **Palworld** developed by Pocketpair, Inc.
 - Gracias a todos los contribuyentes y miembros de la comunidad que han ayudado a mejorar esta herramienta.
 
 ---

@@ -2,7 +2,7 @@
 
 ![PalworldSaveTools 로고](resources/PalworldSaveTools_Blue.png)
 
-# PalworldSaveTools
+# PalworldSave도구
 
 **Palworld을 위한 포괄적인 저장 파일 편집 툴킷**
 
@@ -21,7 +21,7 @@
 
 </div>
 
-## __테크_12__
+## __테크_6__
 
 - [Features](#기능)
 - [Installation](#설치)
@@ -34,7 +34,7 @@
 
 ---
 
-## __테크_7__
+## Features
 
 ### 핵심 기능
 
@@ -97,7 +97,7 @@
 | ------ | ------------- |
 | **플레이어 친구 편집** | 통계, 기술, IV, 재능, 영혼, 순위 및 성별을 갖춘 완전한 친구 편집자 |
 | **SteamID 변환기** | Steam ID를 Palworld UID로 변환 |
-| **호스트 저장 수정** | 두 플레이어 간 UID 교환(예: 호스트 교환) |
+| **호스트 저장 수정** | 두 플레이어 간에 UID을 교환합니다(예: 호스트 교환의 경우). |
 | **스왑 플레이어 UIDs** | 두 플레이어 간에 UID을 교환합니다. |
 | **슬롯 인젝터** | 플레이어당 팔박스 슬롯 늘리기 |
 | **지도 복원** | 모든 월드/서버에 잠금 해제된 지도 진행 상황 적용 |
@@ -142,7 +142,7 @@ python start.py
 1. **저장 파일 로드**
    - **파일 → 저장 로드**를 클릭하세요.
    - Palworld 저장 폴더로 이동하세요.
-   - `Level.sav`를 선택하세요.
+   - `Level.sav`을 선택하세요.
 
 2. **데이터 탐색**
    - 탭을 사용하여 Players, 길드, 기지 또는 지도를 확인하세요.
@@ -247,7 +247,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 6. 파일을 다시 복사하고 실행하세요.
 
 **수정 호스트 저장 사용:**
-- 임시 폴더에서 `Level.sav`를 선택하세요.
+- 임시 폴더에서 `Level.sav`을 선택하세요.
 - **이전 캐릭터**를 선택하세요(원본 저장에서)
 - **새 캐릭터**(방금 생성한 캐릭터)를 선택하세요.
 - **이전**을 클릭하세요.
@@ -339,8 +339,8 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 **해결책:**
 1. Palworld의 GamePass 버전을 닫습니다.
 2. 몇 분만 기다려주세요
-3. Steam → GamePass 변환기 실행
-4. GamePass에서 Palworld을 실행하여 확인하세요.
+3. Steam → GamePass 변환기를 실행합니다.
+4. GamePass에서 Palworld을(를) 실행하여 확인하세요.
 
 ---
 
@@ -364,7 +364,7 @@ python scripts/build.py
 
 ---
 
-## Contributing
+## __테크_4__
 
 기여를 환영합니다! 언제든지 Pull Request를 제출해 주세요.
 
@@ -386,7 +386,7 @@ python scripts/build.py
 
 ## 지원하다
 
-- **__기술_36__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__기술_23__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub 문제:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **선적 서류 비치:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -400,7 +400,7 @@ python scripts/build.py
 
 ## 감사의 말씀
 
-- **Palworld** developed by Pocketpair, Inc.
+- **__기술_0__** developed by Pocketpair, Inc.
 - 이 도구를 개선하는 데 도움을 준 모든 기여자와 커뮤니티 구성원에게 감사드립니다.
 
 ---

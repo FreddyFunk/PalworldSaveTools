@@ -56,7 +56,7 @@
 La suite **All-in-One Tools** offre une gestion complète des sauvegardes :
 
 - **Outils de suppression**
-  - Supprimer Players, bases ou guildes
+  - Supprimer Players, des bases ou des guildes
   - Supprimer les joueurs inactifs en fonction de seuils de temps
   - Supprimez les joueurs en double et les guildes vides
   - Supprimer les données non référencées/orphelines
@@ -200,7 +200,7 @@ Transférer des personnages entre différents mondes/serveurs (sauvegarde crois�
 - Transférer la progression d'un joueur à un autre
 - Indispensable pour les transferts de host/co-op vers le serveur
 - Utile pour échanger le rôle d'hôte entre les joueurs
-- Utile pour les échanges de plateformes (Xbox ↔ Steam)
+- Utile pour les échanges de plates-formes (Xbox ↔ Steam)
 - Résout les problèmes d'affectation hôte/serveur UID
 - **Note:** Affected player must have a character created on the target save first
 
@@ -340,7 +340,7 @@ Les deux joueurs (ancien hôte et nouvel hôte) doivent avoir leurs sauvegardes 
 1. Fermez la version GamePass de Palworld
 2. Attends quelques minutes
 3. Exécutez le convertisseur Steam → GamePass
-4. Lancez Palworld sur GamePass pour vérifier
+4. Lancez Palworld le GamePass pour vérifier
 
 ---
 

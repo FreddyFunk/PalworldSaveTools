@@ -96,7 +96,7 @@ Die Suite **All-in-One Tools** bietet umfassende Speicherverwaltung:
 | Werkzeug | Beschreibung |
 | ------ | ------------- |
 | **Spielerfreunde bearbeiten** | Vollständiger Kumpel-Editor mit Statistiken, Fähigkeiten, IVs, Talenten, Seelen, Rang und Geschlecht |
-| **SteamID-Konverter** | Konvertieren Sie Steam-IDs in Palworld UIDs |
+| **SteamID Konverter** | Konvertieren Sie Steam-IDs in Palworld UIDs |
 | **Host-Speicherung beheben** | Tauschen Sie UIDs zwischen zwei Spielern aus (z. B. für den Host-Tausch) |
 | **Spieler tauschen UIDs** | Tausche UIDs zwischen zwei Spielern |
 | **Schlitzinjektor** | Erhöhen Sie die Palbox-Slots pro Spieler |
@@ -122,7 +122,7 @@ Die Suite **All-in-One Tools** bietet umfassende Speicherverwaltung:
 
 ### Eigenständig (Windows – empfohlen)
 
-1. Laden Sie die neueste Version von [GitHub Releases] herunter (https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)
+1. Laden Sie die neueste Version von [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) herunter.
 2. Extrahieren Sie die ZIP-Datei
 3. Führen Sie „PalworldSaveTools.exe“ aus
 
@@ -141,7 +141,7 @@ python start.py
 
 1. **Laden Sie Ihren Speicherstand**
    - Klicken Sie auf **Datei → Laden und Speichern**
-   - Navigieren Sie zu Ihrem Palworld-Speicherordner
+   - Navigieren Sie zu Ihrem Speicherordner Palworld
    - Wählen Sie „Level.sav“.
 
 2. **Erkunden Sie Ihre Daten**
@@ -334,7 +334,7 @@ Für beide Spieler (alter Host und neuer Host) müssen ihre regulären Spielstä
 2. Dadurch wird eine automatische Strukturaktualisierung ausgelöst
 3. Stellen Sie sicher, dass der Speicherstand mit oder nach dem neuesten Spiel-Patch aktualisiert wurde
 
-### GamePass-Konverter funktioniert nicht
+### GamePass Konverter funktioniert nicht
 
 **Lösung:**
 1. Schließen Sie die GamePass-Version von Palworld

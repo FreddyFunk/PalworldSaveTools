@@ -47,7 +47,7 @@
 | **ベースキャンプツール** | エクスポート、インポート、クローン作成、半径の調整、およびベースの管理 |
 | **マップビューア** | 座標と詳細を含むインタラクティブなベースとプレーヤーのマップ |
 | **キャラクター転送** | 異なるワールド/サーバー間でキャラクターを転送 (クロスセーブ) |
-| **変換を保存** | Steam 形式と GamePass 形式間の変換 |
+| **変換を保存** | Steam 形式と GamePass 形式の間で変換します |
 | **ワールド設定** | WorldOption および LevelMeta 設定を編集する |
 | **タイムスタンプ ツール** | 負のタイムスタンプを修正し、プレーヤーの時間をリセットします |
 
@@ -185,7 +185,7 @@ python start.py
 - すべての拠点の場所とプレーヤーの位置を表示する
 - ギルド名またはプレイヤー名でフィルタリングする
 - マーカーをクリックすると詳細情報が表示されます
-- PalDefender の `killnearestbase` コマンドを生成する
+- PalDefender の「killnearestbase」コマンドを生成する
 
 ### キャラクター転送
 
@@ -239,7 +239,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 <詳細>
 <summary>クリックしてホストからサーバーへの転送ガイドを展開します</summary>
 
-1. ホスト保存から「Level.sav」フォルダと「Players」フォルダをコピーします
+1. ホスト保存から `Level.sav` および `Players` フォルダーをコピーします
 2. dedicated server 保存フォルダーに貼り付けます
 3. サーバーを起動し、新しいキャラクターを作成します
 4. 自動保存されるまで待ってから閉じます
@@ -273,12 +273,12 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
    - プレーヤー B (新しいホスト) には通常のセーブ (例: `987xxx.sav`) が必要です。
 
 2. **古いホストのホスト セーブを通常のセーブに交換**
-   - PalworldSaveTools **ホスト セーブを修正** を使用して以下を交換します。
+   - PalworldSaveTools **ホスト セーブを修正** を使用して交換します。
    - 旧ホストの「0001.sav」→「123xxx.sav」
    - (これにより、古いホストの進行状況がホスト スロットから通常のプレイヤー スロットに移動します)
 
 3. **新しいホストの通常の保存をホストの保存に交換**
-   - PalworldSaveTools **ホスト セーブを修正** を使用して以下を交換します。
+   - PalworldSaveTools **ホスト セーブを修正** を使用して交換します。
    - 新しいホストの `987xxx.sav` → `0001.sav`
    - (これにより、新しいホストの進行状況がホスト スロットに移動されます)
 
@@ -340,7 +340,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 1. Palworld の GamePass バージョンを閉じます
 2. 数分待ちます
 3. Steam → GamePass コンバータを実行します
-4. GamePass で Palworld を起動して確認します
+4. GamePass で Palworld を起動して確認してください
 
 ---
 
@@ -400,7 +400,7 @@ python scripts/build.py
 
 ## 謝辞
 
-- **Palworld** developed by Pocketpair, Inc.
+- **__技術_0__** developed by Pocketpair, Inc.
 - このツールの改善に協力してくれたすべての貢献者とコミュニティ メンバーに感謝します
 
 ---
