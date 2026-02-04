@@ -1,6 +1,6 @@
 <div align="center">
 
-![PalworldSaveTools-Logo](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools Logo](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
 
 # PalworldSaveTools
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Englisch](resources/readme/README.en_US.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
+[English](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/README.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
 
 ---
 
@@ -23,14 +23,14 @@
 
 ## Table of Contents
 
-- [Features](#Features)
-- [Installation](#Installation)
-- [Quick Start](#Schnellstart)
+- Features
+- Installation
+- Quick Start
 - [Tools-Übersicht](#tools-overview)
-- [Anleitungen](#Anleitungen)
-- [Troubleshooting](#Fehlerbehebung)
-- [Contributing](#Beitrag)
-- [Lizenz](#license)
+- Anleitungen
+- Troubleshooting
+- Contributing
+- Lizenz
 
 ---
 
@@ -113,7 +113,7 @@ Die Suite **All-in-One Tools** bietet umfassende Speicherverwaltung:
 ### Voraussetzungen
 
 **Für Standalone (Windows):**
-- Windows 11.10
+- Windows 10/11
 - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (2015–2022)
 
 **Zur Ausführung aus dem Quellcode (Linux oder Entwicklung):**
@@ -340,7 +340,7 @@ Für beide Spieler (alter Host und neuer Host) müssen ihre regulären Spielstä
 1. Schließen Sie die GamePass-Version von Palworld
 2. Warten Sie ein paar Minuten
 3. Führen Sie den Konverter Steam → GamePass aus
-4. Starten Sie Palworld auf GamePass, um dies zu überprüfen
+4. Starten Sie zur Überprüfung Palworld auf GamePass
 
 ---
 
@@ -394,7 +394,7 @@ Die Entwickler sind nicht verantwortlich für den Verlust gespeicherter Daten od
 
 ## Lizenz
 
-Dieses Projekt ist unter MIT License lizenziert – Einzelheiten finden Sie in der Datei [LICENSE](LICENSE).
+Dieses Projekt ist unter der Lizenz MIT License lizenziert – Einzelheiten finden Sie in der Datei [LICENSE](LICENSE).
 
 ---
 
@@ -409,6 +409,6 @@ Dieses Projekt ist unter MIT License lizenziert – Einzelheiten finden Sie in d
 
 **Erstellt mit ❤️ für die Palworld-Community**
 
-[⬆ Zurück nach oben](#palworldsavetools)
+⬆ Zurück nach oben
 
 </div>

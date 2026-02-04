@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldLogo SaveTools](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
+![PalworldSaveToolsLogo](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
 
-# PalworldEnregistrerOutils
+# PalworldSaveTools
 
 **Une boîte à outils complète d'édition de fichiers de sauvegarde pour Palworld**
 
@@ -11,11 +11,11 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Anglais](resources/readme/README.en_US.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
+[English](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/README.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
 
 ---
 
-### **Download the standalone version from [GitHub Sorties](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
+### **Download the standalone version from [GitHub Versions](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
 
 ---
 
@@ -23,14 +23,14 @@
 
 ## Table of Contents
 
-- [Features](#fonctionnalités)
-- [Installation](#installation)
+- Features
+- Installation
 - [Quick Start](#démarrage rapide)
 - [Présentation des outils](#tools-overview)
-- [Guides](#guides)
-- [Troubleshooting](#dépannage)
-- [Contributing](#contribuant)
-- [Licence](#licence)
+- Guides
+- Troubleshooting
+- Contributing
+- Licence
 
 ---
 
@@ -243,7 +243,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 2. Coller dans le dossier de sauvegarde dedicated server
 3. Démarrer le serveur, créer un nouveau personnage
 4. Attendez la sauvegarde automatique, puis fermez
-5. Utilisez **Fix Host Save** pour migrer GUIDs
+5. Utilisez **Fix Host Save** pour migrer les GUIDs
 6. Copiez les fichiers et lancez
 
 **Utilisation de Fix Host Save :**
@@ -409,6 +409,6 @@ Ce projet est sous licence MIT License - voir le fichier [LICENSE](LICENSE) pour
 
 **Réalisé avec ❤️ pour la communauté Palworld**
 
-[⬆ Retour en haut](#palworldsavetools)
+⬆ Retour en haut
 
 </div>

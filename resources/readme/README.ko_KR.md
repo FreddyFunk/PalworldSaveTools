@@ -2,7 +2,7 @@
 
 ![PalworldSaveTools 로고](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
 
-# PalworldSaveTools
+# __테크_16__
 
 **Palworld을 위한 포괄적인 저장 파일 편집 툴킷**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[영어](resources/readme/README.en_US.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
+[English](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/README.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
 
 ---
 
@@ -21,20 +21,20 @@
 
 </div>
 
-## __테크_2__
+## Table of Contents
 
-- [Features](#기능)
-- [Installation](#설치)
+- Features
+- Installation
 - [Quick Start](#빠른 시작)
 - [도구 개요](#tools-overview)
-- [가이드](#guides)
+- 가이드
 - [Troubleshooting](#문제 해결)
-- [Contributing](#기여)
-- [라이센스](#license)
+- Contributing
+- 라이센스
 
 ---
 
-## __기술_3__
+## __테크_0__
 
 ### 핵심 기능
 
@@ -47,7 +47,7 @@
 | **베이스캠프 도구** | 내보내기, 가져오기, 복제, 반경 조정 및 기지 관리 |
 | **맵 뷰어** | 좌표와 세부정보가 포함된 대화형 기지 및 플레이어 지도 |
 | **캐릭터 이전** | 다른 월드/서버 간 캐릭터 전송(교차 저장) |
-| **전환 저장** | Steam과 GamePass 형식 간 변환 |
+| **전환 저장** | Steam 및 GamePass 형식 간 변환 |
 | **월드 설정** | WorldOption 및 LevelMeta 설정 편집 |
 | **타임스탬프 도구** | 음수 타임스탬프 수정 및 플레이어 시간 재설정 |
 
@@ -142,7 +142,7 @@ python start.py
 1. **저장 파일 로드**
    - **파일 → 저장 로드**를 클릭하세요.
    - Palworld 저장 폴더로 이동하세요.
-   - `Level.sav`를 선택하세요.
+   - `Level.sav`을 선택하세요.
 
 2. **데이터 탐색**
    - 탭을 사용하여 Players, 길드, 기지 또는 지도를 확인하세요.
@@ -227,7 +227,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 1. `src\resources\`에서 `LocalData.sav` 복사
 2. 서버/월드 저장 폴더 찾기
-3. 기존 `LocalData.sav`을 복사된 파일로 교체하세요.
+3. 기존 `LocalData.sav`를 복사된 파일로 교체하세요.
 4. 완전히 잠금 해제된 지도로 게임을 시작하세요
 
 > **참고:** 자동 백업을 통해 잠금 해제된 지도를 모든 월드/서버에 한 번에 적용하려면 PST의 **도구 → 지도 복원** 옵션을 사용하세요.
@@ -243,11 +243,11 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 2. dedicated server 저장 폴더에 붙여넣기
 3. 서버를 시작하고 새로운 캐릭터를 생성하세요
 4. 자동 저장을 기다린 후 닫습니다.
-5. **Fix Host Save**를 사용하여 GUID을(를) 마이그레이션하세요
+5. **Fix Host Save**를 사용하여 GUID을 마이그레이션하세요.
 6. 파일을 다시 복사하고 실행하세요.
 
 **수정 호스트 저장 사용:**
-- 임시 폴더에서 `Level.sav`를 선택하세요.
+- 임시 폴더에서 `Level.sav`을 선택하세요.
 - **이전 캐릭터**를 선택하세요(원본 저장에서)
 - **새 캐릭터**(방금 생성한 캐릭터)를 선택하세요.
 - **이전**을 클릭하세요.
@@ -273,12 +273,12 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
    - 플레이어 B(새 호스트)는 일반 저장(예: `987xxx.sav`)을 가지고 있어야 합니다.
 
 2. **이전 호스트의 호스트 저장을 일반 저장으로 전환**
-   - PalworldSaveTools **Fix Host Save**를 사용하여 다음을 교체합니다.
+   - PalworldSaveTools **Fix Host Save**를 사용하여 교체합니다.
    - 이전 호스트의 `0001.sav` → `123xxx.sav`
    - (이렇게 하면 이전 호스트의 진행 상황이 호스트 슬롯에서 일반 플레이어 슬롯으로 이동됩니다.)
 
 3. **새 호스트의 일반 저장을 호스트 저장으로 전환**
-   - PalworldSaveTools **Fix Host Save**를 사용하여 다음을 교체합니다.
+   - PalworldSaveTools **Fix Host Save**를 사용하여 교체합니다.
    - 새 호스트의 `987xxx.sav` → `0001.sav`
    - (이렇게 하면 새 호스트의 진행 상황이 호스트 슬롯으로 이동됩니다.)
 
@@ -319,7 +319,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 ---
 
-## Troubleshooting
+## __테크_13__
 
 ### "VCRUNTIME140.dll을 찾을 수 없습니다"
 
@@ -386,7 +386,7 @@ python scripts/build.py
 
 ## 지원하다
 
-- **__기술_16__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__기술_20__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub 문제:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **선적 서류 비치:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -400,7 +400,7 @@ python scripts/build.py
 
 ## 감사의 말씀
 
-- **__테크_24__** developed by Pocketpair, Inc.
+- **Palworld** developed by Pocketpair, Inc.
 - 이 도구를 개선하는 데 도움을 준 모든 기여자와 커뮤니티 구성원에게 감사드립니다.
 
 ---
@@ -409,6 +409,6 @@ python scripts/build.py
 
 **Palworld 커뮤니티를 위해 ❤️으로 제작됨**
 
-[⬆ 맨 위로 이동](#palworldsavetools)
+⬆ 맨 위로 이동
 
 </div>

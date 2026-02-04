@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldLogotipo de SaveTools](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
+![Logotipo de PalworldSaveTools](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
 
-# PalworldSaveTools
+# __TECNOLOGÍA_16__
 
 **Un completo kit de herramientas de edición de archivos guardados para Palworld**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Inglés](resources/readme/README.en_US.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
+[English](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/README.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
 
 ---
 
@@ -21,20 +21,20 @@
 
 </div>
 
-## __TECNOLOGÍA_2__
+## Table of Contents
 
-- [Features](#características)
-- [Installation](#instalación)
+- Features
+- Installation
 - [Quick Start](#inicio rápido)
 - [Descripción general de herramientas](#herramientas-descripción general)
-- [Guías](#guías)
+- Guías
 - [Troubleshooting](#solución de problemas)
-- [Contributing](#contribuyendo)
-- [Licencia](#licencia)
+- Contributing
+- Licencia
 
 ---
 
-## __TECNOLOGÍA_3__
+## Features
 
 ### Funcionalidad principal
 
@@ -96,9 +96,9 @@ El paquete **Herramientas todo en uno** proporciona una gestión integral de gua
 | Herramienta | Descripción |
 | ------ | ------------- |
 | **Editar amigos jugadores** | Editor de amigos completo con estadísticas, habilidades, IV, talentos, almas, rango y género. |
-| **SteamConvertidor de ID** | Convierta los ID de Steam a Palworld UIDs |
+| **SteamID Convertidor** | Convierta los ID de Steam a Palworld UIDs |
 | **Reparar el guardado del host** | Intercambiar UIDs entre dos jugadores (por ejemplo, para intercambio de host) |
-| **Cambiar jugador UIDs** | Intercambia UIDs entre dos jugadores |
+| **Intercambiar jugador UIDs** | Intercambia UIDs entre dos jugadores |
 | **Inyector de ranura** | Aumentar espacios de palbox por jugador |
 | **Restaurar mapa** | Aplicar el progreso del mapa desbloqueado en todos los mundos/servidores. |
 | **Cambiar nombre del mundo** | Cambiar nombre mundial en LevelMeta |
@@ -113,7 +113,7 @@ El paquete **Herramientas todo en uno** proporciona una gestión integral de gua
 ### Requisitos previos
 
 **Para independiente (Windows):**
-- Windows 10/11
+- __TECNOLOGÍA_10__ 10/11
 - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (2015-2022)
 
 **Para ejecutar desde el código fuente (Linux o desarrollo):**
@@ -386,7 +386,7 @@ Los desarrolladores no son responsables de ninguna pérdida de datos guardados o
 
 ## Apoyo
 
-- **__TECNOLOGÍA_16__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__TECNOLOGÍA_20__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub Problemas:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **Documentación:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -400,7 +400,7 @@ Este proyecto tiene la licencia MIT License; consulte el archivo [LICENSE](LICEN
 
 ## Agradecimientos
 
-- **__TECNOLOGÍA_24__** developed by Pocketpair, Inc.
+- **__TECNOLOGÍA_29__** developed by Pocketpair, Inc.
 - Gracias a todos los contribuyentes y miembros de la comunidad que han ayudado a mejorar esta herramienta.
 
 ---
@@ -409,6 +409,6 @@ Este proyecto tiene la licencia MIT License; consulte el archivo [LICENSE](LICEN
 
 **Hecho con ❤️ para la comunidad Palworld**
 
-[⬆ Volver arriba](#palworldsavetools)
+⬆ Volver arriba
 
 </div>

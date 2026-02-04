@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldСохранить логотип инструментов](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools Логотип](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
 
-# PalworldСохранитьИнструменты
+# PalworldSaveTools
 
 **Комплексный набор инструментов для редактирования файлов сохранений для Palworld**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Английский](resources/readme/README.en_US.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
+[English](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/README.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
 
 ---
 
@@ -23,14 +23,14 @@
 
 ## Table of Contents
 
-- [Features](#функции)
-- [Installation](#installation)
+- Features
+- Installation
 - [Quick Start](#быстрый старт)
 - [Обзор инструментов](#tools-overview)
-- [Руководства](#guides)
+- Руководства
 - [Troubleshooting](#устранение неполадок)
-- [Contributing](#вклад)
-- [Лицензия](#лицензия)
+- Contributing
+- Лицензия
 
 ---
 
@@ -96,7 +96,7 @@
 | Инструмент | Описание |
 | ------ | ------------- |
 | **Изменить друзей игроков** | Полноценный редактор приятелей со статистикой, навыками, IV, талантами, душами, рангом и полом. |
-| **SteamКонвертер идентификаторов** | Преобразовать идентификаторы Steam в идентификаторы Palworld UID. |
+| **SteamКонвертер идентификаторов** | Преобразовать идентификаторы Steam в Palworld UIDs |
 | **Исправить сохранение хоста** | Обмен UID между двумя игроками (например, для обмена хостами) |
 | **Поменять игрока UIDs** | Обменяйтесь UID между двумя игроками. |
 | **Слот-инжектор** | Увеличение количества слотов для палбоксов на игрока |
@@ -201,7 +201,7 @@ python start.py
 - Необходим для host/co-op для передачи данных на сервер
 - Полезно для смены роли хоста между игроками.
 - Полезно для смены платформ (Xbox ↔ Steam)
-- Устраняет проблемы с назначением хоста/сервера UID.
+- Решает проблемы с назначением хоста/сервера UID.
 - **Примечание:** Affected player must have a character created on the target save first
 
 ---
@@ -243,7 +243,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 2. Вставить в папку сохранения dedicated server.
 3. Запустить сервер, создать нового персонажа
 4. Подождите автосохранения, затем закройте
-5. Используйте **Fix Host Save** для переноса GUIDs.
+5. Используйте **Fix Host Save** для миграции GUID.
 6. Скопируйте файлы обратно и запустите
 
 **Использование сохранения Fix Host:**
@@ -409,6 +409,6 @@ python scripts/build.py
 
 **Сделано с ❤️ для сообщества Palworld**
 
-[⬆ Вернуться к началу](#palworldsavetools)
+⬆ Вернуться к началу
 
 </div>
