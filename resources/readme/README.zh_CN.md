@@ -1,21 +1,21 @@
 <div align="center">
 
-![PalworldSaveTools 标志](资源/PalworldSaveTools_Blue.png)
+![PalworldSaveTools 徽标](resources/PalworldSaveTools_Blue.png)
 
-# __技术_19__
+# Palworld保存工具
 
-**适用于 Palworld** 的综合保存文件编辑工具包
+**用于 Palworld** 的综合保存文件编辑工具包
 
 [![下载](https://img.shields.io/github/downloads/deafdudecomputers/PalworldSaveTools/total)](https://github.com/deafdudecomputers/PalworldTools/releases/latest)
-[![许可证](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
+[！[执照](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[英文](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [德语](资源/自述文件/README.de_DE.md) | [西班牙语](资源/自述文件/README.es_ES.md) | [法语](资源/自述文件/README.fr_FR.md) | [Русский](资源/自述文件/README.ru_RU.md) | [日本语](资源/自述文件/README.ja_JP.md) | [한국어]（资源/自述文件/README.ko_KR.md）
+[英语](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
-### **从 [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) 下载独立版本**
+### **Download the standalone version from [GitHub 发布](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
 
 ---
 
@@ -126,14 +126,14 @@
 2. 提取 zip 文件
 3. 运行“PalworldSaveTools.exe”
 
-### 来自来源（Linux 或用于开发）
+### 来自源头（Linux 或用于开发）
 
-````bash
-git 克隆 https://github.com/deafdudecomputers/PalworldSaveTools.git
-光盘PalworldSaveTools
-pip 安装-r 要求.txt
-蟒蛇启动.py
-````
+```bash
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
+cd PalworldSaveTools
+pip install -r requirements.txt
+python start.py
+```
 
 ---
 
@@ -142,7 +142,7 @@ pip 安装-r 要求.txt
 1. **加载您的保存**
    - 单击**文件→加载保存**
    - 导航到您的 Palworld 保存文件夹
-   - 选择`Level.sav`
+   - 选择“Level.sav”
 
 2. **探索您的数据**
    - 使用选项卡查看Players、公会、基地或地图
@@ -196,7 +196,7 @@ pip 安装-r 要求.txt
 
 ### 修复主机保存
 
-在两个玩家之间交换 UIDs：
+在两个玩家之间交换 UID：
 - 将进度从一名玩家转移到另一名玩家
 - host/co-op 到服务器传输所必需的
 - 对于在玩家之间交换主机角色很有用
@@ -211,14 +211,14 @@ pip 安装-r 要求.txt
 ### 保存文件位置
 
 **主机/合作社：**
-````
+```
 %localappdata%\Pal\Saved\SaveGames\YOURID\RANDOMID\
-````
+```
 
 **专用服务器：**
-````
+```
 steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
-````
+```
 
 ### 地图解锁
 
@@ -273,12 +273,12 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
    - 玩家 B（新主机）应该有定期保存（例如“987xxx.sav”）
 
 2. **将旧主机的主机保存交换为常规保存**
-   - 使用 PalworldSaveTools **修复主机保存**来交换：
+   - 使用 PalworldSaveTools **修复主机保存** 进行交换：
    - 旧主机的 `0001.sav` → `123xxx.sav`
    - （这会将旧主机的进度从主机位置移至其常规玩家位置）
 
 3. **将新主机的常规保存交换为主机保存**
-   - 使用 PalworldSaveTools **修复主机保存**来交换：
+   - 使用 PalworldSaveTools **修复主机保存** 进行交换：
    - 新主机的 `987xxx.sav` → `0001.sav`
    - （这会将新主机的进度移至主机槽中）
 
@@ -323,9 +323,9 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 ###“未找到 VCRUNTIME140.dll”
 
-**解决方案：** 安装 [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
+**Solution:** Install [微软 Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 
-### 解析保存时的`struct.error`
+### `struct.error` when parsing save
 
 **原因：** 保存文件格式过时
 
@@ -346,21 +346,21 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 ## 从源代码构建
 
-````bash
-# 克隆存储库
-git 克隆 https://github.com/deafdudecomputers/PalworldSaveTools.git
+```bash
+# Clone the repository
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
 
-# 安装依赖项
-pip 安装-r 要求.txt
+# Install dependencies
+pip install -r requirements.txt
 
-# 运行应用程序
-蟒蛇启动.py
-````
+# Run the application
+python start.py
+```
 
 要构建独立的可执行文件，请使用构建脚本：
-````bash
-python 脚本/build.py
-````
+```bash
+python scripts/build.py
+```
 
 ---
 
@@ -386,7 +386,7 @@ python 脚本/build.py
 
 ＃＃ 支持
 
-- **__技术_1__：** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **Discord：** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub 问题：** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **文档：** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -394,20 +394,20 @@ python 脚本/build.py
 
 ＃＃ 执照
 
-该项目已获得 MIT License 许可 - 有关详细信息，请参阅 [LICENSE](LICENSE) 文件。
+该项目已获得 MIT License 许可 - 请参阅 [LICENSE](LICENSE) 文件了解详细信息。
 
 ---
 
 ## 致谢
 
-- **__技术_35__** developed by Pocketpair, Inc.
+- **__技术_22__** developed by Pocketpair, Inc.
 - 感谢所有帮助改进此工具的贡献者和社区成员
 
 ---
 
 <div align="center">
 
-**使用 ❤️ 为 Palworld 社区制作**
+**用 ❤️ 为 Palworld 社区制作**
 
 [⬆ 返回顶部](#palworldsavetools)
 

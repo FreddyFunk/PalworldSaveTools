@@ -1,21 +1,21 @@
 <div align="center">
 
-![PalworldSaveTools ロゴ](リソース/PalworldSaveTools_Blue.png)
+![PalworldSaveTools ロゴ](resources/PalworldSaveTools_Blue.png)
 
-# PalworldSaveTools
+# Palworld保存ツール
 
 **Palworld 用の包括的な保存ファイル編集ツールキット**
 
 [![ダウンロード](https://img.shields.io/github/downloads/deafdudecomputers/PalworldSaveTools/total)](https://github.com/deafdudecomputers/PalworldTools/releases/latest)
-[![ライセンス](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
+[！[ライセンス](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[英語](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [ドイツ語](../resources/readme/README.de_DE.md) | [スペイン語](../resources/readme/README.es_ES.md) | [フランス語](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](リソース/readme/README.ko_KR.md)
+[英語](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
-### **[GitHub リリース](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) からスタンドアロン バージョンをダウンロードします**
+### **Download the standalone version from [GitHub リリース](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
 
 ---
 
@@ -47,7 +47,7 @@
 | **ベースキャンプツール** | エクスポート、インポート、クローン作成、半径の調整、およびベースの管理 |
 | **マップビューア** | 座標と詳細を含むインタラクティブなベースとプレーヤーのマップ |
 | **キャラクター転送** | 異なるワールド/サーバー間でキャラクターを転送 (クロスセーブ) |
-| **変換を保存** | Steam 形式と GamePass 形式の間で変換します |
+| **変換を保存** | Steam 形式と GamePass 形式間の変換 |
 | **ワールド設定** | WorldOption および LevelMeta 設定を編集する |
 | **タイムスタンプ ツール** | 負のタイムスタンプを修正し、プレーヤーの時間をリセットします |
 
@@ -118,7 +118,7 @@
 
 **ソースから実行する場合 (Linux または開発):**
 - Python 3.10 以降
-- pip (Python パッケージマネージャー)
+- pip (Python パッケージ マネージャー)
 
 ### スタンドアロン (Windows - 推奨)
 
@@ -128,12 +128,12 @@
 
 ### ソースから (Linux または開発用)
 
-「」バッシュ
+```bash
 git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
 cd PalworldSaveTools
-pip インストール -r 要件.txt
-Python start.py
-「」
+pip install -r requirements.txt
+python start.py
+```
 
 ---
 
@@ -211,21 +211,21 @@ Python start.py
 ### ファイルの保存場所
 
 **ホスト/協力:**
-「」
+```
 %localappdata%\Pal\Saved\SaveGames\YOURID\RANDOMID\
-「」
+```
 
 **専用サーバー:**
-「」
+```
 steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
-「」
+```
 
 ### マップのロック解除
 
 <詳細>
 <summary>クリックしてマップのロック解除手順を展開します</summary>
 
-1. `LocalData.sav` を `src\resources\` からコピーします
+1. `src\resources\` から `LocalData.sav` をコピーします
 2. サーバー/ワールド保存フォルダーを見つけます
 3. 既存の LocalData.sav をコピーしたファイルで置き換えます
 4. 完全にロックが解除されたマップでゲームを起動します
@@ -273,12 +273,12 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
    - プレーヤー B (新しいホスト) には通常のセーブ (例: `987xxx.sav`) が必要です。
 
 2. **古いホストのホスト セーブを通常のセーブに交換**
-   - PalworldSaveTools **ホスト保存を修正** を使用して交換します。
+   - PalworldSaveTools **ホスト セーブを修正** を使用して以下を交換します。
    - 旧ホストの「0001.sav」→「123xxx.sav」
    - (これにより、古いホストの進行状況がホスト スロットから通常のプレイヤー スロットに移動します)
 
 3. **新しいホストの通常の保存をホストの保存に交換**
-   - PalworldSaveTools **ホスト保存を修正** を使用して交換します。
+   - PalworldSaveTools **ホスト セーブを修正** を使用して以下を交換します。
    - 新しいホストの `987xxx.sav` → `0001.sav`
    - (これにより、新しいホストの進行状況がホスト スロットに移動されます)
 
@@ -323,9 +323,9 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 ### 「VCRUNTIME140.dll が見つかりませんでした」
 
-**解決策:** [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) をインストールします。
+**Solution:** Install [マイクロソフト Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 
-### 保存解析時の `struct.error`
+### `struct.error` when parsing save
 
 **原因:** 保存ファイル形式が古い
 
@@ -340,27 +340,27 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 1. Palworld の GamePass バージョンを閉じます
 2. 数分待ちます
 3. Steam → GamePass コンバータを実行します
-4. GamePass で Palworld を起動して確認してください
+4. GamePass で Palworld を起動して確認します
 
 ---
 
 ## ソースからのビルド
 
-「」バッシュ
-# リポジトリのクローンを作成する
+```bash
+# Clone the repository
 git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
 
-# 依存関係をインストールする
-pip インストール -r 要件.txt
+# Install dependencies
+pip install -r requirements.txt
 
-# アプリケーションを実行する
-Python start.py
-「」
+# Run the application
+python start.py
+```
 
 スタンドアロンの実行可能ファイルをビルドするには、ビルド スクリプトを使用します。
-「」バッシュ
-Python スクリプト/build.py
-「」
+```bash
+python scripts/build.py
+```
 
 ---
 
@@ -407,7 +407,7 @@ Python スクリプト/build.py
 
 <div align="center">
 
-**Palworld コミュニティ向けに ❤️ で作成**
+**Palworld コミュニティのために ❤️ で作成されました**
 
 [⬆ トップに戻る](#palworldsavetools)
 

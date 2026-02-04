@@ -1,6 +1,6 @@
 <div align="center">
 
-![PalworldSaveTools Logo](../resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools-Logo](resources/PalworldSaveTools_Blue.png)
 
 # PalworldSaveTools
 
@@ -11,11 +11,11 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Englisch](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Deutsch](../resources/readme/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Russisch](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [Inhalt](../resources/readme/README.ko_KR.md)
+[Englisch](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
-### **Laden Sie die Standalone-Version von [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest) herunter**
+### **Download the standalone version from [GitHub Veröffentlichungen](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
 
 ---
 
@@ -96,7 +96,7 @@ Die Suite **All-in-One Tools** bietet umfassende Speicherverwaltung:
 | Werkzeug | Beschreibung |
 | ------ | ------------- |
 | **Spielerfreunde bearbeiten** | Vollständiger Kumpel-Editor mit Statistiken, Fähigkeiten, IVs, Talenten, Seelen, Rang und Geschlecht |
-| **SteamID Konverter** | Konvertieren Sie Steam-IDs in Palworld UIDs |
+| **SteamID-Konverter** | Konvertieren Sie Steam-IDs in Palworld UIDs |
 | **Host-Speicherung beheben** | Tauschen Sie UIDs zwischen zwei Spielern aus (z. B. für den Host-Tausch) |
 | **Spieler tauschen UIDs** | Tausche UIDs zwischen zwei Spielern |
 | **Schlitzinjektor** | Erhöhen Sie die Palbox-Slots pro Spieler |
@@ -128,12 +128,12 @@ Die Suite **All-in-One Tools** bietet umfassende Speicherverwaltung:
 
 ### Aus der Quelle (Linux oder für die Entwicklung)
 
-„Bash
-Git-Klon https://github.com/deafdudecomputers/PalworldSaveTools.git
-CD PalworldSaveTools
-pip install -r Anforderungen.txt
-Python start.py
-„
+```bash
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
+cd PalworldSaveTools
+pip install -r requirements.txt
+python start.py
+```
 
 ---
 
@@ -211,14 +211,14 @@ Tausche UIDs zwischen zwei Spielern:
 ### Dateispeicherorte speichern
 
 **Gastgeber/Kooperative:**
-„
+```
 %localappdata%\Pal\Saved\SaveGames\YOURID\RANDOMID\
-„
+```
 
 **Dedizierter Server:**
-„
-Steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
-„
+```
+steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
+```
 
 ### Kartenfreischaltung
 
@@ -323,9 +323,9 @@ Für beide Spieler (alter Host und neuer Host) müssen ihre regulären Spielstä
 
 ### „VCRUNTIME140.dll wurde nicht gefunden“
 
-**Lösung:** Installieren Sie [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
+**Solution:** Install [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 
-### `struct.error` beim Parsen des Speicherns
+### `struct.error` when parsing save
 
 **Ursache:** Veraltetes Speicherdateiformat
 
@@ -334,7 +334,7 @@ Für beide Spieler (alter Host und neuer Host) müssen ihre regulären Spielstä
 2. Dadurch wird eine automatische Strukturaktualisierung ausgelöst
 3. Stellen Sie sicher, dass der Speicherstand mit oder nach dem neuesten Spiel-Patch aktualisiert wurde
 
-### GamePass Konverter funktioniert nicht
+### GamePass-Konverter funktioniert nicht
 
 **Lösung:**
 1. Schließen Sie die GamePass-Version von Palworld
@@ -346,21 +346,21 @@ Für beide Spieler (alter Host und neuer Host) müssen ihre regulären Spielstä
 
 ## Aufbau aus der Quelle
 
-„Bash
-# Klonen Sie das Repository
-Git-Klon https://github.com/deafdudecomputers/PalworldSaveTools.git
+```bash
+# Clone the repository
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
 
-# Abhängigkeiten installieren
-pip install -r Anforderungen.txt
+# Install dependencies
+pip install -r requirements.txt
 
-# Führen Sie die Anwendung aus
-Python start.py
-„
+# Run the application
+python start.py
+```
 
 Verwenden Sie zum Erstellen der eigenständigen ausführbaren Datei das Build-Skript:
-„Bash
-Python-Skripte/build.py
-„
+```bash
+python scripts/build.py
+```
 
 ---
 

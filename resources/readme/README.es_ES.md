@@ -1,8 +1,8 @@
 <div align="center">
 
-![Logotipo de PalworldSaveTools](recursos/PalworldSaveTools_Blue.png)
+![PalworldLogotipo de SaveTools](resources/PalworldSaveTools_Blue.png)
 
-# __TECNOLOGÍA_19__
+# PalworldGuardarHerramientas
 
 **Un completo kit de herramientas de edición de archivos guardados para Palworld**
 
@@ -11,11 +11,11 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Inglés](../resources/readme/README.en_US.md) | [简体中文](recursos/léame/README.zh_CN.md) | [Deutsch](recursos/léame/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Francés](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](recursos/léame/README.ja_JP.md) | [한국어](recursos/léame/README.ko_KR.md)
+[Inglés](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
-### **Descargue la versión independiente de [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
+### **Download the standalone version from [Lanzamientos GitHub](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
 
 ---
 
@@ -34,7 +34,7 @@
 
 ---
 
-## Features
+## __TECNOLOGÍA_7__
 
 ### Funcionalidad principal
 
@@ -96,7 +96,7 @@ El paquete **Herramientas todo en uno** proporciona una gestión integral de gua
 | Herramienta | Descripción |
 | ------ | ------------- |
 | **Editar amigos jugadores** | Editor de amigos completo con estadísticas, habilidades, IV, talentos, almas, rango y género. |
-| **SteamID Convertidor** | Convierta los ID de Steam a Palworld UIDs |
+| **SteamID Convertidor** | Convertir ID de Steam a Palworld UIDs |
 | **Reparar el guardado del host** | Intercambiar UIDs entre dos jugadores (por ejemplo, para intercambio de host) |
 | **Intercambiar jugador UIDs** | Intercambia UIDs entre dos jugadores |
 | **Inyector de ranura** | Aumentar espacios de palbox por jugador |
@@ -113,7 +113,7 @@ El paquete **Herramientas todo en uno** proporciona una gestión integral de gua
 ### Requisitos previos
 
 **Para independiente (Windows):**
-- __TECNOLOGÍA_14__ 10/11
+- __TECNOLOGÍA_13__ 10/11
 - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (2015-2022)
 
 **Para ejecutar desde el código fuente (Linux o desarrollo):**
@@ -128,11 +128,11 @@ El paquete **Herramientas todo en uno** proporciona una gestión integral de gua
 
 ### De la fuente (Linux o para desarrollo)
 
-```golpecito
-clon de git https://github.com/deafdudecomputers/PalworldSaveTools.git
-disco compacto PalworldSaveTools
-pip instalar -r requisitos.txt
-inicio de Python.py
+```bash
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
+cd PalworldSaveTools
+pip install -r requirements.txt
+python start.py
 ```
 
 ---
@@ -164,7 +164,7 @@ inicio de Python.py
 
 La interfaz principal para una gestión integral de guardados con tres pestañas:
 
-**Players Tab** - Ver y administrar todos los jugadores en el servidor
+**Pestaña Players** - Ver y administrar todos los jugadores en el servidor
 - Editar nombres de jugadores, niveles y recuentos de amigos.
 - Eliminar jugadores inactivos
 - Ver gremios de jugadores y el último tiempo en línea
@@ -323,9 +323,9 @@ Ambos jugadores (antiguo anfitrión y nuevo anfitrión) deben generar sus partid
 
 ### "No se encontró VCRUNTIME140.dll"
 
-**Solución:** Instalar [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
+**Solution:** Install [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 
-### `struct.error` al analizar guardar
+### `struct.error` when parsing save
 
 **Causa:** Formato de archivo guardado desactualizado
 
@@ -346,25 +346,25 @@ Ambos jugadores (antiguo anfitrión y nuevo anfitrión) deben generar sus partid
 
 ## Construyendo desde la fuente
 
-```golpecito
-# Clonar el repositorio
-clon de git https://github.com/deafdudecomputers/PalworldSaveTools.git
+```bash
+# Clone the repository
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
 
-# Instalar dependencias
-pip instalar -r requisitos.txt
+# Install dependencies
+pip install -r requirements.txt
 
-# Ejecute la aplicación
-inicio de Python.py
+# Run the application
+python start.py
 ```
 
 Para crear el ejecutable independiente, utilice el script de compilación:
-```golpecito
-scripts de Python/build.py
+```bash
+python scripts/build.py
 ```
 
 ---
 
-## __TECNOLOGÍA_3__
+## Contributing
 
 ¡Las contribuciones son bienvenidas! No dude en enviar una solicitud de extracción.
 
@@ -386,7 +386,7 @@ Los desarrolladores no son responsables de ninguna pérdida de datos guardados o
 
 ## Apoyo
 
-- **__TECNOLOGÍA_1__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__TECNOLOGÍA_36__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub Problemas:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **Documentación:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -400,7 +400,7 @@ Este proyecto tiene la licencia MIT License; consulte el archivo [LICENSE](LICEN
 
 ## Agradecimientos
 
-- **__TECNOLOGÍA_35__** developed by Pocketpair, Inc.
+- **__TECNOLOGÍA_22__** developed by Pocketpair, Inc.
 - Gracias a todos los contribuyentes y miembros de la comunidad que han ayudado a mejorar esta herramienta.
 
 ---

@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldSaveTools Логотип](../resources/PalworldSaveTools_Blue.png)
+![PalworldСохранить логотип инструментов](resources/PalworldSaveTools_Blue.png)
 
-# PalworldSaveTools
+# PalworldСохранитьИнструменты
 
 **Комплексный набор инструментов для редактирования файлов сохранений для Palworld**
 
@@ -11,11 +11,11 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Английский](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Deutsch](../resources/readme/README.de_DE.md) | [Испанский](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[Английский](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
-### **Загрузите автономную версию из [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
+### **Download the standalone version from [GitHub Релизы](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
 
 ---
 
@@ -96,9 +96,9 @@
 | Инструмент | Описание |
 | ------ | ------------- |
 | **Изменить друзей игроков** | Полноценный редактор приятелей со статистикой, навыками, IV, талантами, душами, рангом и полом. |
-| **SteamID Конвертер** | Преобразовать идентификаторы Steam в Palworld UIDs |
+| **SteamКонвертер идентификаторов** | Преобразовать идентификаторы Steam в Palworld UIDs |
 | **Исправить сохранение хоста** | Обмен UID между двумя игроками (например, для обмена хостами) |
-| **Заменить игрока UIDs** | Обмен UID между двумя игроками |
+| **Поменять игрока UIDs** | Обменяйтесь UID между двумя игроками. |
 | **Слот-инжектор** | Увеличение количества слотов для палбоксов на игрока |
 | **Восстановить карту** | Применить разблокированный прогресс карты во всех мирах/серверах. |
 | **Переименовать мир** | Изменить мировое имя в LevelMeta |
@@ -128,11 +128,11 @@
 
 ### Из исходного кода (Linux или для разработки)
 
-``` баш
-git-клон https://github.com/deafdudecomputers/PalworldSaveTools.git
-компакт-диск PalworldSaveTools
-pip install -r требования.txt
-запуск питона.py
+```bash
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
+cd PalworldSaveTools
+pip install -r requirements.txt
+python start.py
 ```
 
 ---
@@ -185,7 +185,7 @@ pip install -r требования.txt
 - Просмотр всех базовых локаций и позиций игроков
 - Фильтровать по гильдии или имени игрока
 - Нажмите маркеры для получения подробной информации
-- Сгенерировать команды killnearestbase для PalDefender.
+- Сгенерировать команды `killnearestbase` для PalDefender
 
 ### Перенос персонажей
 
@@ -198,9 +198,9 @@ pip install -r требования.txt
 
 Обменяйте UID между двумя игроками:
 - Передача прогресса от одного игрока к другому
-- Необходим для передачи host/co-op на сервер
+- Необходим для host/co-op для передачи на сервер
 - Полезно для смены роли хоста между игроками.
-- Полезно для смены платформ (Xbox ↔ Steam)
+- Полезно для смены платформ (Xbox ↔ Steam).
 - Решает проблемы с назначением хоста/сервера UID.
 - **Примечание:** Affected player must have a character created on the target save first
 
@@ -212,12 +212,12 @@ pip install -r требования.txt
 
 **Хозяин/Кооператив:**
 ```
-%localappdata%\Pal\Saved\SaveGames\ВАШИД\RANDOMID\
+%localappdata%\Pal\Saved\SaveGames\YOURID\RANDOMID\
 ```
 
 **Выделенный сервер:**
 ```
-Steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
+steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 ```
 
 ### Разблокировка карты
@@ -323,9 +323,9 @@ Steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 ### "VCRUNTIME140.dll не найден"
 
-**Решение:** Установите [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version).
+**Solution:** Install [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 
-### `struct.error` при разборе сохранения
+### `struct.error` when parsing save
 
 **Причина:** Устаревший формат файла сохранения.
 
@@ -334,7 +334,7 @@ Steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 2. Это запускает автоматическое обновление структуры.
 3. Убедитесь, что сохранение было обновлено после выхода последнего обновления игры.
 
-### Конвертер GamePass не работает
+### GamePass конвертер не работает
 
 **Решение:**
 1. Закройте версию GamePass Palworld.
@@ -346,20 +346,20 @@ Steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 ## Сборка из исходного кода
 
-``` баш
-# Клонировать репозиторий
-git-клон https://github.com/deafdudecomputers/PalworldSaveTools.git
+```bash
+# Clone the repository
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
 
-# Установить зависимости
-pip install -r требования.txt
+# Install dependencies
+pip install -r requirements.txt
 
-# Запустите приложение
-запуск питона.py
+# Run the application
+python start.py
 ```
 
 Для сборки автономного исполняемого файла используйте сценарий сборки:
-``` баш
-скрипты Python/build.py
+```bash
+python scripts/build.py
 ```
 
 ---

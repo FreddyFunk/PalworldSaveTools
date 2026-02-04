@@ -1,27 +1,27 @@
 <div align="center">
 
-![PalworldSaveTools 로고](../resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools 로고](resources/PalworldSaveTools_Blue.png)
 
-# __테크_19__
+# PalworldSaveTools
 
 **Palworld을 위한 포괄적인 저장 파일 편집 툴킷**
 
 [![다운로드](https://img.shields.io/github/downloads/deafdudecomputers/PalworldSaveTools/total)](https://github.com/deafdudecomputers/PalworldTools/releases/latest)
-[![라이선스](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
+[![특허](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[영어](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [독일어](../resources/readme/README.de_DE.md) | [스페인어](../resources/readme/README.es_ES.md) | [프랑스어](../resources/readme/README.fr_FR.md) | [Русский](자원/readme/README.ru_RU.md) | [일본어](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[영어](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
-### **[GitHub 릴리스](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)에서 독립형 버전을 다운로드하세요**
+### **Download the standalone version from [GitHub 출시](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
 
 ---
 
 </div>
 
-## __테크_10__
+## __테크_12__
 
 - [Features](#기능)
 - [Installation](#설치)
@@ -34,7 +34,7 @@
 
 ---
 
-## Features
+## __테크_7__
 
 ### 핵심 기능
 
@@ -97,7 +97,7 @@
 | ------ | ------------- |
 | **플레이어 친구 편집** | 통계, 기술, IV, 재능, 영혼, 순위 및 성별을 갖춘 완전한 친구 편집자 |
 | **SteamID 변환기** | Steam ID를 Palworld UID로 변환 |
-| **호스트 저장 수정** | 두 플레이어 간에 UID을 교환합니다(예: 호스트 교환의 경우). |
+| **호스트 저장 수정** | 두 플레이어 간 UID 교환(예: 호스트 교환) |
 | **스왑 플레이어 UIDs** | 두 플레이어 간에 UID을 교환합니다. |
 | **슬롯 인젝터** | 플레이어당 팔박스 슬롯 늘리기 |
 | **지도 복원** | 모든 월드/서버에 잠금 해제된 지도 진행 상황 적용 |
@@ -128,16 +128,16 @@
 
 ### 소스에서(Linux 또는 개발용)
 
-``배쉬
-자식 복제 https://github.com/deafdudecomputers/PalworldSaveTools.git
-CD PalworldSaveTools
-pip 설치 -r 요구사항.txt
-파이썬 start.py
-````
+```bash
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
+cd PalworldSaveTools
+pip install -r requirements.txt
+python start.py
+```
 
 ---
 
-## __테크_0__
+## Quick Start
 
 1. **저장 파일 로드**
    - **파일 → 저장 로드**를 클릭하세요.
@@ -211,14 +211,14 @@ pip 설치 -r 요구사항.txt
 ### 저장 파일 위치
 
 **호스트/협동조합:**
-````
+```
 %localappdata%\Pal\Saved\SaveGames\YOURID\RANDOMID\
-````
+```
 
 **전용 서버:**
-````
+```
 steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
-````
+```
 
 ### 지도 잠금 해제
 
@@ -273,12 +273,12 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
    - 플레이어 B(새 호스트)는 일반 저장(예: `987xxx.sav`)을 가지고 있어야 합니다.
 
 2. **이전 호스트의 호스트 저장을 일반 저장으로 전환**
-   - PalworldSaveTools **Fix Host Save**를 사용하여 교체합니다.
+   - PalworldSaveTools **Fix Host Save**를 사용하여 다음을 교체합니다.
    - 이전 호스트의 `0001.sav` → `123xxx.sav`
    - (이렇게 하면 이전 호스트의 진행 상황이 호스트 슬롯에서 일반 플레이어 슬롯으로 이동됩니다.)
 
 3. **새 호스트의 일반 저장을 호스트 저장으로 전환**
-   - PalworldSaveTools **Fix Host Save**를 사용하여 교체합니다.
+   - PalworldSaveTools **Fix Host Save**를 사용하여 다음을 교체합니다.
    - 새 호스트의 `987xxx.sav` → `0001.sav`
    - (이렇게 하면 새 호스트의 진행 상황이 호스트 슬롯으로 이동됩니다.)
 
@@ -323,9 +323,9 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 ### "VCRUNTIME140.dll을 찾을 수 없습니다"
 
-**해결책:** [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) 설치
+**Solution:** Install [마이크로소프트 Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 
-### 저장 구문 분석 시 `struct.error`
+### `struct.error` when parsing save
 
 **원인:** 오래된 저장 파일 형식
 
@@ -339,32 +339,32 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 **해결책:**
 1. Palworld의 GamePass 버전을 닫습니다.
 2. 몇 분만 기다려주세요
-3. Steam → GamePass 변환기를 실행하세요.
+3. Steam → GamePass 변환기 실행
 4. GamePass에서 Palworld을 실행하여 확인하세요.
 
 ---
 
 ## 소스에서 빌드
 
-``배쉬
-# 저장소 복제
-자식 복제 https://github.com/deafdudecomputers/PalworldSaveTools.git
+```bash
+# Clone the repository
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
 
-# 종속성 설치
-pip 설치 -r 요구사항.txt
+# Install dependencies
+pip install -r requirements.txt
 
-# 애플리케이션 실행
-파이썬 start.py
-````
+# Run the application
+python start.py
+```
 
 독립 실행형 실행 파일을 빌드하려면 빌드 스크립트를 사용하세요.
-``배쉬
-파이썬 스크립트/build.py
-````
+```bash
+python scripts/build.py
+```
 
 ---
 
-## __기술_3__
+## Contributing
 
 기여를 환영합니다! 언제든지 Pull Request를 제출해 주세요.
 
@@ -386,7 +386,7 @@ pip 설치 -r 요구사항.txt
 
 ## 지원하다
 
-- **__기술_1__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__기술_36__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub 문제:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **선적 서류 비치:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 

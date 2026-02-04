@@ -1,8 +1,8 @@
 <div align="center">
 
-![Logo PalworldSaveTools](../resources/PalworldSaveTools_Blue.png)
+![PalworldLogo SaveTools](resources/PalworldSaveTools_Blue.png)
 
-# PalworldSaveTools
+# PalworldEnregistrerOutils
 
 **Une boîte à outils complète d'édition de fichiers de sauvegarde pour Palworld**
 
@@ -11,11 +11,11 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Anglais](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Allemand](../resources/readme/README.de_DE.md) | [Espagnol](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[Anglais](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
-### **Téléchargez la version autonome à partir de [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
+### **Download the standalone version from [GitHub Sorties](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)**
 
 ---
 
@@ -29,7 +29,7 @@
 - [Présentation des outils](#tools-overview)
 - [Guides](#guides)
 - [Troubleshooting](#dépannage)
-- [Contributing](#contribuant)
+- [Contributing](#contribution)
 - [Licence](#licence)
 
 ---
@@ -129,9 +129,9 @@ La suite **All-in-One Tools** offre une gestion complète des sauvegardes :
 ### Depuis la source (Linux ou pour le développement)
 
 ```bash
-clone git https://github.com/deafdudecomputers/PalworldSaveTools.git
-CD PalworldSaveTools
-pip install -r exigences.txt
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
+cd PalworldSaveTools
+pip install -r requirements.txt
 python start.py
 ```
 
@@ -200,7 +200,7 @@ Transférer des personnages entre différents mondes/serveurs (sauvegarde crois�
 - Transférer la progression d'un joueur à un autre
 - Indispensable pour les transferts de host/co-op vers le serveur
 - Utile pour échanger le rôle d'hôte entre les joueurs
-- Utile pour les échanges de plates-formes (Xbox ↔ Steam)
+- Utile pour les échanges de plateformes (Xbox ↔ Steam)
 - Résout les problèmes d'affectation hôte/serveur UID
 - **Note:** Affected player must have a character created on the target save first
 
@@ -212,7 +212,7 @@ Transférer des personnages entre différents mondes/serveurs (sauvegarde crois�
 
 **Hôte/Coop :**
 ```
-%localappdata%\Pal\Saved\SaveGames\VOTREID\RANDOMID\
+%localappdata%\Pal\Saved\SaveGames\YOURID\RANDOMID\
 ```
 
 **Serveur dédié :**
@@ -323,9 +323,9 @@ Les deux joueurs (ancien hôte et nouvel hôte) doivent avoir leurs sauvegardes 
 
 ### "VCRUNTIME140.dll est introuvable"
 
-**Solution :** Installez [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
+**Solution:** Install [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 
-### `struct.error` lors de l'analyse de la sauvegarde
+### `struct.error` when parsing save
 
 **Cause :** Format de fichier de sauvegarde obsolète
 
@@ -347,19 +347,19 @@ Les deux joueurs (ancien hôte et nouvel hôte) doivent avoir leurs sauvegardes 
 ## Construire à partir de la source
 
 ```bash
-# Cloner le référentiel
-clone git https://github.com/deafdudecomputers/PalworldSaveTools.git
+# Clone the repository
+git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
 
-# Installer les dépendances
-pip install -r exigences.txt
+# Install dependencies
+pip install -r requirements.txt
 
-# Exécutez l'application
+# Run the application
 python start.py
 ```
 
 Pour créer l'exécutable autonome, utilisez le script de construction :
 ```bash
-scripts python/build.py
+python scripts/build.py
 ```
 
 ---
