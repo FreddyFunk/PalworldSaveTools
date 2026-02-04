@@ -7,7 +7,7 @@
 **Palworld 用の包括的な保存ファイル編集ツールキット**
 
 [![ダウンロード](https://img.shields.io/github/downloads/deafdudecomputers/PalworldSaveTools/total)](https://github.com/deafdudecomputers/PalworldTools/releases/latest)
-[！[ライセンス](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
+[![ライセンス](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
