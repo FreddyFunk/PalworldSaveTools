@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldLogotipo de SaveTools](resources/PalworldSaveTools_Blue.png)
+![Logotipo de PalworldSaveTools](resources/PalworldSaveTools_Blue.png)
 
-# PalworldSaveTools
+# __TECNOLOGÍA_8__
 
 **Un completo kit de herramientas de edición de archivos guardados para Palworld**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Inglés](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Deutsch](../resources/readme/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[Inglés](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
@@ -21,7 +21,7 @@
 
 </div>
 
-## __TECNOLOGÍA_6__
+## Table of Contents
 
 - [Features](#características)
 - [Installation](#instalación)
@@ -98,7 +98,7 @@ El paquete **Herramientas todo en uno** proporciona una gestión integral de gua
 | **Editar amigos jugadores** | Editor de amigos completo con estadísticas, habilidades, IV, talentos, almas, rango y género. |
 | **SteamID Convertidor** | Convertir Steam ID a Palworld UIDs |
 | **Reparar el guardado del host** | Intercambiar UIDs entre dos jugadores (por ejemplo, para intercambio de host) |
-| **Intercambiar jugador UIDs** | Intercambia UIDs entre dos jugadores |
+| **Cambiar jugador UIDs** | Intercambia UIDs entre dos jugadores |
 | **Inyector de ranura** | Aumentar espacios de palbox por jugador |
 | **Restaurar mapa** | Aplicar el progreso del mapa desbloqueado en todos los mundos/servidores. |
 | **Cambiar nombre del mundo** | Cambiar nombre mundial en LevelMeta |
@@ -113,7 +113,7 @@ El paquete **Herramientas todo en uno** proporciona una gestión integral de gua
 ### Requisitos previos
 
 **Para independiente (Windows):**
-- __TECNOLOGÍA_5__ 10/11
+- __TECNOLOGÍA_17__ 10/11
 - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (2015-2022)
 
 **Para ejecutar desde el código fuente (Linux o desarrollo):**
@@ -141,7 +141,7 @@ python start.py
 
 1. **Carga tu guardado**
    - Haga clic en **Archivo → Cargar Guardar**
-   - Navega a tu carpeta de guardado Palworld
+   - Navegue a su carpeta de guardado Palworld
    - Seleccione `Level.sav`
 
 2. **Explore sus datos**
@@ -364,7 +364,7 @@ python scripts/build.py
 
 ---
 
-## __TECNOLOGÍA_4__
+## Contributing
 
 ¡Las contribuciones son bienvenidas! No dude en enviar una solicitud de extracción.
 
@@ -386,7 +386,7 @@ Los desarrolladores no son responsables de ninguna pérdida de datos guardados o
 
 ## Apoyo
 
-- **__TECNOLOGÍA_23__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__TECNOLOGÍA_42__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub Problemas:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **Documentación:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -394,13 +394,13 @@ Los desarrolladores no son responsables de ninguna pérdida de datos guardados o
 
 ## Licencia
 
-Este proyecto tiene la licencia MIT License; consulte el archivo [LICENSE](LICENSE) para obtener más detalles.
+Este proyecto tiene licencia MIT License; consulte el archivo [LICENSE](LICENSE) para obtener más detalles.
 
 ---
 
 ## Agradecimientos
 
-- **Palworld** developed by Pocketpair, Inc.
+- **__TECNOLOGÍA_10__** developed by Pocketpair, Inc.
 - Gracias a todos los contribuyentes y miembros de la comunidad que han ayudado a mejorar esta herramienta.
 
 ---

@@ -1,17 +1,17 @@
 <div align="center">
 
-![PalworldSaveTools 徽标](resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools 标志](resources/PalworldSaveTools_Blue.png)
 
-# Palworld保存工具
+# __技术_8__
 
-**用于Palworld的综合保存文件编辑工具包**
+**用于 Palworld** 的综合保存文件编辑工具包
 
 [![下载](https://img.shields.io/github/downloads/deafdudecomputers/PalworldSaveTools/total)](https://github.com/deafdudecomputers/PalworldTools/releases/latest)
 [！[执照](https://img.shields.io/github/license/deafdudecomputers/PalworldSaveTools)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[英语](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Deutsch](../resources/readme/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[英语](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
@@ -112,8 +112,8 @@
 
 ### 先决条件
 
-**对于独立 (Windows)：**
-- __技术_5__ 10/11
+**对于独立版 (Windows)：**
+- Windows 10/11
 - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (2015-2022)
 
 **对于从源代码运行（Linux 或开发）：**
@@ -126,7 +126,7 @@
 2. 提取 zip 文件
 3. 运行“PalworldSaveTools.exe”
 
-### 来自来源（Linux 或用于开发）
+### 来自源头（Linux 或用于开发）
 
 ```bash
 git clone https://github.com/deafdudecomputers/PalworldSaveTools.git
@@ -145,7 +145,7 @@ python start.py
    - 选择“Level.sav”
 
 2. **探索您的数据**
-   - 使用选项卡查看Players、公会、基地或地图
+   - 使用选项卡查看 Players、公会、基地或地图
    - 搜索和过滤以查找特定条目
 
 3. **进行更改**
@@ -192,7 +192,7 @@ python start.py
 在不同世界/服务器之间转移角色（交叉保存）：
 - 转移单个或所有玩家
 - 保留角色、伙伴、库存和技术
-- 对于在合作社和 dedicated servers 之间迁移很有用
+- 对于在合作社和 dedicated server 之间迁移很有用
 
 ### 修复主机保存
 
@@ -273,12 +273,12 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
    - 玩家 B（新主机）应该有定期保存（例如“987xxx.sav”）
 
 2. **将旧主机的主机保存交换为常规保存**
-   - 使用 PalworldSaveTools **修复主机保存** 进行交换：
+   - 使用 PalworldSaveTools **修复主机保存**来交换：
    - 旧主机的 `0001.sav` → `123xxx.sav`
    - （这会将旧主机的进度从主机位置移至其常规玩家位置）
 
 3. **将新主机的常规保存交换为主机保存**
-   - 使用 PalworldSaveTools **修复主机保存** 进行交换：
+   - 使用 PalworldSaveTools **修复主机保存**来交换：
    - 新主机的 `987xxx.sav` → `0001.sav`
    - （这会将新主机的进度移至主机槽中）
 
@@ -386,7 +386,7 @@ python scripts/build.py
 
 ＃＃ 支持
 
-- **__技术_23__：** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **Discord：** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub 问题：** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **文档：** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -400,14 +400,14 @@ python scripts/build.py
 
 ## 致谢
 
-- **__技术_0__** developed by Pocketpair, Inc.
+- **__技术_10__** developed by Pocketpair, Inc.
 - 感谢所有帮助改进此工具的贡献者和社区成员
 
 ---
 
 <div align="center">
 
-**用 ❤️ 为 Palworld 社区制作**
+**使用 ❤️ 为 Palworld 社区制作**
 
 [⬆ 返回顶部](#palworldsavetools)
 

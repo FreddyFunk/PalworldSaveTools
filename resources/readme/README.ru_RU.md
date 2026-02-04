@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldСохранить логотип инструментов](resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools Логотип](resources/PalworldSaveTools_Blue.png)
 
-# PalworldСохранитьИнструменты
+# PalworldSaveTools
 
 **Комплексный набор инструментов для редактирования файлов сохранений для Palworld**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Английский](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Deutsch](../resources/readme/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[Английский](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
@@ -96,9 +96,9 @@
 | Инструмент | Описание |
 | ------ | ------------- |
 | **Изменить друзей игроков** | Полноценный редактор приятелей со статистикой, навыками, IV, талантами, душами, рангом и полом. |
-| **SteamID Конвертер** | Преобразовать идентификаторы Steam в Palworld UIDs |
+| **SteamКонвертер идентификаторов** | Преобразовать идентификаторы Steam в Palworld UIDs |
 | **Исправить сохранение хоста** | Обмен UID между двумя игроками (например, для обмена хостами) |
-| **Поменять игрока UIDs** | Обменяйтесь UID между двумя игроками. |
+| **Заменить игрока UIDs** | Обменяйтесь UID между двумя игроками. |
 | **Слот-инжектор** | Увеличение количества слотов для палбоксов на игрока |
 | **Восстановить карту** | Применить разблокированный прогресс карты во всех мирах/серверах. |
 | **Переименовать мир** | Изменить название мира в LevelMeta |
@@ -122,7 +122,7 @@
 
 ### Автономный (Windows — рекомендуется)
 
-1. Загрузите последнюю версию из [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)
+1. Загрузите последнюю версию из [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest).
 2. Извлеките zip-файл
 3. Запустите `PalworldSaveTools.exe`
 
@@ -185,7 +185,7 @@ python start.py
 - Просмотр всех базовых локаций и позиций игроков
 - Фильтровать по гильдии или имени игрока
 - Нажмите маркеры для получения подробной информации
-- Сгенерировать команды killnearestbase для PalDefender.
+- Сгенерируйте команды `killnearestbase` для PalDefender
 
 ### Перенос персонажей
 
@@ -198,9 +198,9 @@ python start.py
 
 Обменяйте UID между двумя игроками:
 - Передача прогресса от одного игрока к другому
-- Необходим для host/co-op для передачи на сервер
+- Необходим для host/co-op для передачи данных на сервер
 - Полезно для смены роли хоста между игроками.
-- Полезно для смены платформ (Xbox ↔ Steam).
+- Полезно для смены платформ (Xbox ↔ Steam)
 - Устраняет проблемы с назначением хоста/сервера UID.
 - **Примечание:** Affected player must have a character created on the target save first
 
@@ -273,12 +273,12 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
    - Игрок Б (новый хост) должен иметь обычное сохранение (например, «987xxx.sav»).
 
 2. **Замените сохранение хоста старого хоста на обычное сохранение**
-   - Используйте PalworldSaveTools **Fix Host Save**, чтобы поменять местами:
+   - Используйте PalworldSaveTools **Исправить сохранение хоста**, чтобы поменять местами:
    - Старый хост `0001.sav` → `123xxx.sav`
    - (Это переместит прогресс старого хоста из слота хоста в слот обычного игрока)
 
 3. **Заменить обычное сохранение нового хоста на сохранение хоста**
-   - Используйте PalworldSaveTools **Fix Host Save**, чтобы поменять местами:
+   - Используйте PalworldSaveTools **Исправить сохранение хоста**, чтобы поменять местами:
    - Новый хост `987xxx.sav` → `0001.sav`
    - (Это перемещает прогресс нового хоста в слот хоста)
 

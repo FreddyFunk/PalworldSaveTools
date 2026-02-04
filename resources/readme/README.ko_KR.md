@@ -2,7 +2,7 @@
 
 ![PalworldSaveTools 로고](resources/PalworldSaveTools_Blue.png)
 
-# PalworldSave도구
+# __기술_8__
 
 **Palworld을 위한 포괄적인 저장 파일 편집 툴킷**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[영어](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Deutsch](../resources/readme/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[영어](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
@@ -21,7 +21,7 @@
 
 </div>
 
-## __테크_6__
+## Table of Contents
 
 - [Features](#기능)
 - [Installation](#설치)
@@ -97,7 +97,7 @@
 | ------ | ------------- |
 | **플레이어 친구 편집** | 통계, 기술, IV, 재능, 영혼, 순위 및 성별을 갖춘 완전한 친구 편집자 |
 | **SteamID 변환기** | Steam ID를 Palworld UID로 변환 |
-| **호스트 저장 수정** | 두 플레이어 간에 UID을 교환합니다(예: 호스트 교환의 경우). |
+| **호스트 저장 수정** | 두 플레이어 간 UID 교환(예: 호스트 교환) |
 | **스왑 플레이어 UIDs** | 두 플레이어 간에 UID을 교환합니다. |
 | **슬롯 인젝터** | 플레이어당 팔박스 슬롯 늘리기 |
 | **지도 복원** | 모든 월드/서버에 잠금 해제된 지도 진행 상황 적용 |
@@ -137,7 +137,7 @@ python start.py
 
 ---
 
-## Quick Start
+## __테크_14__
 
 1. **저장 파일 로드**
    - **파일 → 저장 로드**를 클릭하세요.
@@ -227,7 +227,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 1. `src\resources\`에서 `LocalData.sav` 복사
 2. 서버/월드 저장 폴더 찾기
-3. 기존 `LocalData.sav`를 복사된 파일로 교체하세요.
+3. 기존 `LocalData.sav`을 복사된 파일로 교체하세요.
 4. 완전히 잠금 해제된 지도로 게임을 시작하세요
 
 > **참고:** 자동 백업을 통해 잠금 해제된 지도를 모든 월드/서버에 한 번에 적용하려면 PST의 **도구 → 지도 복원** 옵션을 사용하세요.
@@ -319,7 +319,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 ---
 
-## Troubleshooting
+## __테크_0__
 
 ### "VCRUNTIME140.dll을 찾을 수 없습니다"
 
@@ -340,7 +340,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 1. Palworld의 GamePass 버전을 닫습니다.
 2. 몇 분만 기다려주세요
 3. Steam → GamePass 변환기를 실행합니다.
-4. GamePass에서 Palworld을(를) 실행하여 확인하세요.
+4. GamePass에서 Palworld을 실행하여 확인하세요.
 
 ---
 
@@ -364,7 +364,7 @@ python scripts/build.py
 
 ---
 
-## __테크_4__
+## Contributing
 
 기여를 환영합니다! 언제든지 Pull Request를 제출해 주세요.
 
@@ -386,7 +386,7 @@ python scripts/build.py
 
 ## 지원하다
 
-- **__기술_23__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__기술_42__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub 문제:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **선적 서류 비치:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -400,7 +400,7 @@ python scripts/build.py
 
 ## 감사의 말씀
 
-- **__기술_0__** developed by Pocketpair, Inc.
+- **__테크_10__** developed by Pocketpair, Inc.
 - 이 도구를 개선하는 데 도움을 준 모든 기여자와 커뮤니티 구성원에게 감사드립니다.
 
 ---

@@ -2,7 +2,7 @@
 
 ![PalworldSaveTools ロゴ](resources/PalworldSaveTools_Blue.png)
 
-# Palworld保存ツール
+# __技術_8__
 
 **Palworld 用の包括的な保存ファイル編集ツールキット**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[英語](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Deutsch](../resources/readme/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[英語](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
@@ -47,7 +47,7 @@
 | **ベースキャンプツール** | エクスポート、インポート、クローン作成、半径の調整、およびベースの管理 |
 | **マップビューア** | 座標と詳細を含むインタラクティブなベースとプレーヤーのマップ |
 | **キャラクター転送** | 異なるワールド/サーバー間でキャラクターを転送 (クロスセーブ) |
-| **変換を保存** | Steam 形式と GamePass 形式の間で変換します |
+| **変換を保存** | Steam 形式と GamePass 形式間の変換 |
 | **ワールド設定** | WorldOption および LevelMeta 設定を編集する |
 | **タイムスタンプ ツール** | 負のタイムスタンプを修正し、プレーヤーの時間をリセットします |
 
@@ -185,7 +185,7 @@ python start.py
 - すべての拠点の場所とプレーヤーの位置を表示する
 - ギルド名またはプレイヤー名でフィルタリングする
 - マーカーをクリックすると詳細情報が表示されます
-- PalDefender の「killnearestbase」コマンドを生成する
+- PalDefender の `killnearestbase` コマンドを生成する
 
 ### キャラクター転送
 
@@ -239,8 +239,8 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 <詳細>
 <summary>クリックしてホストからサーバーへの転送ガイドを展開します</summary>
 
-1. ホスト保存から `Level.sav` および `Players` フォルダーをコピーします
-2. dedicated server 保存フォルダーに貼り付けます
+1. ホスト保存から「Level.sav」フォルダと「Players」フォルダをコピーします
+2. Paste to dedicated server save folder
 3. サーバーを起動し、新しいキャラクターを作成します
 4. 自動保存されるまで待ってから閉じます
 5. **ホスト保存の修正** を使用して GUID を移行します
@@ -273,12 +273,12 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
    - プレーヤー B (新しいホスト) には通常のセーブ (例: `987xxx.sav`) が必要です。
 
 2. **古いホストのホスト セーブを通常のセーブに交換**
-   - PalworldSaveTools **ホスト セーブを修正** を使用して交換します。
+   - PalworldSaveTools **ホスト保存を修正** を使用して交換します。
    - 旧ホストの「0001.sav」→「123xxx.sav」
    - (これにより、古いホストの進行状況がホスト スロットから通常のプレイヤー スロットに移動します)
 
 3. **新しいホストの通常の保存をホストの保存に交換**
-   - PalworldSaveTools **ホスト セーブを修正** を使用して交換します。
+   - PalworldSaveTools **ホスト保存を修正** を使用して交換します。
    - 新しいホストの `987xxx.sav` → `0001.sav`
    - (これにより、新しいホストの進行状況がホスト スロットに移動されます)
 
@@ -400,14 +400,14 @@ python scripts/build.py
 
 ## 謝辞
 
-- **__技術_0__** developed by Pocketpair, Inc.
+- **Palworld** developed by Pocketpair, Inc.
 - このツールの改善に協力してくれたすべての貢献者とコミュニティ メンバーに感謝します
 
 ---
 
 <div align="center">
 
-**Palworld コミュニティのために ❤️ で作成されました**
+**Palworld コミュニティ向けに ❤️ で作成**
 
 [⬆ トップに戻る](#palworldsavetools)
 

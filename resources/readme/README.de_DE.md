@@ -1,6 +1,6 @@
 <div align="center">
 
-![PalworldSaveTools-Logo](resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools Logo](resources/PalworldSaveTools_Blue.png)
 
 # PalworldSaveTools
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Englisch](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Deutsch](../resources/readme/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[Englisch](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
@@ -96,7 +96,7 @@ Die Suite **All-in-One Tools** bietet umfassende Speicherverwaltung:
 | Werkzeug | Beschreibung |
 | ------ | ------------- |
 | **Spielerfreunde bearbeiten** | Vollständiger Kumpel-Editor mit Statistiken, Fähigkeiten, IVs, Talenten, Seelen, Rang und Geschlecht |
-| **SteamID Konverter** | Konvertieren Sie Steam-IDs in Palworld UIDs |
+| **SteamID-Konverter** | Konvertieren Sie Steam-IDs in Palworld UIDs |
 | **Host-Speicherung beheben** | Tauschen Sie UIDs zwischen zwei Spielern aus (z. B. für den Host-Tausch) |
 | **Spieler tauschen UIDs** | Tausche UIDs zwischen zwei Spielern |
 | **Schlitzinjektor** | Erhöhen Sie die Palbox-Slots pro Spieler |
@@ -141,7 +141,7 @@ python start.py
 
 1. **Laden Sie Ihren Speicherstand**
    - Klicken Sie auf **Datei → Laden und Speichern**
-   - Navigieren Sie zu Ihrem Speicherordner Palworld
+   - Navigieren Sie zu Ihrem Palworld-Speicherordner
    - Wählen Sie „Level.sav“.
 
 2. **Erkunden Sie Ihre Daten**

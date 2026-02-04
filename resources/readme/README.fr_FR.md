@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldLogo SaveTools](resources/PalworldSaveTools_Blue.png)
+![PalworldSaveToolsLogo](resources/PalworldSaveTools_Blue.png)
 
-# PalworldEnregistrerOutils
+# PalworldSaveTools
 
 **Une boîte à outils complète d'édition de fichiers de sauvegarde pour Palworld**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Anglais](../resources/readme/README.en_US.md) | [简体中文](../resources/readme/README.zh_CN.md) | [Deutsch](../resources/readme/README.de_DE.md) | [Español](../resources/readme/README.es_ES.md) | [Français](../resources/readme/README.fr_FR.md) | [Русский](../resources/readme/README.ru_RU.md) | [日本語](../resources/readme/README.ja_JP.md) | [한국어](../resources/readme/README.ko_KR.md)
+[Anglais](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
 
 ---
 
@@ -56,7 +56,7 @@
 La suite **All-in-One Tools** offre une gestion complète des sauvegardes :
 
 - **Outils de suppression**
-  - Supprimer Players, des bases ou des guildes
+  - Supprimer Players, bases ou guildes
   - Supprimer les joueurs inactifs en fonction de seuils de temps
   - Supprimez les joueurs en double et les guildes vides
   - Supprimer les données non référencées/orphelines
@@ -340,7 +340,7 @@ Les deux joueurs (ancien hôte et nouvel hôte) doivent avoir leurs sauvegardes 
 1. Fermez la version GamePass de Palworld
 2. Attends quelques minutes
 3. Exécutez le convertisseur Steam → GamePass
-4. Lancez Palworld le GamePass pour vérifier
+4. Lancez Palworld sur GamePass pour vérifier
 
 ---
 
