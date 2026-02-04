@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldSaveToolsLogo](resources/PalworldSaveTools_Blue.png)
+![PalworldLogo SaveTools](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
 
-# PalworldSaveTools
+# PalworldEnregistrerOutils
 
 **Une boîte à outils complète d'édition de fichiers de sauvegarde pour Palworld**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Anglais](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
+[Anglais](resources/readme/README.en_US.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
 
 ---
 
@@ -29,7 +29,7 @@
 - [Présentation des outils](#tools-overview)
 - [Guides](#guides)
 - [Troubleshooting](#dépannage)
-- [Contributing](#contribution)
+- [Contributing](#contribuant)
 - [Licence](#licence)
 
 ---
@@ -96,7 +96,7 @@ La suite **All-in-One Tools** offre une gestion complète des sauvegardes :
 | Outil | Description |
 | ------ | ------------- |
 | **Modifier les amis joueurs** | Éditeur pal complet avec statistiques, compétences, IV, talents, âmes, rang et sexe |
-| **SteamID Convertisseur** | Convertir les identifiants Steam en Palworld UIDs |
+| **SteamID Convertisseur** | Convertir les identifiants Steam en Palworld UID |
 | **Correction de la sauvegarde de l'hôte** | Échangez des UID entre deux joueurs (par exemple, pour un échange d'hôte) |
 | **Échanger le joueur UIDs** | Échangez des UID entre deux joueurs |
 | **Injecteur à fente** | Augmenter les emplacements palbox par joueur |

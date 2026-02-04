@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldSaveTools 로고](resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools 로고](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
 
-# __기술_8__
+# PalworldSaveTools
 
 **Palworld을 위한 포괄적인 저장 파일 편집 툴킷**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[영어](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
+[영어](resources/readme/README.en_US.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
 
 ---
 
@@ -21,7 +21,7 @@
 
 </div>
 
-## Table of Contents
+## __테크_2__
 
 - [Features](#기능)
 - [Installation](#설치)
@@ -34,7 +34,7 @@
 
 ---
 
-## Features
+## __기술_3__
 
 ### 핵심 기능
 
@@ -47,7 +47,7 @@
 | **베이스캠프 도구** | 내보내기, 가져오기, 복제, 반경 조정 및 기지 관리 |
 | **맵 뷰어** | 좌표와 세부정보가 포함된 대화형 기지 및 플레이어 지도 |
 | **캐릭터 이전** | 다른 월드/서버 간 캐릭터 전송(교차 저장) |
-| **전환 저장** | Steam 및 GamePass 형식 간 변환 |
+| **전환 저장** | Steam과 GamePass 형식 간 변환 |
 | **월드 설정** | WorldOption 및 LevelMeta 설정 편집 |
 | **타임스탬프 도구** | 음수 타임스탬프 수정 및 플레이어 시간 재설정 |
 
@@ -97,7 +97,7 @@
 | ------ | ------------- |
 | **플레이어 친구 편집** | 통계, 기술, IV, 재능, 영혼, 순위 및 성별을 갖춘 완전한 친구 편집자 |
 | **SteamID 변환기** | Steam ID를 Palworld UID로 변환 |
-| **호스트 저장 수정** | 두 플레이어 간 UID 교환(예: 호스트 교환) |
+| **호스트 저장 수정** | 두 플레이어 간에 UID을 교환합니다(예: 호스트 교환의 경우). |
 | **스왑 플레이어 UIDs** | 두 플레이어 간에 UID을 교환합니다. |
 | **슬롯 인젝터** | 플레이어당 팔박스 슬롯 늘리기 |
 | **지도 복원** | 모든 월드/서버에 잠금 해제된 지도 진행 상황 적용 |
@@ -137,12 +137,12 @@ python start.py
 
 ---
 
-## __테크_14__
+## Quick Start
 
 1. **저장 파일 로드**
    - **파일 → 저장 로드**를 클릭하세요.
    - Palworld 저장 폴더로 이동하세요.
-   - `Level.sav`을 선택하세요.
+   - `Level.sav`를 선택하세요.
 
 2. **데이터 탐색**
    - 탭을 사용하여 Players, 길드, 기지 또는 지도를 확인하세요.
@@ -247,7 +247,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 6. 파일을 다시 복사하고 실행하세요.
 
 **수정 호스트 저장 사용:**
-- 임시 폴더에서 `Level.sav`을 선택하세요.
+- 임시 폴더에서 `Level.sav`를 선택하세요.
 - **이전 캐릭터**를 선택하세요(원본 저장에서)
 - **새 캐릭터**(방금 생성한 캐릭터)를 선택하세요.
 - **이전**을 클릭하세요.
@@ -319,7 +319,7 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
 
 ---
 
-## __테크_0__
+## Troubleshooting
 
 ### "VCRUNTIME140.dll을 찾을 수 없습니다"
 
@@ -386,7 +386,7 @@ python scripts/build.py
 
 ## 지원하다
 
-- **__기술_42__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__기술_16__:** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub 문제:** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **선적 서류 비치:** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -400,7 +400,7 @@ python scripts/build.py
 
 ## 감사의 말씀
 
-- **__테크_10__** developed by Pocketpair, Inc.
+- **__테크_24__** developed by Pocketpair, Inc.
 - 이 도구를 개선하는 데 도움을 준 모든 기여자와 커뮤니티 구성원에게 감사드립니다.
 
 ---

@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldSaveTools Логотип](resources/PalworldSaveTools_Blue.png)
+![PalworldСохранить логотип инструментов](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
 
-# PalworldSaveTools
+# PalworldСохранитьИнструменты
 
 **Комплексный набор инструментов для редактирования файлов сохранений для Palworld**
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[Английский](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
+[Английский](resources/readme/README.en_US.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
 
 ---
 
@@ -96,9 +96,9 @@
 | Инструмент | Описание |
 | ------ | ------------- |
 | **Изменить друзей игроков** | Полноценный редактор приятелей со статистикой, навыками, IV, талантами, душами, рангом и полом. |
-| **SteamКонвертер идентификаторов** | Преобразовать идентификаторы Steam в Palworld UIDs |
+| **SteamКонвертер идентификаторов** | Преобразовать идентификаторы Steam в идентификаторы Palworld UID. |
 | **Исправить сохранение хоста** | Обмен UID между двумя игроками (например, для обмена хостами) |
-| **Заменить игрока UIDs** | Обменяйтесь UID между двумя игроками. |
+| **Поменять игрока UIDs** | Обменяйтесь UID между двумя игроками. |
 | **Слот-инжектор** | Увеличение количества слотов для палбоксов на игрока |
 | **Восстановить карту** | Применить разблокированный прогресс карты во всех мирах/серверах. |
 | **Переименовать мир** | Изменить название мира в LevelMeta |
@@ -122,7 +122,7 @@
 
 ### Автономный (Windows — рекомендуется)
 
-1. Загрузите последнюю версию из [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest).
+1. Загрузите последнюю версию из [GitHub Releases](https://github.com/deafdudecomputers/PalworldSaveTools/releases/latest)
 2. Извлеките zip-файл
 3. Запустите `PalworldSaveTools.exe`
 
@@ -185,7 +185,7 @@ python start.py
 - Просмотр всех базовых локаций и позиций игроков
 - Фильтровать по гильдии или имени игрока
 - Нажмите маркеры для получения подробной информации
-- Сгенерируйте команды `killnearestbase` для PalDefender
+- Сгенерировать команды killnearestbase для PalDefender
 
 ### Перенос персонажей
 
@@ -196,7 +196,7 @@ python start.py
 
 ### Исправить сохранение хоста
 
-Обменяйте UID между двумя игроками:
+Обменяйтесь UID между двумя игроками:
 - Передача прогресса от одного игрока к другому
 - Необходим для host/co-op для передачи данных на сервер
 - Полезно для смены роли хоста между игроками.

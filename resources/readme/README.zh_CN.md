@@ -1,8 +1,8 @@
 <div align="center">
 
-![PalworldSaveTools 标志](resources/PalworldSaveTools_Blue.png)
+![PalworldSaveTools 徽标](https://github.com/deafdudecomputers/PalworldSaveTools/blob/main/resources/PalworldSaveTools_Blue.png)
 
-# __技术_8__
+# Palworld保存工具
 
 **用于 Palworld** 的综合保存文件编辑工具包
 
@@ -11,7 +11,7 @@
 [![Discord](https://img.shields.io/badge/Discord-Join_for_support-blue)](https://discord.gg/sYcZwcT4cT)
 [![NexusMods](https://img.shields.io/badge/NexusMods-Download-orange)](https://www.nexusmods.com/palworld/mods/3190)
 
-[英语](resources/readme/README.en_US.md) | [简体中文](resources/readme/README.zh_CN.md) | [Deutsch](resources/readme/README.de_DE.md) | [Español](resources/readme/README.es_ES.md) | [Français](resources/readme/README.fr_FR.md) | [Русский](resources/readme/README.ru_RU.md) | [日本語](resources/readme/README.ja_JP.md) | [한국어](resources/readme/README.ko_KR.md)
+[英语](resources/readme/README.en_US.md) | [zh-CN](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.zh_CN.md) | [de-DE](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.de_DE.md) | [es-ES](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.es_ES.md) | [fr-FR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.fr_FR.md) | [ru-RU](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ru_RU.md) | [ja-JP](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ja_JP.md) | [ko-KR](https://github.com/deafdudecomputers/PalworldSaveTools/tree/main/resources/readme/README.ko_KR.md)
 
 ---
 
@@ -23,9 +23,9 @@
 
 ## Table of Contents
 
-- [Features]（#功能）
+- [Features](#功能)
 - [Installation](#安装)
-- [Quick Start](#快速入门)
+- [Quick Start](#快速启动)
 - [工具概述](#tools-overview)
 - [指南](#guides)
 - [Troubleshooting]（#故障排除）
@@ -97,7 +97,7 @@
 | ------ | ------------- |
 | **编辑玩家好友** | 完整的好友编辑器，包含统计数据、技能、IV、天赋、灵魂、等级和性别 |
 | **SteamID 转换器** | 将 Steam ID 转换为 Palworld UIDs |
-| **修复主机保存** | 在两个玩家之间交换 UIDs（例如，用于主机交换） |
+| **修复主机保存** | 在两个玩家之间交换 UIDs（例如，主机交换） |
 | **交换玩家UIDs** | 在两个玩家之间交换 UIDs |
 | **槽式注入器** | 增加每位玩家的 palbox 槽位 |
 | **恢复地图** | 在所有世界/服务器上应用解锁的地图进度 |
@@ -142,10 +142,10 @@ python start.py
 1. **加载您的保存**
    - 单击**文件→加载保存**
    - 导航到您的 Palworld 保存文件夹
-   - 选择“Level.sav”
+   - 选择`Level.sav`
 
 2. **探索您的数据**
-   - 使用选项卡查看 Players、公会、基地或地图
+   - 使用选项卡查看Players、公会、基地或地图
    - 搜索和过滤以查找特定条目
 
 3. **进行更改**
@@ -273,12 +273,12 @@ steamapps\common\Palworld\Pal\Saved\SaveGames\0\RANDOMSERVERID\
    - 玩家 B（新主机）应该有定期保存（例如“987xxx.sav”）
 
 2. **将旧主机的主机保存交换为常规保存**
-   - 使用 PalworldSaveTools **修复主机保存**来交换：
+   - 使用 PalworldSaveTools **修复主机保存** 进行交换：
    - 旧主机的 `0001.sav` → `123xxx.sav`
    - （这会将旧主机的进度从主机位置移至其常规玩家位置）
 
 3. **将新主机的常规保存交换为主机保存**
-   - 使用 PalworldSaveTools **修复主机保存**来交换：
+   - 使用 PalworldSaveTools **修复主机保存** 进行交换：
    - 新主机的 `987xxx.sav` → `0001.sav`
    - （这会将新主机的进度移至主机槽中）
 
@@ -386,7 +386,7 @@ python scripts/build.py
 
 ＃＃ 支持
 
-- **Discord：** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
+- **__技术_16__：** [Join us for support, base builds, and more!](https://discord.gg/sYcZwcT4cT)
 - **GitHub 问题：** [Report a bug](https://github.com/deafdudecomputers/PalworldSaveTools/issues)
 - **文档：** [Wiki](https://github.com/deafdudecomputers/PalworldSaveTools/wiki) *(Currently in development)*
 
@@ -394,20 +394,20 @@ python scripts/build.py
 
 ＃＃ 执照
 
-该项目已获得 MIT License 许可 - 请参阅 [LICENSE](LICENSE) 文件了解详细信息。
+该项目已获得 MIT License 许可 - 有关详细信息，请参阅 [LICENSE](LICENSE) 文件。
 
 ---
 
 ## 致谢
 
-- **__技术_10__** developed by Pocketpair, Inc.
+- **__技术_24__** developed by Pocketpair, Inc.
 - 感谢所有帮助改进此工具的贡献者和社区成员
 
 ---
 
 <div align="center">
 
-**使用 ❤️ 为 Palworld 社区制作**
+**用 ❤️ 为 Palworld 社区制作**
 
 [⬆ 返回顶部](#palworldsavetools)
 
