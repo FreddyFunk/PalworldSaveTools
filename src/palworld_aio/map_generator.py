@@ -175,8 +175,7 @@ def generate_world_map(output_path=None):
     painter.end()
     final_image = output_image.scaled(QSize(base_map.width(), base_map.height()), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
     if output_path is None:
-        main_dir = os.path.dirname(base_dir)
-        output_path = os.path.join(main_dir, 'updated_worldmap.png')
+        output_path = os.path.join(base_dir, 'updated_worldmap.png')
     try:
         final_image.save(output_path, 'PNG', quality=50)
         duration = time.time() - start_time
