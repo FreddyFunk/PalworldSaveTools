@@ -3,7 +3,7 @@ import os, sys, shutil, subprocess, threading, queue, argparse, re, platform, ti
 from pathlib import Path
 from typing import Optional
 PROJECT_DIR = Path(__file__).resolve().parent
-VENV_DIR = PROJECT_DIR / '.pst_venv'
+VENV_DIR = PROJECT_DIR / 'pst_venv'
 SENTINEL = VENV_DIR / '.ready'
 USE_ANSI = True
 if os.name == 'nt':

@@ -127,7 +127,7 @@ def run_and_watch(cmd, cwd=None, env=None, filter_keys=None, update_callback=Non
         if proc.poll() is not None and proc in child_procs:
             child_procs.remove(proc)
     return proc.wait()
-VENV_DIR = PROJECT_DIR / '.pst_venv'
+VENV_DIR = PROJECT_DIR / 'pst_venv'
 REQ_FILE = PROJECT_DIR / 'requirements.txt'
 PYPROJECT = PROJECT_DIR / 'pyproject.toml'
 TEMP_REQ_FILE_NAME = 'resources/temp_req.txt'

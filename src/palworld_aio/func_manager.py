@@ -1269,6 +1269,19 @@ def check_is_illegal_pal(raw):
             illegal_markers.append('DEF Soul')
         if rank_craftspeed > 20:
             illegal_markers.append('Craft Soul')
+        if 'PassiveSkillList' in sp:
+            passives = sp['PassiveSkillList'].get('value', {}).get('values', [])
+            if isinstance(passives, list) and len(passives) > 4:
+                illegal_markers.append('>4 Passives')
+        if 'EquipWaza' in sp:
+            active_skills = sp['EquipWaza'].get('value', {}).get('values', [])
+            if isinstance(active_skills, list):
+                active_count = sum((1 for s in active_skills if s and s.strip()))
+                if active_count > 3:
+                    illegal_markers.append('>3 Active Skills')
+        rank = extract_value(sp, 'Rank', 1)
+        if rank > 5:
+            illegal_markers.append('>4 Stars')
         return (len(illegal_markers) > 0, illegal_markers)
     except:
         return (False, [])
@@ -1326,7 +1339,14 @@ def _process_dps_file_worker(args):
                 else:
                     container_id = str(slot_id_obj) if slot_id_obj else 'Unknown'
                 owner_uid = extract_value(sp, 'OwnerPlayerUId', '')
-                illegal_info = {'name': pal_name, 'nickname': nick, 'cid': cid, 'level': level, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'illegal_markers': illegal_markers, 'instance_id': inst_id, 'container_id': container_id, 'owner_uid': owner_uid, 'location': 'DPS Storage', 'filename': filename, 'player_uid_from_file': player_uid_from_file}
+                rank = extract_value(sp, 'Rank', 1)
+                passive_skills = sp.get('PassiveSkillList', {}).get('value', {}).get('values', [])
+                passive_count = len(passive_skills) if isinstance(passive_skills, list) else 0
+                active_skills = sp.get('EquipWaza', {}).get('value', {}).get('values', [])
+                active_count = sum((1 for s in active_skills if s and s.strip())) if isinstance(active_skills, list) else 0
+                passive_skills_list = list(passive_skills) if isinstance(passive_skills, list) else []
+                active_skills_list = [s for s in active_skills if s and s.strip()] if isinstance(active_skills, list) else []
+                illegal_info = {'name': pal_name, 'nickname': nick, 'cid': cid, 'level': level, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'rank': rank, 'passive_count': passive_count, 'active_count': active_count, 'passive_skills': passive_skills_list, 'active_skills': active_skills_list, 'illegal_markers': illegal_markers, 'instance_id': inst_id, 'container_id': container_id, 'owner_uid': owner_uid, 'location': 'DPS Storage', 'filename': filename, 'player_uid_from_file': player_uid_from_file}
                 illegal_entries_list.append(illegal_info)
                 if level > 65:
                     sp['Level'] = {'id': None, 'type': 'IntProperty', 'value': 65}
@@ -1357,6 +1377,23 @@ def _process_dps_file_worker(args):
                 if rank_craftspeed > 20:
                     sp['Rank_CraftSpeed'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 20}}
                     changed = True
+                rank = extract_value(sp, 'Rank', 1)
+                if rank > 5:
+                    sp['Rank'] = {'id': None, 'type': 'ByteProperty', 'value': {'type': 'None', 'value': 5}}
+                    changed = True
+                if 'PassiveSkillList' in sp:
+                    passives = sp['PassiveSkillList'].get('value', {}).get('values', [])
+                    if isinstance(passives, list) and len(passives) > 4:
+                        sp['PassiveSkillList']['value']['values'] = passives[:4]
+                        changed = True
+                if 'EquipWaza' in sp:
+                    active_skills = sp['EquipWaza'].get('value', {}).get('values', [])
+                    if isinstance(active_skills, list):
+                        valid_skills = [s for s in active_skills if s and s.strip()]
+                        if len(valid_skills) > 3:
+                            trimmed_skills = valid_skills[:3]
+                            sp['EquipWaza']['value']['values'] = trimmed_skills
+                            changed = True
                 if changed:
                     illegals_in_file += 1
         if changed:
@@ -1374,7 +1411,7 @@ def fix_illegal_pals_in_save(parent=None):
     if not constants.current_save_path or not constants.loaded_level_json:
         return 0
     base_path = constants.get_base_path()
-    illegal_log_folder = os.path.join(base_path, os.path.join('Scan Save Logger', 'Illegal Pal Logger'))
+    illegal_log_folder = os.path.join(base_path, 'Illegal Pal Logger')
     if os.path.exists(illegal_log_folder):
         try:
             shutil.rmtree(illegal_log_folder)
@@ -1559,7 +1596,7 @@ def fix_illegal_pals_in_save(parent=None):
                         except Exception as e:
                             print(f'Error collecting results from {filename}: {e}')
         base_path = constants.get_base_path()
-        illegal_log_dir = os.path.join(base_path, os.path.join('Scan Save Logger', 'Illegal Pal Logger'))
+        illegal_log_dir = os.path.join(base_path, 'Illegal Pal Logger')
         os.makedirs(illegal_log_dir, exist_ok=True)
         guild_illegals = defaultdict(list)
         player_illegals = defaultdict(list)
@@ -1647,12 +1684,31 @@ def fix_illegal_pals_in_save(parent=None):
                             lvl_str = f"[!] {info['level']}" if 'Level' in info['illegal_markers'] else str(info['level'])
                             iv_str = f"HP: {info['talent_hp']}(+0%),ATK: {info['talent_shot']}(+0%),DEF: {info['talent_defense']}(+0%)"
                             soul_str = f"HP Soul: {info['rank_hp']}, ATK Soul: {info['rank_attack']}, DEF Soul: {info['rank_defense']}, Craft: {info['rank_craftspeed']}"
+                            rank_str = f"{info.get('rank', 1)} stars ({info.get('rank', 1) - 1}☆)"
+                            skills_str = f"Active: {info.get('active_count', 0)}/3, Passive: {info.get('passive_count', 0)}/4"
+                            active_skills_display = []
+                            for skill in info.get('active_skills', []):
+                                skill_clean = skill.split('::')[-1] if '::' in skill else skill
+                                active_skills_display.append(skill_clean)
+                            passive_skills_display = []
+                            for skill in info.get('passive_skills', []):
+                                passive_skills_display.append(skill)
                             info_block = f'\n[{display_name}]\n'
                             info_block += f'  [!] ILLEGAL: {illegal_str}\n'
-                            info_block += f'  Level: {lvl_str}\n'
+                            info_block += f'  Level:    {lvl_str}\n'
+                            info_block += f'  Rank:     {rank_str}\n'
+                            info_block += f'  Skills:   {skills_str}\n'
+                            if active_skills_display:
+                                info_block += f"    Active Skills:   {', '.join(active_skills_display)}\n"
+                            if passive_skills_display:
+                                info_block += f"    Passive Skills: {', '.join(passive_skills_display)}\n"
                             info_block += f'  IVs:      {iv_str}\n'
                             info_block += f'  Souls:    {soul_str}\n'
-                            info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                            instance_id = info.get('instance_id', 'Unknown')
+                            if instance_id and instance_id != 'Unknown':
+                                info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                            else:
+                                info_block += f"  IDs:      Container: {info['container_id']}\n"
                             logger.info(info_block)
                             logger.info('-' * 20)
                     for h in logger.handlers[:]:
@@ -1708,12 +1764,31 @@ def fix_illegal_pals_in_save(parent=None):
                             lvl_str = f"[!] {info['level']}" if 'Level' in info['illegal_markers'] else str(info['level'])
                             iv_str = f"HP: {info['talent_hp']}(+0%),ATK: {info['talent_shot']}(+0%),DEF: {info['talent_defense']}(+0%)"
                             soul_str = f"HP Soul: {info['rank_hp']}, ATK Soul: {info['rank_attack']}, DEF Soul: {info['rank_defense']}, Craft: {info['rank_craftspeed']}"
+                            rank_str = f"{info.get('rank', 1)} stars ({info.get('rank', 1) - 1}☆)"
+                            skills_str = f"Active: {info.get('active_count', 0)}/3, Passive: {info.get('passive_count', 0)}/4"
+                            active_skills_display = []
+                            for skill in info.get('active_skills', []):
+                                skill_clean = skill.split('::')[-1] if '::' in skill else skill
+                                active_skills_display.append(skill_clean)
+                            passive_skills_display = []
+                            for skill in info.get('passive_skills', []):
+                                passive_skills_display.append(skill)
                             info_block = f'\n[{display_name}]\n'
                             info_block += f'  [!] ILLEGAL: {illegal_str}\n'
-                            info_block += f'  Level: {lvl_str}\n'
+                            info_block += f'  Level:    {lvl_str}\n'
+                            info_block += f'  Rank:     {rank_str}\n'
+                            info_block += f'  Skills:   {skills_str}\n'
+                            if active_skills_display:
+                                info_block += f"    Active Skills:   {', '.join(active_skills_display)}\n"
+                            if passive_skills_display:
+                                info_block += f"    Passive Skills: {', '.join(passive_skills_display)}\n"
                             info_block += f'  IVs:      {iv_str}\n'
                             info_block += f'  Souls:    {soul_str}\n'
-                            info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                            instance_id = info.get('instance_id', 'Unknown')
+                            if instance_id and instance_id != 'Unknown':
+                                info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                            else:
+                                info_block += f"  IDs:      Container: {info['container_id']}\n"
                             logger.info(info_block)
                             logger.info('-' * 20)
                     for h in logger.handlers[:]:

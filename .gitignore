@@ -12,6 +12,7 @@ build/
 PalworldSaveTools.egg-info/
 src/data/configs/
 .pst_venv/
+pst_venv/
 CLAUDE.md
 .claude/
 Scan Save Logger/

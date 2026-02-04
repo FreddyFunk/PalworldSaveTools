@@ -1,4 +1,4 @@
 @echo off
-rem Run the python bootstrapper
+title PalworldSaveTools Launcher
 python "%~dp0setup_pst.py"
 exit /b %errorlevel%

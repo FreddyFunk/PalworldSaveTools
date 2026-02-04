@@ -2,7 +2,7 @@ import os, sys, subprocess, shutil, re, argparse
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 os.chdir(ROOT_DIR)
-VENV_DIR = '.pst_venv'
+VENV_DIR = 'pst_venv'
 PYTHON_EXE = os.path.join(VENV_DIR, 'Scripts', 'python.exe') if os.name == 'nt' else os.path.join(VENV_DIR, 'bin', 'python')
 USE_EXISTING_VENV = False
 def create_venv():
@@ -46,7 +46,7 @@ def build_with_cx_freeze():
         print(f'Removing {lib_folder}...')
         shutil.rmtree(lib_folder)
 def clean_build_artifacts():
-    items = ['build', 'PalworldSaveTools.egg-info', 'Backups', 'PST_standalone', 'Scan Save Logger', 'psp_windows', 'ppe_windows', 'updated_worldmap.png', 'PalDefender', 'XGP_converted_saves', 'saves']
+    items = ['build', 'PalworldSaveTools.egg-info', 'Backups', 'PST_standalone', 'Scan Save Logger', 'Illegal Pal Logger', 'psp_windows', 'ppe_windows', 'updated_worldmap.png', 'PalDefender', 'XGP_converted_saves', 'saves']
     if not USE_EXISTING_VENV:
         items.extend(['.pst_venv', 'pst_venv'])
     for item in items:

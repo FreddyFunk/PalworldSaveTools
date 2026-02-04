@@ -114,19 +114,13 @@ class SaveManager(QObject):
                     guild_name_map[gid.lower()] = guild_name
                     for base_id_uuid in gdata['value']['RawData']['value'].get('base_ids', []):
                         constants.base_guild_lookup[str(base_id_uuid)] = {'GuildName': guild_name, 'GuildID': gid}
-            log_folder = os.path.join(base_path, os.path.join('Scan Save Logger', 'Illegal Pal Logger'))
+            log_folder = os.path.join(base_path, 'Scan Save Logger')
             if os.path.exists(log_folder):
                 try:
                     shutil.rmtree(log_folder)
                 except:
                     pass
             os.makedirs(log_folder, exist_ok=True)
-            illegal_log_folder = os.path.join(log_folder, os.path.join('Scan Save Logger', 'Illegal Pal Logger'))
-            if os.path.exists(illegal_log_folder):
-                try:
-                    shutil.rmtree(illegal_log_folder)
-                except:
-                    pass
             player_pals_count = {}
             illegal_pals_by_owner, owner_nicknames = self._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
             constants.PLAYER_PAL_COUNTS = player_pals_count
@@ -166,19 +160,13 @@ class SaveManager(QObject):
                 guild_name_map[gid.lower()] = guild_name
                 for base_id_uuid in gdata['value']['RawData']['value'].get('base_ids', []):
                     constants.base_guild_lookup[str(base_id_uuid)] = {'GuildName': guild_name, 'GuildID': gid}
-        log_folder = os.path.join(base_path, os.path.join('Scan Save Logger', 'Illegal Pal Logger'))
+        log_folder = os.path.join(base_path, 'Scan Save Logger')
         if os.path.exists(log_folder):
             try:
                 shutil.rmtree(log_folder)
             except:
                 pass
         os.makedirs(log_folder, exist_ok=True)
-        illegal_log_folder = os.path.join(log_folder, os.path.join('Scan Save Logger', 'Illegal Pal Logger'))
-        if os.path.exists(illegal_log_folder):
-            try:
-                shutil.rmtree(illegal_log_folder)
-            except:
-                pass
         player_pals_count = {}
         illegal_pals_by_owner, owner_nicknames = self._count_pals_found(data_source, player_pals_count, log_folder, constants.current_save_path, guild_name_map)
         constants.PLAYER_PAL_COUNTS = player_pals_count
@@ -540,7 +528,7 @@ class SaveManager(QObject):
                         print(f'Error processing DPS task: {e}')
             self.dps_tasks.clear()
         if illegal_pals_by_owner:
-            illegal_log_dir = os.path.join(base_path, os.path.join('Scan Save Logger', 'Illegal Pal Logger'))
+            illegal_log_dir = os.path.join(base_path, 'Illegal Pal Logger')
             os.makedirs(illegal_log_dir, exist_ok=True)
             guild_illegals = defaultdict(list)
             player_illegals = defaultdict(list)
@@ -608,12 +596,31 @@ class SaveManager(QObject):
                                 lvl_str = f"[!] {info['level']}" if 'Level' in info['illegal_markers'] else str(info['level'])
                                 iv_str = f"HP: {info['talent_hp']}(+0%),ATK: {info['talent_shot']}(+0%),DEF: {info['talent_defense']}(+0%)"
                                 soul_str = f"HP Soul: {info['rank_hp']}, ATK Soul: {info['rank_attack']}, DEF Soul: {info['rank_defense']}, Craft: {info['rank_craftspeed']}"
+                                rank_str = f"{info.get('rank', 1)} stars ({info.get('rank', 1) - 1}☆)"
+                                skills_str = f"Active: {info.get('active_count', 0)}/3, Passive: {info.get('passive_count', 0)}/4"
+                                active_skills_display = []
+                                for skill in info.get('active_skills', []):
+                                    skill_clean = skill.split('::')[-1] if '::' in skill else skill
+                                    active_skills_display.append(skill_clean)
+                                passive_skills_display = []
+                                for skill in info.get('passive_skills', []):
+                                    passive_skills_display.append(skill)
                                 info_block = f'\n[{display_name}]\n'
                                 info_block += f'  [!] ILLEGAL: {illegal_str}\n'
-                                info_block += f'  Level: {lvl_str}\n'
+                                info_block += f'  Level:    {lvl_str}\n'
+                                info_block += f'  Rank:     {rank_str}\n'
+                                info_block += f'  Skills:   {skills_str}\n'
+                                if active_skills_display:
+                                    info_block += f"    Active Skills:   {', '.join(active_skills_display)}\n"
+                                if passive_skills_display:
+                                    info_block += f"    Passive Skills: {', '.join(passive_skills_display)}\n"
                                 info_block += f'  IVs:      {iv_str}\n'
                                 info_block += f'  Souls:    {soul_str}\n'
-                                info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                                instance_id = info.get('instance_id', 'Unknown')
+                                if instance_id and instance_id != 'Unknown':
+                                    info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                                else:
+                                    info_block += f"  IDs:      Container: {info['container_id']}\n"
                                 logger.info(info_block)
                                 logger.info('-' * 20)
                         for h in logger.handlers[:]:
@@ -665,12 +672,31 @@ class SaveManager(QObject):
                                 lvl_str = f"[!] {info['level']}" if 'Level' in info['illegal_markers'] else str(info['level'])
                                 iv_str = f"HP: {info['talent_hp']}(+0%),ATK: {info['talent_shot']}(+0%),DEF: {info['talent_defense']}(+0%)"
                                 soul_str = f"HP Soul: {info['rank_hp']}, ATK Soul: {info['rank_attack']}, DEF Soul: {info['rank_defense']}, Craft: {info['rank_craftspeed']}"
+                                rank_str = f"{info.get('rank', 1)} stars ({info.get('rank', 1) - 1}☆)"
+                                skills_str = f"Active: {info.get('active_count', 0)}/3, Passive: {info.get('passive_count', 0)}/4"
+                                active_skills_display = []
+                                for skill in info.get('active_skills', []):
+                                    skill_clean = skill.split('::')[-1] if '::' in skill else skill
+                                    active_skills_display.append(skill_clean)
+                                passive_skills_display = []
+                                for skill in info.get('passive_skills', []):
+                                    passive_skills_display.append(skill)
                                 info_block = f'\n[{display_name}]\n'
                                 info_block += f'  [!] ILLEGAL: {illegal_str}\n'
-                                info_block += f'  Level: {lvl_str}\n'
+                                info_block += f'  Level:    {lvl_str}\n'
+                                info_block += f'  Rank:     {rank_str}\n'
+                                info_block += f'  Skills:   {skills_str}\n'
+                                if active_skills_display:
+                                    info_block += f"    Active Skills:   {', '.join(active_skills_display)}\n"
+                                if passive_skills_display:
+                                    info_block += f"    Passive Skills: {', '.join(passive_skills_display)}\n"
                                 info_block += f'  IVs:      {iv_str}\n'
                                 info_block += f'  Souls:    {soul_str}\n'
-                                info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                                instance_id = info.get('instance_id', 'Unknown')
+                                if instance_id and instance_id != 'Unknown':
+                                    info_block += f"  IDs:      Container: {info['container_id']} | Instance: {info['instance_id']}\n"
+                                else:
+                                    info_block += f"  IDs:      Container: {info['container_id']}\n"
                                 logger.info(info_block)
                                 logger.info('-' * 20)
                         for h in logger.handlers[:]:
@@ -843,11 +869,15 @@ def _process_dps_scan_worker(args):
                 guild_id = str(raw_data_val.get('group_id', 'Unknown')).lower()
                 name = NAMEMAP.get(char_id.lower(), char_id)
                 dn = f'{name}(Nickname: {nick})' if nick != 'Unknown' and nick else name
-                info = f"\n[{dn}]\n  Level: {level} | Rank: {rank} | Gender: {ginfo}\n  IVs:      {iv_str}\n  Passives: {(','.join(pskills) if pskills else 'None')}\n  Active:   {(','.join(active) if active else 'None')}\n  Learned:  {(','.join(learned) if learned else 'None')}\n  IDs:      Container: {container_id} | Instance: {inst_id} | Guild: {guild_id}\n\n"
+                info = f"\n[{dn}]\n  Level: {level} | Rank: {rank} | Gender: {ginfo}\n  IVs:      {iv_str}\n  Passives: {(','.join(pskills) if pskills else 'None')}\n  Active:   {(','.join(active) if active else 'None')}\n  Learned:  {(','.join(learned) if learned else 'None')}\n  IDs:      Container: {container_id}\n\n"
                 formatted_pals.append(info)
                 is_illegal, illegal_markers = check_is_illegal_pal(entry)
                 if is_illegal:
-                    illegal_info = {'name': name, 'nickname': nick, 'cid': char_id, 'level': level, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'illegal_markers': illegal_markers, 'instance_id': inst_id, 'container_id': container_id, 'location': 'DPS Storage'}
+                    passive_count = len(p_list) if isinstance(p_list, list) else 0
+                    active_count = sum((1 for s in e_list if s and s.strip())) if isinstance(e_list, list) else 0
+                    passive_skills_list = list(p_list) if isinstance(p_list, list) else []
+                    active_skills_list = [s for s in e_list if s and s.strip()] if isinstance(e_list, list) else []
+                    illegal_info = {'name': name, 'nickname': nick, 'cid': char_id, 'level': level, 'talent_hp': talent_hp, 'talent_shot': talent_shot, 'talent_defense': talent_defense, 'rank_hp': rank_hp, 'rank_attack': rank_attack, 'rank_defense': rank_defense, 'rank_craftspeed': rank_craftspeed, 'rank': rank, 'passive_count': passive_count, 'active_count': active_count, 'passive_skills': passive_skills_list, 'active_skills': active_skills_list, 'illegal_markers': illegal_markers, 'instance_id': inst_id, 'container_id': container_id, 'location': 'DPS Storage'}
                     illegal_pals.append(illegal_info)
             except Exception as e:
                 print(f'Error processing pal in DPS file: {e}')
