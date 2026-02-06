@@ -415,7 +415,7 @@ class PalDefenderDialog(QDialog):
         import re
         import palworld_coord
         base_dir = constants.get_base_path()
-        log_file = os.path.join(base_dir, 'Scan Save Logger', 'scan_save.log')
+        log_file = os.path.join(base_dir, 'logs', 'Scan Save Logger', 'scan_save.log')
         if not os.path.exists(log_file):
             self._append_output(f'Log file not found: {log_file}')
             self._append_output('Please load a save file first to generate the scan_save.log file.')

@@ -1411,7 +1411,7 @@ def fix_illegal_pals_in_save(parent=None):
     if not constants.current_save_path or not constants.loaded_level_json:
         return 0
     base_path = constants.get_base_path()
-    illegal_log_folder = os.path.join(base_path, 'Illegal Pal Logger')
+    illegal_log_folder = os.path.join(base_path, 'logs', 'Illegal Pal Logger')
     if os.path.exists(illegal_log_folder):
         try:
             shutil.rmtree(illegal_log_folder)
@@ -1607,7 +1607,7 @@ def fix_illegal_pals_in_save(parent=None):
                         except Exception as e:
                             print(f'Error collecting results from {filename}: {e}')
         base_path = constants.get_base_path()
-        illegal_log_dir = os.path.join(base_path, 'Illegal Pal Logger')
+        illegal_log_dir = os.path.join(base_path, 'logs', 'Illegal Pal Logger')
         os.makedirs(illegal_log_dir, exist_ok=True)
         guild_illegals = defaultdict(list)
         player_illegals = defaultdict(list)

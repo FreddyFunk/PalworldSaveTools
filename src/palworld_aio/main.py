@@ -173,7 +173,7 @@ def run_aio():
         print('Loading done')
         if options['logs']:
             base_path = constants.get_base_path()
-            log_folder = os.path.join(base_path, 'Scan Save Logger')
+            log_folder = os.path.join(base_path, 'logs', 'Scan Save Logger')
             import shutil
             if os.path.exists(log_folder):
                 try:
