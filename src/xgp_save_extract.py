@@ -2,6 +2,7 @@ from import_libs import *
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePath
 from typing import Any, Dict, List, Tuple
+from common import get_base_directory
 filetime_epoch = datetime(1601, 1, 1, tzinfo=timezone.utc)
 packages_root = Path(os.path.expandvars(f'%LOCALAPPDATA%\\Packages'))
 def read_game_list() -> Dict[str, Any] | None:
@@ -213,10 +214,11 @@ def main(wgs_path=None):
                 formatted_game_name = name.replace(' ', '_').replace(':', '_').replace("'", '').replace('!', '').lower()
                 timestamp = datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
                 zip_name = '{}_{}_{}.zip'.format(formatted_game_name, xbox_username_or_id, timestamp)
-                with zipfile.ZipFile(zip_name, 'x', zipfile.ZIP_DEFLATED) as save_zip:
+                zip_path = os.path.join(get_base_directory(), zip_name)
+                with zipfile.ZipFile(zip_path, 'x', zipfile.ZIP_DEFLATED) as save_zip:
                     for file_name, file_path in save_paths:
                         save_zip.write(file_path, arcname=file_name)
-                        zip_full_path = os.path.abspath(zip_name)
+                        zip_full_path = os.path.abspath(zip_path)
                 temp_dir.cleanup()
                 print()
                 print(' Save files written to "%s"' % zip_name)
@@ -257,10 +259,11 @@ def main(wgs_path=None):
                 formatted_game_name = name.replace(' ', '_').replace(':', '_').replace("'", '').replace('!', '').lower()
                 timestamp = datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
                 zip_name = '{}_{}_{}.zip'.format(formatted_game_name, xbox_username_or_id, timestamp)
-                with zipfile.ZipFile(zip_name, 'x', zipfile.ZIP_DEFLATED) as save_zip:
+                zip_path = os.path.join(get_base_directory(), zip_name)
+                with zipfile.ZipFile(zip_path, 'x', zipfile.ZIP_DEFLATED) as save_zip:
                     for file_name, file_path in save_paths:
                         save_zip.write(file_path, arcname=file_name)
-                        zip_full_path = os.path.abspath(zip_name)
+                        zip_full_path = os.path.abspath(zip_path)
                 temp_dir.cleanup()
                 print()
                 print(' Save files written to "%s"' % zip_name)

@@ -319,7 +319,7 @@ class RadiusInputDialog(QDialog):
 class PalDefenderDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(t('paldefender.title') if t else 'Generate PalDefender killnearestbase Commands')
+        self.setWindowTitle(t('paldefender.title') if t else 'PalDefender - Generate Commands')
         self.setMinimumSize(800, 600)
         if os.path.exists(constants.ICON_PATH):
             self.setWindowIcon(QIcon(constants.ICON_PATH))
@@ -349,7 +349,7 @@ class PalDefenderDialog(QDialog):
         radio_layout.addWidget(self.radio_both)
         radio_layout.addStretch()
         filter_layout.addLayout(radio_layout)
-        instructions = QLabel(t('paldefender.instructions') if t else 'Choose filter type:\nInactivity: Select bases with ALL players inactive for given days.\nMax Level: Select bases with ALL players below given level.\nBoth: Combine both filters(ALL players must match both criteria).')
+        instructions = QLabel(t('paldefender.instructions') if t else 'Choose filter type:\nInactivity: Select guilds with ALL players inactive for given days.\nMax Level: Select guilds with ALL players below given level.\nBoth: Combine both filters(ALL players must match both criteria).')
         instructions.setStyleSheet(f'color: {constants.MUTED}; padding: 10px;')
         instructions.setWordWrap(True)
         filter_layout.addWidget(instructions)
@@ -374,12 +374,12 @@ class PalDefenderDialog(QDialog):
         input_layout.addWidget(self.maxlevel_spin)
         input_layout.addStretch()
         layout.addLayout(input_layout)
-        run_btn = QPushButton(t('button.run') if t else 'Run')
+        run_btn = QPushButton(t('button.run') if t else 'Generate Commands')
         run_btn.setMinimumHeight(40)
         run_btn.setFont(QFont(constants.FONT_FAMILY, constants.FONT_SIZE, QFont.Bold))
         run_btn.clicked.connect(self._on_generate)
         layout.addWidget(run_btn)
-        output_label = QLabel(t('paldefender.output') if t else 'Output:')
+        output_label = QLabel(t('paldefender.output') if t else 'Output (killnearestbase commands):')
         output_label.setFont(QFont(constants.FONT_FAMILY, constants.FONT_SIZE, QFont.Bold))
         layout.addWidget(output_label)
         self.output_text = QTextEdit()
@@ -403,130 +403,125 @@ class PalDefenderDialog(QDialog):
     def _on_generate(self):
         self._clear_output()
         try:
+            if not constants.loaded_level_json:
+                self._append_output('No save file loaded.')
+                return
             filter_type = self.filter_group.checkedId()
             inactivity_days = self.inactivity_spin.value() if filter_type in (1, 3) else None
             max_level = self.maxlevel_spin.value() if filter_type in (2, 3) else None
-            result = self._parse_log(inactivity_days=inactivity_days, max_level=max_level)
-            if not result:
-                self._append_output(t('paldefender.no_match') if t else 'No guilds matched the filter criteria.')
+            self._generate_commands(inactivity_days=inactivity_days, max_level=max_level)
         except Exception as e:
             show_critical(self, t('error.title') if t else 'Error', str(e))
-    def _parse_log(self, inactivity_days=None, max_level=None):
-        import re
-        import palworld_coord
-        base_dir = constants.get_base_path()
-        log_file = os.path.join(base_dir, 'logs', 'Scan Save Logger', 'scan_save.log')
-        if not os.path.exists(log_file):
-            self._append_output(f'Log file not found: {log_file}')
-            self._append_output('Please load a save file first to generate the scan_save.log file.')
-            return False
-        with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read()
-        guilds = [g.strip() for g in re.split('={60,}', content) if g.strip()]
-        inactive_guilds = {}
-        kill_commands = []
-        guild_count = base_count = excluded_guilds = excluded_bases = 0
-        for guild in guilds:
-            players_data = re.findall('Player:(.+?)\\| UID:([a-f0-9-]+)\\| Level:(\\d+)\\| Caught:(\\d+)\\| Owned:(\\d+)\\| Encounters:(\\d+)\\| Uniques:(\\d+)\\| Last Online:(.+? ago)', guild)
-            bases = re.findall('Base \\d+: Base ID:([a-f0-9-]+)\\| .+? \\| RawData:(.+)', guild)
-            if not players_data or not bases:
-                continue
-            guild_name_match = re.search('Guild:(.+?)\\|', guild)
-            guild_leader_match = re.search('Guild Leader:(.+?)\\|', guild)
-            guild_id_match = re.search('Guild ID:([a-f0-9-]+)', guild)
-            guild_name = guild_name_match.group(1) if guild_name_match else 'Unnamed Guild'
-            guild_leader = guild_leader_match.group(1) if guild_leader_match else 'Unknown'
-            guild_id = guild_id_match.group(1) if guild_id_match else 'Unknown'
-            if guild_id in constants.exclusions.get('guilds', []):
-                excluded_guilds += 1
-                continue
-            filtered_bases = []
-            for base_id, raw_data in bases:
-                if base_id in constants.exclusions.get('bases', []):
-                    excluded_bases += 1
+    def _generate_commands(self, inactivity_days=None, max_level=None):
+        from collections import defaultdict
+        from .utils import as_uuid, extract_value
+        wsd = constants.loaded_level_json['properties']['worldSaveData']['value']
+        tick = wsd['GameTimeSaveData']['value']['RealDateTimeTicks']['value']
+        player_levels = {}
+        char_map = wsd.get('CharacterSaveParameterMap', {}).get('value', [])
+        for entry in char_map:
+            try:
+                sp = entry['value']['RawData']['value']['object']['SaveParameter']
+                if sp['struct_type'] != 'PalIndividualCharacterSaveParameter':
                     continue
-                filtered_bases.append((base_id, raw_data))
-            if not filtered_bases:
+                sp_val = sp['value']
+                if not sp_val.get('IsPlayer', {}).get('value', False):
+                    continue
+                key = entry.get('key', {})
+                uid_obj = key.get('PlayerUId', {})
+                uid = str(uid_obj.get('value', '') if isinstance(uid_obj, dict) else uid_obj)
+                level = extract_value(sp_val, 'Level', '?')
+                if uid:
+                    player_levels[uid.replace('-', '').lower()] = level
+            except:
                 continue
+        excluded_guilds = {ex.replace('-', '').lower() for ex in constants.exclusions.get('guilds', [])}
+        excluded_bases = {ex.replace('-', '').lower() for ex in constants.exclusions.get('bases', [])}
+        matching_guilds = {}
+        for g in wsd['GroupSaveDataMap']['value']:
+            if g['value']['GroupType']['value']['value'] != 'EPalGroupType::Guild':
+                continue
+            gid_raw = str(g['key'])
+            gid_clean = gid_raw.replace('-', '').lower()
+            if gid_clean in excluded_guilds:
+                continue
+            guild_name = g['value']['RawData']['value'].get('guild_name', 'Unknown')
+            players = g['value']['RawData']['value'].get('players', [])
+            if not players:
+                continue
+            matches_inactivity = True
             if inactivity_days is not None:
-                all_inactive = True
-                for player in players_data:
-                    last_online = player[7]
-                    if 'd' in last_online:
-                        days_match = re.search('(\\d+)d', last_online)
-                        if days_match:
-                            days = int(days_match.group(1))
-                            if days < inactivity_days:
-                                all_inactive = False
-                                break
-                        else:
-                            all_inactive = False
-                            break
-                    else:
-                        all_inactive = False
+                for p in players:
+                    last_online = p.get('player_info', {}).get('last_online_real_time')
+                    if last_online is None:
+                        matches_inactivity = False
                         break
-                if not all_inactive:
-                    continue
+                    days_inactive = (tick - last_online) / 10000000.0 / 86400
+                    if days_inactive < inactivity_days:
+                        matches_inactivity = False
+                        break
+            if not matches_inactivity:
+                continue
+            matches_max_level = True
             if max_level is not None:
-                if any((int(player[2]) > max_level for player in players_data)):
-                    continue
-            if guild_id not in inactive_guilds:
-                inactive_guilds[guild_id] = {'guild_name': guild_name, 'guild_leader': guild_leader, 'players': [], 'bases': []}
-            for player in players_data:
-                inactive_guilds[guild_id]['players'].append({'name': player[0], 'uid': player[1], 'level': player[2], 'caught': player[3], 'owned': player[4], 'encounters': player[5], 'uniques': player[6], 'last_online': player[7]})
-            inactive_guilds[guild_id]['bases'].extend(filtered_bases)
-            guild_count += 1
-            base_count += len(filtered_bases)
-            for base_id, raw_data in filtered_bases:
-                coords = re.findall('[-+]?\\d*\\.?\\d+', raw_data)
+                for p in players:
+                    uid = str(p.get('player_uid', '')).replace('-', '').lower()
+                    level = player_levels.get(uid, '?')
+                    if level == '?':
+                        matches_max_level = False
+                        break
+                    if isinstance(level, int) and level > max_level:
+                        matches_max_level = False
+                        break
+            if not matches_max_level:
+                continue
+            matching_guilds[gid_raw] = {'name': guild_name, 'bases': []}
+        base_list = wsd.get('BaseCampSaveData', {}).get('value', [])
+        for b in base_list:
+            gid = as_uuid(b['value']['RawData']['value'].get('group_id_belong_to'))
+            base_id = str(b['key'])
+            if base_id.replace('-', '').lower() in excluded_bases:
+                continue
+            gid_str = str(gid)
+            if gid_str in matching_guilds:
+                raw = b['value']['RawData']['value']
+                trans = raw.get('transform', {})
+                translation = trans.get('translation', {})
+                x = translation.get('x', 0)
+                y = translation.get('y', 0)
+                z = translation.get('z', 0)
+                raw_data = f'RawData: {x},{y},{z}'
+                matching_guilds[gid_str]['bases'].append({'id': base_id, 'raw': raw_data})
+        kill_commands = []
+        for gid, ginfo in matching_guilds.items():
+            self._append_output(f"Guild: {ginfo['name']} | ID: {gid}")
+            self._append_output(f"Bases: {len(ginfo['bases'])}")
+            for base in ginfo['bases']:
+                self._append_output(f"  Base {base['id']} | {base['raw']}")
+                raw = base['raw'].replace('RawData: ', '')
+                coords = raw.split(',')
                 if len(coords) >= 3:
-                    x, y, z = map(float, coords[:3])
-                    base_coords = palworld_coord.sav_to_map(x, y)
-                    kill_commands.append(f'killnearestbase {base_coords.x:.2f} {base_coords.y:.2f} {z:.2f}')
-        for guild_id, info in inactive_guilds.items():
-            self._append_output(f"Guild: {info['guild_name']} | Leader: {info['guild_leader']} | ID: {guild_id}")
-            self._append_output(f"Players: {len(info['players'])}")
-            for p in info['players']:
-                self._append_output(f"  Player: {p['name']} | UID: {p['uid']} | Level: {p['level']} | Caught: {p['caught']} | Owned: {p['owned']} | Encounters: {p['encounters']} | Uniques: {p['uniques']} | Last Online: {p['last_online']}")
-            self._append_output(f"Bases: {len(info['bases'])}")
-            for base_id, raw_data in info['bases']:
-                self._append_output(f'  Base ID: {base_id} | RawData: {raw_data}')
+                    x, y, z = (coords[0], coords[1], coords[2])
+                    kill_commands.append(f'killnearestbase {x} {y} {z}')
             self._append_output('-' * 40)
-        self._append_output(f'\nFound {guild_count} guild(s)with {base_count} base(s).')
+        self._append_output(f'\nFound {len(matching_guilds)} guild(s) with bases to delete.')
         if kill_commands:
             output_dir = os.path.join(constants.get_base_path(), 'PalDefender')
             os.makedirs(output_dir, exist_ok=True)
             commands_file = os.path.join(output_dir, 'paldefender_bases.log')
             with open(commands_file, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(kill_commands))
-            self._append_output(f'Wrote {len(kill_commands)} kill commands to {commands_file}')
-            info_file = os.path.join(output_dir, 'paldefender_bases_info.log')
-            with open(info_file, 'w', encoding='utf-8') as info_log:
-                info_log.write('-' * 40 + '\n')
-                for gid, ginfo in inactive_guilds.items():
-                    info_log.write(f"Guild: {ginfo['guild_name']} | Leader: {ginfo['guild_leader']} | ID: {gid}\n")
-                    info_log.write(f"Players: {len(ginfo['players'])}\n")
-                    for p in ginfo['players']:
-                        info_log.write(f"  Player: {p['name']} | UID: {p['uid']} | Level: {p['level']} | Caught: {p['caught']} | Owned: {p['owned']} | Encounters: {p['encounters']} | Uniques: {p['uniques']} | Last Online: {p['last_online']}\n")
-                    info_log.write(f"Bases: {len(ginfo['bases'])}\n")
-                    for base_id, raw_data in ginfo['bases']:
-                        coords = re.findall('[-+]?\\d*\\.?\\d+', raw_data)
-                        if len(coords) >= 3:
-                            x, y, z = map(float, coords[:3])
-                            map_coords = palworld_coord.sav_to_map(x, y)
-                            info_log.write(f'  Base ID: {base_id} | Map Coords: X: {map_coords.x:.2f},Y: {map_coords.y:.2f},Z: {z:.2f}\n')
-                        else:
-                            info_log.write(f'  Base ID: {base_id} | Invalid RawData: {raw_data}\n')
-                    info_log.write('-' * 40 + '\n')
-                info_log.write(f'Found {guild_count} guild(s)with {base_count} base(s).\n')
-                info_log.write('-' * 40)
+            self._append_output(f'\nWrote {len(kill_commands)} kill commands to:')
+            self._append_output(commands_file)
+            self._append_output('\n--- Commands ---')
+            for cmd in kill_commands:
+                self._append_output(cmd)
         else:
-            self._append_output('No kill commands generated.')
+            self._append_output('\nNo kill commands generated.')
         if inactivity_days is not None:
-            self._append_output(f'Inactivity filter applied: >={inactivity_days} day(s).')
+            self._append_output(f'\nFilter: Inactivity >= {inactivity_days} days')
         if max_level is not None:
-            self._append_output(f'Level filter applied: <={max_level}.')
-        self._append_output(f'Excluded guilds: {excluded_guilds}')
-        self._append_output(f'Excluded bases: {excluded_bases}')
-        return guild_count > 0
+            self._append_output(f'\nFilter: Max Level <= {max_level}')
+        self._append_output(f'\nExcluded guilds: {len(excluded_guilds)}')
+        self._append_output(f'Excluded bases: {len(excluded_bases)}')
 from .edit_pals import EditPalsDialog, PalFrame

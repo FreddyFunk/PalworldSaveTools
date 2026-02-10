@@ -5,7 +5,6 @@ venv/
 GamePassSave/
 saves/
 Restore Map/
-Pal Logger/
 .venv/
 PST_standalone/
 build/
@@ -15,10 +14,9 @@ src/data/configs/
 pst_venv/
 CLAUDE.md
 .claude/
-Scan Save Logger/
+Logs/
 updated_worldmap.png
 task_progress.md
 Backups/
 .coderef.psp/
 .coderef.palsave/
-logs

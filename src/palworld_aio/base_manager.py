@@ -481,38 +481,6 @@ def clone_base_complete(loaded_level_json, source_base_id, target_guild_id, offs
     if not exported:
         return False
     return import_base_json(loaded_level_json, exported, target_guild_id, offset)
-def analyze_base_radius_coverage(loaded_level_json, base_id):
-    raw_prop = loaded_level_json['properties']['worldSaveData']['value']
-    data = raw_prop if isinstance(raw_prop, dict) else {}
-    base_camp_data = data.get('BaseCampSaveData', {}).get('value', [])
-    map_objs = data.get('MapObjectSaveData', {}).get('value', {}).get('values', [])
-    src_id_str = _s(base_id)
-    src_base_entry = next((b for b in base_camp_data if _s(b.get('key')) == src_id_str), None)
-    if not src_base_entry:
-        return None
-    base_raw = src_base_entry['value']['RawData']['value']
-    base_pos = base_raw['transform']['translation']
-    area_range = base_raw.get('area_range', 0)
-    result = {'base_id': src_id_str, 'base_position': (base_pos['x'], base_pos['y'], base_pos['z']), 'area_range': area_range, 'assigned_structures': [], 'structures_outside_radius': [], 'unassigned_inside_radius': []}
-    for obj in map_objs:
-        mr = _get_model_raw(obj)
-        if not isinstance(mr, dict):
-            continue
-        obj_base_id = _s(mr.get('base_camp_id_belong_to', ''))
-        obj_pos = mr.get('initital_transform_cache', {}).get('translation')
-        if not obj_pos:
-            continue
-        dist = math.sqrt((obj_pos['x'] - base_pos['x']) ** 2 + (obj_pos['y'] - base_pos['y']) ** 2 + (obj_pos['z'] - base_pos['z']) ** 2)
-        if obj_base_id == src_id_str:
-            obj_type = str(obj.get('MapObjectId', {}).get('value', 'Unknown'))
-            result['assigned_structures'].append({'type': obj_type, 'distance': dist, 'position': (obj_pos['x'], obj_pos['y'], obj_pos['z'])})
-            if dist > area_range:
-                result['structures_outside_radius'].append({'type': obj_type, 'distance': dist, 'position': (obj_pos['x'], obj_pos['y'], obj_pos['z'])})
-        elif dist <= area_range:
-            obj_type = str(obj.get('MapObjectId', {}).get('value', 'Unknown'))
-            other_base_id = obj_base_id if obj_base_id else 'None'
-            result['unassigned_inside_radius'].append({'type': obj_type, 'distance': dist, 'assigned_to': other_base_id, 'position': (obj_pos['x'], obj_pos['y'], obj_pos['z'])})
-    return result
 def update_base_area_range(loaded_level_json, base_id, new_radius):
     raw_prop = loaded_level_json['properties']['worldSaveData']['value']
     data = raw_prop if isinstance(raw_prop, dict) else {}

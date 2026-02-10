@@ -114,14 +114,14 @@ class SaveManager(QObject):
                     guild_name_map[gid.lower()] = guild_name
                     for base_id_uuid in gdata['value']['RawData']['value'].get('base_ids', []):
                         constants.base_guild_lookup[str(base_id_uuid)] = {'GuildName': guild_name, 'GuildID': gid}
-            log_folder = os.path.join(base_path, 'logs', 'Scan Save Logger')
+            log_folder = os.path.join(base_path, 'Logs', 'Scan Save Logger')
             if os.path.exists(log_folder):
                 try:
                     shutil.rmtree(log_folder)
                 except:
                     pass
             os.makedirs(log_folder, exist_ok=True)
-            illegal_log_folder = os.path.join(base_path, 'logs', 'Illegal Pal Logger')
+            illegal_log_folder = os.path.join(base_path, 'Logs', 'Illegal Pal Logger')
             if os.path.exists(illegal_log_folder):
                 try:
                     shutil.rmtree(illegal_log_folder)
@@ -166,14 +166,14 @@ class SaveManager(QObject):
                 guild_name_map[gid.lower()] = guild_name
                 for base_id_uuid in gdata['value']['RawData']['value'].get('base_ids', []):
                     constants.base_guild_lookup[str(base_id_uuid)] = {'GuildName': guild_name, 'GuildID': gid}
-        log_folder = os.path.join(base_path, 'logs', 'Scan Save Logger')
+        log_folder = os.path.join(base_path, 'Logs', 'Scan Save Logger')
         if os.path.exists(log_folder):
             try:
                 shutil.rmtree(log_folder)
             except:
                 pass
         os.makedirs(log_folder, exist_ok=True)
-        illegal_log_folder = os.path.join(base_path, 'logs', 'Illegal Pal Logger')
+        illegal_log_folder = os.path.join(base_path, 'Logs', 'Illegal Pal Logger')
         if os.path.exists(illegal_log_folder):
             try:
                 shutil.rmtree(illegal_log_folder)
@@ -567,7 +567,7 @@ class SaveManager(QObject):
                         print(f'Error processing DPS task: {e}')
             self.dps_tasks.clear()
         if illegal_pals_by_owner:
-            illegal_log_dir = os.path.join(base_path, 'logs', 'Illegal Pal Logger')
+            illegal_log_dir = os.path.join(base_path, 'Logs', 'Illegal Pal Logger')
             os.makedirs(illegal_log_dir, exist_ok=True)
             guild_illegals = defaultdict(list)
             player_illegals = defaultdict(list)

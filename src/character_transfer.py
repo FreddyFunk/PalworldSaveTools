@@ -367,6 +367,12 @@ class CharacterTransferWindow(QWidget):
         tip_label.setAlignment(Qt.AlignCenter)
         tip_label.setFont(QFont('Segoe UI', 9))
         glass_layout.addWidget(tip_label)
+        warning_label = QLabel(t('warning.world_id'))
+        warning_label.setFont(QFont('Segoe UI', 9))
+        warning_label.setStyleSheet('color: #ffaa00;')
+        warning_label.setAlignment(Qt.AlignCenter)
+        warning_label.setWordWrap(True)
+        glass_layout.addWidget(warning_label)
         main_layout.addWidget(glass_frame)
     def showEvent(self, event):
         super().showEvent(event)

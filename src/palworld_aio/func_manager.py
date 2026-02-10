@@ -205,8 +205,8 @@ def delete_inactive_bases(days_threshold, parent=None):
         if base_id.replace('-', '').lower() in excluded_bases:
             continue
         if gid in inactive_guild_ids:
-            if delete_base_camp(b, gid):
-                removed += 1
+            delete_base_camp(b, gid)
+            removed += 1
     return removed
 def delete_duplicated_players(parent=None):
     if not constants.current_save_path or not constants.loaded_level_json:
@@ -1131,7 +1131,24 @@ def modify_container_slots(new_slot_num, parent=None):
                                 if target_id:
                                     valid_container_ids.add(str(target_id))
                                 break
+        guild_extra_map = wsd.get('GuildExtraSaveDataMap', {}).get('value', [])
+        for guild_entry in guild_extra_map:
+            try:
+                guild_storage = guild_entry.get('value', {}).get('GuildItemStorage', {})
+                raw_data = guild_storage.get('value', {}).get('RawData', {}).get('value', {})
+                container_id = raw_data.get('container_id')
+                if container_id:
+                    valid_container_ids.add(str(container_id))
+            except:
+                pass
         item_containers = wsd.get('ItemContainerSaveData', {}).get('value', [])
+        container_id_to_cont = {}
+        for cont in item_containers:
+            try:
+                cont_id = str(cont['key']['ID']['value'])
+                container_id_to_cont[cont_id] = cont
+            except:
+                pass
         for cont in item_containers:
             try:
                 container_id = str(cont['key']['ID']['value'])
@@ -1152,7 +1169,8 @@ def modify_container_slots(new_slot_num, parent=None):
                                 break
                     if linked:
                         break
-                if not linked:
+                is_guild_chest = container_id in valid_container_ids
+                if not linked and (not is_guild_chest):
                     continue
                 slots = value.get('Slots', {}).get('value', {}).get('values', [])
                 if current_slot_num == new_slot_num:
@@ -1411,7 +1429,7 @@ def fix_illegal_pals_in_save(parent=None):
     if not constants.current_save_path or not constants.loaded_level_json:
         return 0
     base_path = constants.get_base_path()
-    illegal_log_folder = os.path.join(base_path, 'logs', 'Illegal Pal Logger')
+    illegal_log_folder = os.path.join(base_path, 'Logs', 'Illegal Pal Logger')
     if os.path.exists(illegal_log_folder):
         try:
             shutil.rmtree(illegal_log_folder)
@@ -1607,7 +1625,7 @@ def fix_illegal_pals_in_save(parent=None):
                         except Exception as e:
                             print(f'Error collecting results from {filename}: {e}')
         base_path = constants.get_base_path()
-        illegal_log_dir = os.path.join(base_path, 'logs', 'Illegal Pal Logger')
+        illegal_log_dir = os.path.join(base_path, 'Logs', 'Illegal Pal Logger')
         os.makedirs(illegal_log_dir, exist_ok=True)
         guild_illegals = defaultdict(list)
         player_illegals = defaultdict(list)

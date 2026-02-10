@@ -1,7 +1,7 @@
 from import_libs import *
 from palworld_aio.utils import sav_to_json, json_to_sav, extract_value
 from fix_host_save import ask_string_with_icon
-from common import get_src_directory
+from common import get_src_directory, get_base_directory
 from loading_manager import run_with_loading, show_information, show_critical
 import nerdfont as nf
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QFrame, QMessageBox, QFileDialog, QStyleFactory, QApplication, QLabel
@@ -11,10 +11,7 @@ saves = []
 save_info_map = {}
 save_extractor_done = threading.Event()
 save_converter_done = threading.Event()
-if getattr(sys, 'frozen', False):
-    base_dir = os.path.dirname(sys.executable)
-else:
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+base_dir = get_base_directory()
 root_dir = base_dir
 class GamePassSaveFixWidget(QWidget):
     update_combobox_signal = Signal(list)
@@ -55,6 +52,12 @@ class GamePassSaveFixWidget(QWidget):
         desc_label.setWordWrap(True)
         glass_layout.addWidget(desc_label)
         glass_layout.addStretch(1)
+        warning_label = QLabel(t('warning.world_id'))
+        warning_label.setFont(QFont('Segoe UI', 9))
+        warning_label.setStyleSheet('color: #ffaa00;')
+        warning_label.setAlignment(Qt.AlignCenter)
+        warning_label.setWordWrap(True)
+        glass_layout.addWidget(warning_label)
         buttons_layout = QHBoxLayout()
         buttons_layout.addStretch()
         xgp_button = QPushButton(f"{nf.icons['nf-fa-xbox']}  {t('xgp.ui.btn_xgp_folder')}")
@@ -542,9 +545,12 @@ def center_window(win):
         size = win.size()
     win.move((screen.width() - size.width()) // 2, (screen.height() - size.height()) // 2)
 def game_pass_save_fix():
-    default_source = os.path.join(root_dir, 'saves')
-    if os.path.exists(default_source):
-        shutil.rmtree(default_source)
+    saves_folder = os.path.join(root_dir, 'saves')
+    xgp_folder = os.path.join(root_dir, 'XGP_converted_saves')
+    if os.path.exists(saves_folder):
+        shutil.rmtree(saves_folder)
+    if os.path.exists(xgp_folder):
+        shutil.rmtree(xgp_folder)
     return GamePassSaveFixWidget()
 if __name__ == '__main__':
     import sys
